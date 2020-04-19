@@ -4,12 +4,12 @@
 package one.tracking.framework.repo;
 
 import org.springframework.data.repository.CrudRepository;
-import one.tracking.framework.entity.meta.question.Question;
+import one.tracking.framework.entity.meta.container.Container;
 
 /**
  * @author Marko Voß
  *
  */
-public interface QuestionRepository extends CrudRepository<Question, Long> {
+public interface ContainerRepository extends CrudRepository<Container, Long> {
 
 }

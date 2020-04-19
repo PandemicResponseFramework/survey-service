@@ -1,17 +1,19 @@
 /**
  *
  */
-package one.tracking.framework.entity.meta;
+package one.tracking.framework.entity.meta.question;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import one.tracking.framework.entity.meta.container.BooleanContainer;
 
 /**
  * @author Marko Voß
@@ -23,30 +25,18 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@DiscriminatorValue("RANGE")
-public class RangeQuestion extends Question {
-
-  @Column(nullable = false)
-  private Integer minValue;
-
-  @Column(nullable = false)
-  private Integer maxValue;
+@DiscriminatorValue("BOOL")
+public class BooleanQuestion extends Question {
 
   @Column(nullable = true)
-  private Integer defaultValue;
+  private Boolean defaultValue;
+
+  @OneToOne
+  private BooleanContainer container;
 
   @Override
   @PrePersist
   void onPrePersist() {
-
     super.onPrePersist();
-
-    // Only allow a default value, which is within the range of minValue and maxValue
-    if (this.defaultValue != null) {
-      if (this.defaultValue < this.minValue)
-        this.defaultValue = null;
-      if (this.defaultValue > this.maxValue)
-        this.defaultValue = null;
-    }
   }
 }

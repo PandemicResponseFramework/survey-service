@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import one.tracking.framework.entity.meta.question.Question;
 
 /**
  * @author Marko Voß

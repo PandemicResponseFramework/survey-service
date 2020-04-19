@@ -1,12 +1,10 @@
 /**
  *
  */
-package one.tracking.framework.entity.meta;
+package one.tracking.framework.entity.meta.container;
 
-import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,15 +21,9 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@DiscriminatorValue("TEXT")
-public class TextQuestion extends Question {
+@DiscriminatorValue("BOOL")
+public class BooleanContainer extends Container {
 
-  @Column(nullable = false)
-  private boolean multiline;
+  private Boolean dependsOn;
 
-  @Override
-  @PrePersist
-  void onPrePersist() {
-    super.onPrePersist();
-  }
 }

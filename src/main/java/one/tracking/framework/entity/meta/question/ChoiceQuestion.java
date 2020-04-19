@@ -1,7 +1,7 @@
 /**
  *
  */
-package one.tracking.framework.entity.meta;
+package one.tracking.framework.entity.meta.question;
 
 import java.util.List;
 import javax.persistence.Column;
@@ -10,12 +10,15 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import one.tracking.framework.entity.meta.Answer;
+import one.tracking.framework.entity.meta.container.ChoiceContainer;
 
 /**
  * @author Marko Voß
@@ -38,6 +41,9 @@ public class ChoiceQuestion extends Question {
 
   @ManyToOne(fetch = FetchType.LAZY)
   private Answer defaultValue;
+
+  @OneToOne
+  private ChoiceContainer container;
 
   @Override
   @PrePersist

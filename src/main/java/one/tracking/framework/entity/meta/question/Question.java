@@ -1,7 +1,7 @@
 /**
  *
  */
-package one.tracking.framework.entity.meta;
+package one.tracking.framework.entity.meta.question;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
