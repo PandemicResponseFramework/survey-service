@@ -30,7 +30,7 @@ public class Answer {
   @GeneratedValue
   private Long id;
 
-  @Column(length = 255)
+  @Column(length = 256)
   private String value;
 
   @Column(nullable = false, updatable = false)

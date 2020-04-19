@@ -46,6 +46,9 @@ public class Survey {
   @Column(length = 32, nullable = false, updatable = false)
   private String nameId;
 
+  @Column(length = 256, nullable = true)
+  private String description;
+
   @Column(nullable = false, updatable = false)
   private Instant timestampCreate;
 

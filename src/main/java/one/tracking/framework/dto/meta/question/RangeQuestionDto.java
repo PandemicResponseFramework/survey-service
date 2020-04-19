@@ -3,7 +3,9 @@
  */
 package one.tracking.framework.dto.meta.question;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,12 +28,15 @@ public class RangeQuestionDto extends QuestionDto {
   @NotNull
   private Integer maxValue;
 
+  @Size(max = 64)
   private String minText;
 
+  @Size(max = 64)
   private String maxText;
 
   private Integer defaultValue;
 
+  @Valid
   private DefaultContainerDto container;
 
 }

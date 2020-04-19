@@ -37,7 +37,7 @@ public class Question {
   @GeneratedValue
   private Long id;
 
-  @Column(length = 255, nullable = false)
+  @Column(length = 256, nullable = false)
   private String question;
 
   @Column(nullable = false)

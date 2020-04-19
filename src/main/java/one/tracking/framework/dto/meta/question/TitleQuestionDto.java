@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.dto.meta.question;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
@@ -21,5 +22,6 @@ import one.tracking.framework.dto.meta.container.DefaultContainerDto;
 public class TitleQuestionDto extends QuestionDto {
 
   @NotNull
+  @Valid
   private DefaultContainerDto container;
 }

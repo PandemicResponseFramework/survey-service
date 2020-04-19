@@ -4,6 +4,8 @@
 package one.tracking.framework.dto.meta.container;
 
 import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
@@ -26,6 +28,8 @@ import one.tracking.framework.dto.meta.question.QuestionDto;
 // DefaultContainerDto.class})
 public abstract class ContainerDto {
 
+  @NotEmpty
+  @Valid
   private List<QuestionDto> subQuestions;
 
 }

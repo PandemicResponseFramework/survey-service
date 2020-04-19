@@ -3,6 +3,9 @@
  */
 package one.tracking.framework.dto.meta.question;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
@@ -29,11 +32,16 @@ import lombok.experimental.SuperBuilder;
     TitleQuestionDto.class})
 public abstract class QuestionDto {
 
+  @NotNull
   private Long id;
 
+  @NotEmpty
+  @Size(max = 256)
   private String question;
 
+  @NotNull
   private QuestionType type;
 
+  @NotNull
   private Integer order;
 }
