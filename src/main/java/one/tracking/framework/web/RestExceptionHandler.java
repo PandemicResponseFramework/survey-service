@@ -67,14 +67,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         "': rejected value [" + ObjectUtils.nullSafeToString(error.getRejectedValue()) + "]; ";
   }
 
-  @ExceptionHandler(value = {NoSuchElementException.class})
-  @ResponseStatus(HttpStatus.NOT_FOUND)
-  public ResponseEntity<String> notFound(final Exception e) {
-    LOG.debug(e.getMessage(), e);
-    return ResponseEntity.notFound().build();
-  }
-
-  @ExceptionHandler(value = {IllegalArgumentException.class})
+  @ExceptionHandler(value = {IllegalArgumentException.class, NoSuchElementException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ResponseEntity<String> badRequest(final Exception e) {
     LOG.debug(e.getMessage(), e);

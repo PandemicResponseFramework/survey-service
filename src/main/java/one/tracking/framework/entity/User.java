@@ -29,7 +29,7 @@ public class User {
   @Id
   @GenericGenerator(name = "uuid", strategy = "uuid2")
   @GeneratedValue(generator = "uuid")
-  @Column(unique = true, nullable = false)
+  @Column(unique = true, nullable = false, length = 36)
   private String id;
 
   @Column(nullable = false, updatable = false)

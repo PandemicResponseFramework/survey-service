@@ -5,10 +5,10 @@ package one.tracking.framework.web;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
-import org.apache.commons.codec.binary.Base64;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import one.tracking.framework.dto.DtoMapper;
+import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.dto.meta.SurveyDto;
 import one.tracking.framework.service.SurveyService;
 
@@ -38,6 +39,18 @@ public class SurveyController {
     return DtoMapper.map(this.surveyService.getSurvey(nameId));
   }
 
+  @RequestMapping(method = RequestMethod.POST, path = "/survey/{nameId}/answer")
+  public void handleSurveyResponse(
+      @PathVariable("nameId")
+      final String nameId,
+      @RequestBody
+      @Valid
+      final SurveyResponseDto surveyResponse,
+      final Authentication authentication) {
+
+    this.surveyService.handleSurveyResponse(authentication.getName(), nameId, surveyResponse);
+  }
+
   @RequestMapping(
       method = RequestMethod.POST,
       path = "/verify",
@@ -47,8 +60,7 @@ public class SurveyController {
       @RequestBody
       final String hash) {
 
-    final String jwt = this.surveyService.verifyEmail(hash);
-    return Base64.encodeBase64String(jwt.getBytes(Charset.defaultCharset()));
+    return this.surveyService.verifyEmail(hash);
   }
 
   @RequestMapping(

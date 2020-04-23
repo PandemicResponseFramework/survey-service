@@ -27,6 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import one.tracking.framework.dto.SurveyResponseDto;
+import one.tracking.framework.dto.meta.question.QuestionType;
+import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
@@ -44,6 +47,7 @@ import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.QuestionRepository;
 import one.tracking.framework.repo.SurveyRepository;
+import one.tracking.framework.repo.SurveyResponseRepository;
 import one.tracking.framework.repo.UserRepository;
 import one.tracking.framework.repo.VerificationRepository;
 import one.tracking.framework.util.JWTHelper;
@@ -74,6 +78,9 @@ public class SurveyService {
 
   @Autowired
   private UserRepository userRepository;
+
+  @Autowired
+  private SurveyResponseRepository surveyResponseRepository;
 
   @Autowired
   private SendGridService emailService;
@@ -107,12 +114,82 @@ public class SurveyService {
     return this.surveyRepository.findByNameId(nameId).get();
   }
 
+  public void handleSurveyResponse(final String userId, final String nameId, final SurveyResponseDto surveyResponse) {
+
+    final User user = this.userRepository.findById(userId).get();
+    final Survey survey = this.surveyRepository.findByNameId(nameId).get();
+    final Question question = this.questionRepository.findById(surveyResponse.getQuestionId()).get();
+
+    final Optional<SurveyResponse> responseOp =
+        this.surveyResponseRepository.findByUserAndSurveyAndQuestion(user, survey, question);
+
+    SurveyResponse response = null;
+    final Long answerId = getValidAnswerId(question, surveyResponse.getAnswerId());
+
+    if (responseOp.isEmpty()) {
+
+      response = SurveyResponse.builder()
+          .question(question)
+          .survey(survey)
+          .user(user)
+          .value(answerId)
+          .build();
+    } else {
+
+      response = responseOp.get();
+      response.setUpdatedAt(Instant.now());
+      response.setValue(answerId);
+    }
+
+    this.surveyResponseRepository.save(response);
+  }
+
+  private Long getValidAnswerId(final Question question, final Long input) {
+
+    final QuestionType type = QuestionType.valueOf(question.getType());
+
+    if (type == QuestionType.BOOL) {
+
+      return input == 0 ? 0L : 1L;
+    }
+
+    if (type == QuestionType.CHOICE) {
+
+      if (!((ChoiceQuestion) question).getAnswers().stream().anyMatch(p -> p.getId().equals(input)))
+        throw new IllegalArgumentException("Invalid answerId");
+
+      return input;
+    }
+
+    if (type == QuestionType.RANGE) {
+
+      final RangeQuestion rangeQuestion = (RangeQuestion) question;
+      if (!(input < rangeQuestion.getMinValue() || input > rangeQuestion.getMaxValue()))
+        throw new IllegalArgumentException("Invalid answerId");
+
+      return input;
+    }
+
+    if (type == QuestionType.TITLE) {
+
+      throw new IllegalArgumentException("Title question does not support answers.");
+    }
+
+    if (type == QuestionType.TEXT) {
+
+      // FIXME
+      throw new UnsupportedOperationException("Text question type currently not supported.");
+    }
+
+    return null;
+  }
+
   public String verifyEmail(final String hash) {
 
     final Optional<Verification> verificationOp = this.verificationRepository.findByHashAndVerified(hash, false);
 
     if (verificationOp.isEmpty())
-      return null;
+      throw new IllegalArgumentException();
 
     final Verification verification = verificationOp.get();
 
@@ -120,7 +197,7 @@ public class SurveyService {
 
     final Instant instant =
         verification.getUpdatedAt() == null ? verification.getCreatedAt() : verification.getUpdatedAt();
-    if (instant.plusSeconds(this.verificationTimeoutSeconds).isAfter(Instant.now())) {
+    if (instant.plusSeconds(this.verificationTimeoutSeconds).isBefore(Instant.now())) {
 
       LOG.info("Expired email verification requested.");
       throw new IllegalArgumentException(); // keep silence about it
@@ -138,7 +215,7 @@ public class SurveyService {
     // Generate new User ID
     final User user = this.userRepository.save(User.builder().build());
 
-    return this.jwtHelper.createJWT(user.getId(), -1);
+    return this.jwtHelper.createJWT(user.getId(), 365 * 24 * 60 * 60);
   }
 
   public void registerParticipant(final String email, final boolean autoUpdateInvitation) throws IOException {

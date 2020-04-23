@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import one.tracking.framework.repo.UserRepository;
 import one.tracking.framework.security.BearerAuthenticationFilter;
 import one.tracking.framework.util.JWTHelper;
 
@@ -26,17 +27,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   @Autowired
   private JWTHelper jwtHelper;
 
+  @Autowired
+  private UserRepository userRepository;
+
   @Override
   protected void configure(final HttpSecurity http) throws Exception {
     http.cors().and().csrf().disable()
         .authorizeRequests()
-        // .antMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**",
-        // "/h2-console/**")
-        // .permitAll()
-        // .anyRequest().authenticated()
-        .anyRequest().permitAll()
+        .antMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**", "/h2-console/**").permitAll()
+        .antMatchers("/verify", "/register/**").permitAll()
+        .anyRequest().authenticated()
         .and()
-        // .addFilter(bearerAuthenticationFilter())
+        .addFilter(bearerAuthenticationFilter())
         .sessionManagement()
         .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     http.headers().frameOptions().disable();
@@ -48,7 +50,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
       @Override
       protected boolean checkIfUserExists(final String userId) {
-        return true;
+        return SecurityConfig.this.userRepository.existsById(userId);
       }
 
     };

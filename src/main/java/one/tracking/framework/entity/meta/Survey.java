@@ -55,7 +55,7 @@ public class Survey {
   @Column(nullable = false, updatable = false)
   private Integer timestampCreateOffset;
 
-  @OneToMany(fetch = FetchType.EAGER)
+  @OneToMany(fetch = FetchType.LAZY)
   private List<Question> questions;
 
   @PrePersist
