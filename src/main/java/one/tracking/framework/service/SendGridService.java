@@ -62,14 +62,11 @@ public class SendGridService {
     mail.setReplyTo(new Email(this.replyTo));
 
     final Request request = new Request();
-    final Response response = null;
 
     request.setMethod(Method.POST);
     request.setEndpoint("mail/send");
     request.setBody(mail.build());
-    this.sendGridClient.api(request);
-
-    return response;
+    return this.sendGridClient.api(request);
   }
 
 }

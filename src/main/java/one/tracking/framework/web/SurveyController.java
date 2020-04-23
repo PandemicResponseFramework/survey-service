@@ -23,7 +23,7 @@ import one.tracking.framework.service.SurveyService;
  *
  */
 @RestController
-@RequestMapping("/survey")
+@RequestMapping
 public class SurveyController {
 
   @Autowired
