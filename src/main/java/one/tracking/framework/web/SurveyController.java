@@ -4,6 +4,7 @@
 package one.tracking.framework.web;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,11 +51,20 @@ public class SurveyController {
   }
 
   @RequestMapping(method = RequestMethod.POST, path = "/register", consumes = MediaType.TEXT_PLAIN_VALUE)
-  public void register(
+  public void registerParticipant(
       @RequestBody
       final String email) throws IOException {
 
-    this.surveyService.registerParticipant(email);
+    this.surveyService.registerParticipant(email, true);
+  }
+
+  @RequestMapping(
+      method = RequestMethod.POST,
+      path = "/register/import",
+      consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+  public void importParticipants(final InputStream inputStream) throws IOException {
+
+    this.surveyService.importParticipants(inputStream);
   }
 
 }

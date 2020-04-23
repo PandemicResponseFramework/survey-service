@@ -35,15 +35,15 @@ public class SendGridService {
   @Autowired
   private SendGrid sendGridClient;
 
-  public void sendText(final String to, final String subject, final String body) throws IOException {
-    sendEmailType("text/plain", to, subject, body);
+  public boolean sendText(final String to, final String subject, final String body) throws IOException {
+    return sendEmailType("text/plain", to, subject, body);
   }
 
-  public void sendHTML(final String to, final String subject, final String body) throws IOException {
-    sendEmailType("text/html", to, subject, body);
+  public boolean sendHTML(final String to, final String subject, final String body) throws IOException {
+    return sendEmailType("text/html", to, subject, body);
   }
 
-  private void sendEmailType(final String type, final String to, final String subject,
+  private boolean sendEmailType(final String type, final String to, final String subject,
       final String body) throws IOException {
 
     final Response response = sendEmail(to, subject, new Content(type, body));
@@ -51,6 +51,8 @@ public class SendGridService {
         response.getStatusCode(),
         response.getBody(),
         response.getHeaders());
+
+    return response.getStatusCode() >= 200 && response.getStatusCode() < 300;
   }
 
   private Response sendEmail(final String to, final String subject, final Content content)

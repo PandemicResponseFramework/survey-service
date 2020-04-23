@@ -3,7 +3,11 @@
  */
 package one.tracking.framework.service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -134,11 +138,13 @@ public class SurveyService {
     return this.jwtHelper.createJWT(user.getId(), -1);
   }
 
-  public void registerParticipant(final String email) throws IOException {
+  public void registerParticipant(final String email, final boolean autoUpdateInvitation) throws IOException {
 
     final String hash = getValidHash();
 
     final Optional<Verification> verificationOp = this.verificationRepository.findByEmail(email);
+
+    boolean continueInivitation = false;
 
     if (verificationOp.isEmpty()) {
       // add new entity
@@ -148,22 +154,43 @@ public class SurveyService {
           .verified(false)
           .build();
       this.verificationRepository.save(verification);
+      continueInivitation = true;
 
-    } else {
+    } else if (autoUpdateInvitation) {
       // update entity
       final Verification verification = verificationOp.get();
       verification.setUpdatedAt(Instant.now());
       verification.setVerified(false);
       verification.setHash(hash);
       this.verificationRepository.save(verification);
-
+      continueInivitation = true;
     }
 
-    final String publicLink = this.publicUrlBuilder.path("/verify").path("/" + hash).build().encode().toString();
-    final Context context = new Context();
-    context.setVariable("link", publicLink);
-    final String message = this.templateEngine.process("registrationTemplate", context);
-    this.emailService.sendHTML(email, "Registration", message);
+    if (continueInivitation) {
+
+      final String publicLink = this.publicUrlBuilder.path("/verify").path("/" + hash).build().encode().toString();
+      final Context context = new Context();
+      context.setVariable("link", publicLink);
+      final String message = this.templateEngine.process("registrationTemplate", context);
+      final boolean success = this.emailService.sendHTML(email, "Registration", message);
+
+      if (!success)
+        throw new IOException("Sending email to receipient '" + email + "' was not successful.");
+    }
+  }
+
+  public void importParticipants(final InputStream inputStream) throws IOException {
+
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+
+      reader.lines().forEach(line -> {
+        try {
+          registerParticipant(line, false);
+        } catch (final IOException e) {
+          LOG.error("IMPORT: Unable to register participant: {}", line);
+        }
+      });
+    }
   }
 
   /**
