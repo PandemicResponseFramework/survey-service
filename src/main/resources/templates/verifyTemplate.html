@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+
+	<div id="main"></div>
+
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+
+		var customURI = /*[[${customURI}]]*/'default';
+
+		if (customURI === 'default') {
+			document.getElementById('main').innerHTML = "An error occured. Please contact the administrator.";
+		}
+
+		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+				.test(navigator.userAgent)) {
+			window.location.replace(customURI);
+		} else {
+			document.getElementById('main').innerHTML = "Please use this link on a mobile device.";
+		}
+
+		/*]]>*/
+	</script>
+</body>
+</html>

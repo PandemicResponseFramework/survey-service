@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import one.tracking.framework.dto.DtoMapper;
 import one.tracking.framework.dto.meta.SurveyDto;
@@ -48,6 +49,16 @@ public class SurveyController {
 
     final String jwt = this.surveyService.verifyEmail(hash);
     return Base64.encodeBase64String(jwt.getBytes(Charset.defaultCharset()));
+  }
+
+  @RequestMapping(
+      method = RequestMethod.GET,
+      path = "/verify")
+  public String handleVerification(
+      @RequestParam("token")
+      final String token) {
+
+    return this.surveyService.handleVerificationRequest(token);
   }
 
   @RequestMapping(method = RequestMethod.POST, path = "/register", consumes = MediaType.TEXT_PLAIN_VALUE)

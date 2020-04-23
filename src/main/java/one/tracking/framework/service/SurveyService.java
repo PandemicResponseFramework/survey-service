@@ -90,6 +90,9 @@ public class SurveyService {
   @Value("${app.verification.timeout}")
   private int verificationTimeoutSeconds;
 
+  @Value("${app.custom.uri.prefix}")
+  private String customUriPrefix;
+
   private UriComponentsBuilder publicUrlBuilder;
 
   @PostConstruct
@@ -168,7 +171,13 @@ public class SurveyService {
 
     if (continueInivitation) {
 
-      final String publicLink = this.publicUrlBuilder.path("/verify").path("/" + hash).build().encode().toString();
+      final String publicLink = this.publicUrlBuilder
+          .path("/verify")
+          .queryParam("token", hash)
+          .build()
+          .encode()
+          .toString();
+
       final Context context = new Context();
       context.setVariable("link", publicLink);
       final String message = this.templateEngine.process("registrationTemplate", context);
@@ -191,6 +200,13 @@ public class SurveyService {
         }
       });
     }
+  }
+
+  public String handleVerificationRequest(final String token) {
+
+    final Context context = new Context();
+    context.setVariable("customURI", this.customUriPrefix + "://verify/" + token);
+    return this.templateEngine.process("verifyTemplate", context);
   }
 
   /**
@@ -770,4 +786,5 @@ public class SurveyService {
         .ranking(order)
         .build());
   }
+
 }
