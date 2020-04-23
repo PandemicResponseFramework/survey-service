@@ -26,21 +26,14 @@ public class SendGridService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SendGridService.class);
 
-  @Value("${app.sendgrid.api.key}")
-  private String sendGridAPIKey;
-
   @Value("${app.email.reply.to}")
   private String replyTo;
 
   @Value("${app.email.from}")
   private String from;
 
-  private final SendGrid sendGridClient;
-
   @Autowired
-  public SendGridService(final SendGrid sendGridClient) {
-    this.sendGridClient = sendGridClient;
-  }
+  private SendGrid sendGridClient;
 
   public void sendText(final String to, final String subject, final String body) throws IOException {
     sendEmailType("text/plain", to, subject, body);
