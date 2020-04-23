@@ -83,7 +83,7 @@ public abstract class DtoMapper {
         .id(entity.getId())
         .order(entity.getRanking())
         .question(entity.getQuestion())
-        .defaultValue(entity.getDefaultValue())
+        .defaultAnswer(entity.getDefaultValue())
         .container(map(entity.getContainer()))
         .type(QuestionType.valueOf(entity.getType()))
         .build();
@@ -173,7 +173,7 @@ public abstract class DtoMapper {
       return null;
 
     return BooleanContainerDto.builder()
-        .dependsOn(entity.getDependsOn())
+        .boolDependsOn(entity.getDependsOn())
         .subQuestions(map(entity.getSubQuestions()))
         .build();
   }
@@ -192,7 +192,7 @@ public abstract class DtoMapper {
         : entity.getDependsOn().stream().map(c -> c.getId()).collect(Collectors.toList());
 
     return ChoiceContainerDto.builder()
-        .dependsOn(dependsOn)
+        .choiceDependsOn(dependsOn)
         .subQuestions(map(entity.getSubQuestions()))
         .build();
   }

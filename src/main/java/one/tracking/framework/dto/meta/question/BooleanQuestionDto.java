@@ -20,7 +20,7 @@ import one.tracking.framework.dto.meta.container.BooleanContainerDto;
 @ApiModel
 public class BooleanQuestionDto extends QuestionDto {
 
-  private Boolean defaultValue;
+  private Boolean defaultAnswer;
 
   @Valid
   private BooleanContainerDto container;

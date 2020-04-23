@@ -21,5 +21,5 @@ import lombok.experimental.SuperBuilder;
 public class ChoiceContainerDto extends ContainerDto {
 
   @Valid
-  private List<Long> dependsOn;
+  private List<Long> choiceDependsOn;
 }

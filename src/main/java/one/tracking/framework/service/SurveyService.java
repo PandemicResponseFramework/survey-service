@@ -3,15 +3,28 @@
  */
 package one.tracking.framework.service;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import one.tracking.framework.entity.User;
+import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
@@ -27,13 +40,18 @@ import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.QuestionRepository;
 import one.tracking.framework.repo.SurveyRepository;
+import one.tracking.framework.repo.UserRepository;
+import one.tracking.framework.repo.VerificationRepository;
+import one.tracking.framework.util.JWTHelper;
 
 /**
  * @author Marko Voß
  *
  */
 @Service
-public class BusinessService {
+public class SurveyService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SurveyService.class);
 
   @Autowired
   private AnswerRepository answerRepository;
@@ -46,6 +64,120 @@ public class BusinessService {
 
   @Autowired
   private SurveyRepository surveyRepository;
+
+  @Autowired
+  private VerificationRepository verificationRepository;
+
+  @Autowired
+  private UserRepository userRepository;
+
+  @Autowired
+  private SendGridService emailService;
+
+  @Autowired
+  private TemplateEngine templateEngine;
+
+  @Autowired
+  private JWTHelper jwtHelper;
+
+  @Value("${app.public.url}")
+  private String publicUrl;
+
+  @Value("${app.verification.timeout}")
+  private int verificationTimeoutSeconds;
+
+  private UriComponentsBuilder publicUrlBuilder;
+
+  @PostConstruct
+  public void init() {
+
+    // throws IllegalArgumentException on invalid URIs -> startup will fail if URL is invalid
+    this.publicUrlBuilder = UriComponentsBuilder.fromUriString(this.publicUrl);
+  }
+
+  public Survey getSurvey(final String nameId) {
+
+    return this.surveyRepository.findByNameId(nameId).get();
+  }
+
+  public String verifyEmail(final String hash) {
+
+    final Optional<Verification> verificationOp = this.verificationRepository.findByHashAndVerified(hash, false);
+
+    if (verificationOp.isEmpty())
+      return null;
+
+    final Verification verification = verificationOp.get();
+
+    // Validate if verification is still valid
+
+    final Instant instant =
+        verification.getUpdatedAt() == null ? verification.getCreatedAt() : verification.getUpdatedAt();
+    if (instant.plusSeconds(this.verificationTimeoutSeconds).isAfter(Instant.now())) {
+
+      LOG.info("Expired email verification requested.");
+      throw new IllegalArgumentException(); // keep silence about it
+    }
+
+    // Update verification
+
+    verification.setVerified(true);
+    verification.setUpdatedAt(Instant.now());
+    this.verificationRepository.save(verification);
+
+    // TODO: send confirmation email maybe?
+    // final String email = verificationOp.get().getEmail();
+
+    // Generate new User ID
+    final User user = this.userRepository.save(User.builder().build());
+
+    return this.jwtHelper.createJWT(user.getId(), -1);
+  }
+
+  public void registerParticipant(final String email) throws IOException {
+
+    final String hash = getValidHash();
+
+    final Optional<Verification> verificationOp = this.verificationRepository.findByEmail(email);
+
+    if (verificationOp.isEmpty()) {
+      // add new entity
+      final Verification verification = Verification.builder()
+          .email(email)
+          .hash(hash)
+          .verified(false)
+          .build();
+      this.verificationRepository.save(verification);
+
+    } else {
+      // update entity
+      final Verification verification = verificationOp.get();
+      verification.setUpdatedAt(Instant.now());
+      verification.setVerified(false);
+      verification.setHash(hash);
+      this.verificationRepository.save(verification);
+
+    }
+
+    final String publicLink = this.publicUrlBuilder.path("/verify").path("/" + hash).build().encode().toString();
+    final Context context = new Context();
+    context.setVariable("link", publicLink);
+    final String message = this.templateEngine.process("registrationTemplate", context);
+    this.emailService.sendHTML(email, "Registration", message);
+  }
+
+  /**
+   *
+   * @return
+   */
+  private String getValidHash() {
+
+    final String hash = UUID.randomUUID().toString();
+    if (this.verificationRepository.existsByHash(hash))
+      return getValidHash(); // repeat
+
+    return hash;
+  }
 
   /**
    * FIXME DEV only

@@ -18,6 +18,6 @@ import lombok.experimental.SuperBuilder;
 @ApiModel
 public class BooleanContainerDto extends ContainerDto {
 
-  private Boolean dependsOn;
+  private Boolean boolDependsOn;
 
 }
