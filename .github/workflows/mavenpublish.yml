@@ -9,9 +9,6 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    env: 
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      SETTINGS_PATH: ${{ github.workspace }}/.github/workflows/settings.xml
 
     steps:
     - uses: actions/checkout@v2
@@ -22,7 +19,10 @@ jobs:
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: $SETTINGS_PATH # location for the settings.xml file
 
-    - name: Publish to GitHub Packages Apache Maven
+    - name: Deploy to Github Package Registry
+      env:
+        GITHUB_USERNAME: x-access-token
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SETTINGS_PATH: ${{ github.workspace }}/.github/workflows/settings.xml
       run:
-        echo "$SETTINGS_PATH"
         mvn deploy -B -s $SETTINGS_PATH
