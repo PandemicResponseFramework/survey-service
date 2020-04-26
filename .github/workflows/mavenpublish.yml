@@ -22,11 +22,7 @@ jobs:
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: $SETTINGS_PATH # location for the settings.xml file
 
-    - name: Deploy to Github Package Registry
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        mkdir -p ~/.m2
-        echo "<settings><servers><server><id>gh</id><username>$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $1}')</username><password>\${env.GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
-        REPO="gh::default::https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
-        mvn deploy -B -DaltReleaseDeploymentRepository="${REPO}" -DaltSnapshotDeploymentRepository="${REPO}"
+    - name: Publish to GitHub Packages Apache Maven
+      run:
+        echo "$SETTINGS_PATH"
+        mvn deploy -B -s $SETTINGS_PATH
