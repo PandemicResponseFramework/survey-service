@@ -23,6 +23,6 @@ jobs:
         settings-path: $SETTINGS_PATH # location for the settings.xml file
 
     - name: Publish to GitHub Packages Apache Maven
-      run: mvn deploy -s $SETTINGS_PATH
+      run: mvn deploy -B -s $SETTINGS_PATH
       env:
         GITHUB_TOKEN: ${{ github.token }}
