@@ -104,16 +104,9 @@
 			</releases>
 		</repository>
 		<repository>
-			<id>com.github.OneTrackingFramework.kafka-module-boot</id>
-			<name>GitHub OneTrackingFramework Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/OneTrackingFramework/kafka-module-boot
-			</url>
-		</repository>
-		<repository>
 			<id>com.github.OneTrackingFramework.commons-boot</id>
 			<name>GitHub OneTrackingFramework Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/OneTrackingFramework/commons-boot
-			</url>
+			<url>https://maven.pkg.github.com/OneTrackingFramework/commons-boot</url>
 		</repository>
 	</repositories>
 
