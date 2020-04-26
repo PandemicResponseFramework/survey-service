@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-@ApiModel
+@ApiModel(parent = ContainerDto.class)
 public class DefaultContainerDto extends ContainerDto {
 
 }

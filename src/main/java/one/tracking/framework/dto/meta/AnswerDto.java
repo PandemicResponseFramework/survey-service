@@ -6,6 +6,7 @@ package one.tracking.framework.dto.meta;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import io.swagger.annotations.ApiModel;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,6 +16,7 @@ import lombok.Data;
  */
 @Data
 @Builder
+@ApiModel
 public class AnswerDto {
 
   @NotNull

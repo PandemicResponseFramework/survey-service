@@ -17,7 +17,7 @@ import one.tracking.framework.dto.meta.container.BooleanContainerDto;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-@ApiModel
+@ApiModel(parent = QuestionDto.class)
 public class BooleanQuestionDto extends QuestionDto {
 
   private Boolean defaultAnswer;

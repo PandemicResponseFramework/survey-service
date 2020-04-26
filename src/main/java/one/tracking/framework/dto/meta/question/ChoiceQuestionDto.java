@@ -20,7 +20,7 @@ import one.tracking.framework.dto.meta.container.ChoiceContainerDto;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-@ApiModel
+@ApiModel(parent = QuestionDto.class)
 public class ChoiceQuestionDto extends QuestionDto {
 
   @NotEmpty

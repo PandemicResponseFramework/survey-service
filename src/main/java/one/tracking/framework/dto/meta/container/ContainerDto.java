@@ -7,6 +7,7 @@ import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 import one.tracking.framework.dto.meta.question.QuestionDto;
@@ -22,10 +23,10 @@ import one.tracking.framework.dto.meta.question.QuestionDto;
     @JsonSubTypes.Type(value = ChoiceContainerDto.class),
     @JsonSubTypes.Type(value = DefaultContainerDto.class),
 })
-// @ApiModel(discriminator = "type", subTypes = {
-// BooleanContainerDto.class,
-// ChoiceContainerDto.class,
-// DefaultContainerDto.class})
+@ApiModel(subTypes = {
+    BooleanContainerDto.class,
+    ChoiceContainerDto.class,
+    DefaultContainerDto.class})
 public abstract class ContainerDto {
 
   @NotEmpty

@@ -18,7 +18,7 @@ import one.tracking.framework.dto.meta.container.DefaultContainerDto;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-@ApiModel
+@ApiModel(parent = QuestionDto.class)
 public class TitleQuestionDto extends QuestionDto {
 
   @NotNull

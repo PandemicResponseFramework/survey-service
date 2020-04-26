@@ -19,6 +19,7 @@ import one.tracking.framework.dto.DtoMapper;
 import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.dto.meta.SurveyDto;
 import one.tracking.framework.service.SurveyService;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * @author Marko Voß
@@ -46,6 +47,7 @@ public class SurveyController {
       @RequestBody
       @Valid
       final SurveyResponseDto surveyResponse,
+      @ApiIgnore
       final Authentication authentication) {
 
     this.surveyService.handleSurveyResponse(authentication.getName(), nameId, surveyResponse);
