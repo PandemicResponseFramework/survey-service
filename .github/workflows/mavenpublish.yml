@@ -25,4 +25,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SETTINGS_PATH: ${{ github.workspace }}/.github/workflows/settings.xml
       run:
-        mvn deploy -B -s $SETTINGS_PATH
+        mvn compile -B -s $SETTINGS_PATH
