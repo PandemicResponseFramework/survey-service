@@ -47,7 +47,7 @@ public class SendGridService {
       final String body) throws IOException {
 
     final Response response = sendEmail(to, subject, new Content(type, body));
-    LOG.debug("Status Code: {}, Body: {}, Headers: {}",
+    LOG.debug("Email response: Status code: {}, Body: {}, Headers: {}",
         response.getStatusCode(),
         response.getBody(),
         response.getHeaders());
