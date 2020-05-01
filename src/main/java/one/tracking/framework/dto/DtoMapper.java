@@ -45,6 +45,7 @@ public abstract class DtoMapper {
     return SurveyDto.builder()
         .id(entity.getId())
         .nameId(entity.getNameId())
+        .title(entity.getTitle())
         .description(entity.getDescription())
         .version(entity.getVersion())
         .questions(entity.getQuestions().stream().map(DtoMapper::map).collect(Collectors.toList()))

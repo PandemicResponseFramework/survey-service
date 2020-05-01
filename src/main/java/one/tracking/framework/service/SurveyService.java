@@ -442,6 +442,7 @@ public class SurveyService {
     this.surveyRepository.save(Survey.builder()
         .questions(questions)
         .nameId("BASIC")
+        .title(s64)
         .description(s256)
         .build());
   }
@@ -663,6 +664,7 @@ public class SurveyService {
     this.surveyRepository.save(Survey.builder()
         .questions(questions)
         .nameId("REGULAR")
+        .title("Regular survey")
         .build());
   }
 

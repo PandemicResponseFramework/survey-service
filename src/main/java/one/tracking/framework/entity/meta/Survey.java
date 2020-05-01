@@ -45,6 +45,9 @@ public class Survey {
   @Column(length = 32, nullable = false, updatable = false)
   private String nameId;
 
+  @Column(length = 64, nullable = false)
+  private String title;
+
   @Column(length = 256, nullable = true)
   private String description;
 

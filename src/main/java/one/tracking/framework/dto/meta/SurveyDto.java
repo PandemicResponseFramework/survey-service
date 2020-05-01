@@ -33,6 +33,9 @@ public class SurveyDto {
   @NotBlank
   private String nameId;
 
+  @Size(max = 64)
+  private String title;
+
   @Size(max = 256)
   private String description;
 
