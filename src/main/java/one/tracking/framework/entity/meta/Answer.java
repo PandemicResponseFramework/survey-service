@@ -4,7 +4,6 @@
 package one.tracking.framework.entity.meta;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -30,21 +29,16 @@ public class Answer {
   @GeneratedValue
   private Long id;
 
-  @Column(length = 256)
+  @Column(length = 64)
   private String value;
 
   @Column(nullable = false, updatable = false)
-  private Instant timestampCreate;
-
-  @Column(nullable = false, updatable = false)
-  private Integer timestampCreateOffset;
+  private Instant createdAt;
 
   @PrePersist
   void onPrePersist() {
     if (this.id == null) {
-      final OffsetDateTime timestamp = OffsetDateTime.now();
-      setTimestampCreate(timestamp.toInstant());
-      setTimestampCreateOffset(timestamp.getOffset().getTotalSeconds());
+      setCreatedAt(Instant.now());
     }
   }
 

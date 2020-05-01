@@ -4,7 +4,6 @@
 package one.tracking.framework.entity.meta;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -50,10 +49,7 @@ public class Survey {
   private String description;
 
   @Column(nullable = false, updatable = false)
-  private Instant timestampCreate;
-
-  @Column(nullable = false, updatable = false)
-  private Integer timestampCreateOffset;
+  private Instant createdAt;
 
   @OneToMany(fetch = FetchType.LAZY)
   private List<Question> questions;
@@ -61,9 +57,7 @@ public class Survey {
   @PrePersist
   void onPrePersist() {
     if (this.id == null) {
-      final OffsetDateTime timestamp = OffsetDateTime.now();
-      setTimestampCreate(timestamp.toInstant());
-      setTimestampCreateOffset(timestamp.getOffset().getTotalSeconds());
+      setCreatedAt(Instant.now());
     }
   }
 

@@ -248,12 +248,14 @@ public class SurveyService {
 
     if (continueInivitation) {
 
-      final String publicLink = this.publicUrlBuilder
+      final String publicLink = this.publicUrlBuilder.cloneBuilder()
           .path("/verify")
           .queryParam("token", hash)
           .build()
           .encode()
           .toString();
+
+      LOG.debug("Sending email to '{}' with verification link: '{}'", email, publicLink);
 
       final Context context = new Context();
       context.setVariable("link", publicLink);
@@ -281,8 +283,17 @@ public class SurveyService {
 
   public String handleVerificationRequest(final String token) {
 
+    final String publicLink = this.publicUrlBuilder.cloneBuilder()
+        .path("/verify")
+        .queryParam("token", token)
+        .build()
+        .encode()
+        .toString();
+
     final Context context = new Context();
     context.setVariable("customURI", this.customUriPrefix + "://verify/" + token);
+    context.setVariable("publicURI", publicLink);
+
     return this.templateEngine.process("verifyTemplate", context);
   }
 
@@ -318,6 +329,32 @@ public class SurveyService {
 
     int order = 1;
     final List<Question> questions = new ArrayList<>(12);
+
+    final String s256 =
+        "-123456789-123456789-123456789-123456789-123456789-123456789-123456789-123456789-123456789-123456789" +
+            "-123456789-123456789-123456789-123456789-123456789-123456789-123456789-123456789-123456789-123456789" +
+            "-123456789-123456789-123456789-123456789-123456789-12345";
+    final String s64 = "-123456789-123456789-123456789-123456789-123456789-123456789-123";
+    final String s32 = "-123456789-123456789-123456789-1";
+
+    // TEST MAX TEXT
+    questions.add(createChoiceQuestion(
+        s256,
+        order++, false,
+        Arrays.asList(
+            s64,
+            s64,
+            s64,
+            s64)));
+
+    questions.add(createRangeQuestion(
+        s256,
+        order++,
+        Integer.MIN_VALUE,
+        Integer.MAX_VALUE,
+        0,
+        s32,
+        s32));
 
     // 1
     questions.add(createChoiceQuestion(
@@ -405,6 +442,7 @@ public class SurveyService {
     this.surveyRepository.save(Survey.builder()
         .questions(questions)
         .nameId("BASIC")
+        .description(s256)
         .build());
   }
 

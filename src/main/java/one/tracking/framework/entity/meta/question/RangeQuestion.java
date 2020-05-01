@@ -31,13 +31,13 @@ public class RangeQuestion extends Question {
   @Column(nullable = false)
   private Integer minValue;
 
-  @Column(nullable = true, length = 64)
+  @Column(nullable = true, length = 32)
   private String minText;
 
   @Column(nullable = false)
   private Integer maxValue;
 
-  @Column(nullable = true, length = 64)
+  @Column(nullable = true, length = 32)
   private String maxText;
 
   @Column(nullable = true)

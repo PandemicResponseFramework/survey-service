@@ -32,6 +32,11 @@ public class SurveyController {
   @Autowired
   private SurveyService surveyService;
 
+  @RequestMapping(method = RequestMethod.GET, path = "/check")
+  public void checkAuthN() {
+    // Call this endpoint to evaluate if bearer token is still valid
+  }
+
   @RequestMapping(method = RequestMethod.GET, path = "/survey/{nameId}")
   public SurveyDto getSurvey(
       @PathVariable("nameId")

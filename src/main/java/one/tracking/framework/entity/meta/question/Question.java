@@ -4,7 +4,6 @@
 package one.tracking.framework.entity.meta.question;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
@@ -44,10 +43,7 @@ public class Question {
   private int ranking;
 
   @Column(nullable = false, updatable = false)
-  private Instant timestampCreate;
-
-  @Column(nullable = false, updatable = false)
-  private Integer timestampCreateOffset;
+  private Instant createdAt;
 
   @Formula("QUESTION_TYPE")
   private String type;
@@ -55,9 +51,7 @@ public class Question {
   @PrePersist
   void onPrePersist() {
     if (this.id == null) {
-      final OffsetDateTime timestamp = OffsetDateTime.now();
-      setTimestampCreate(timestamp.toInstant());
-      setTimestampCreateOffset(timestamp.getOffset().getTotalSeconds());
+      setCreatedAt(Instant.now());
     }
   }
 }
