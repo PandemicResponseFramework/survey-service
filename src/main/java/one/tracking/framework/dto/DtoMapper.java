@@ -160,6 +160,7 @@ public abstract class DtoMapper {
         .multiline(entity.isMultiline())
         .container(map(entity.getContainer()))
         .type(QuestionType.valueOf(entity.getType()))
+        .length(entity.getLength())
         .build();
   }
 

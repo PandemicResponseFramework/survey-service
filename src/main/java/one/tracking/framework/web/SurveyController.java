@@ -80,7 +80,10 @@ public class SurveyController {
     return this.surveyService.handleVerificationRequest(token);
   }
 
-  @RequestMapping(method = RequestMethod.POST, path = "/register", consumes = MediaType.TEXT_PLAIN_VALUE)
+  @RequestMapping(
+      method = RequestMethod.POST,
+      path = "/register",
+      consumes = MediaType.TEXT_PLAIN_VALUE)
   public void registerParticipant(
       @RequestBody
       final String email) throws IOException {

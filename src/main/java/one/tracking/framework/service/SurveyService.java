@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import org.thymeleaf.context.Context;
 import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.dto.meta.question.QuestionType;
 import one.tracking.framework.entity.SurveyResponse;
+import one.tracking.framework.entity.SurveyResponse.SurveyResponseBuilder;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
@@ -114,74 +116,110 @@ public class SurveyService {
     return this.surveyRepository.findByNameId(nameId).get();
   }
 
+  @Transactional
   public void handleSurveyResponse(final String userId, final String nameId, final SurveyResponseDto surveyResponse) {
 
     final User user = this.userRepository.findById(userId).get();
     final Survey survey = this.surveyRepository.findByNameId(nameId).get();
     final Question question = this.questionRepository.findById(surveyResponse.getQuestionId()).get();
-
-    final Optional<SurveyResponse> responseOp =
-        this.surveyResponseRepository.findByUserAndSurveyAndQuestion(user, survey, question);
-
-    SurveyResponse response = null;
-    final Long answerId = getValidAnswerId(question, surveyResponse.getAnswerId());
-
-    if (responseOp.isEmpty()) {
-
-      response = SurveyResponse.builder()
-          .question(question)
-          .survey(survey)
-          .user(user)
-          .value(answerId)
-          .build();
-    } else {
-
-      response = responseOp.get();
-      response.setUpdatedAt(Instant.now());
-      response.setValue(answerId);
-    }
-
-    this.surveyResponseRepository.save(response);
-  }
-
-  private Long getValidAnswerId(final Question question, final Long input) {
-
     final QuestionType type = QuestionType.valueOf(question.getType());
 
-    if (type == QuestionType.BOOL) {
+    if (!validateResponse(question, type, surveyResponse))
+      throw new IllegalArgumentException("Invalid Survey Response.");
 
-      return input == 0 ? 0L : 1L;
+    this.surveyResponseRepository.deleteByUserAndSurveyAndQuestion(user, survey, question);
+
+    final SurveyResponseBuilder entityBuilder = SurveyResponse.builder()
+        .boolAnswer(surveyResponse.getBoolAnswer())
+        .question(question)
+        .survey(survey)
+        .user(user);
+
+    switch (type) {
+      case BOOL:
+        this.surveyResponseRepository.save(entityBuilder.boolAnswer(surveyResponse.getBoolAnswer()).build());
+        break;
+      case CHOICE:
+        final List<Answer> existingAnswers = new ArrayList<>();
+
+        for (final Long answerId : surveyResponse.getAnswerIds()) {
+          final Optional<Answer> answerOp = this.answerRepository.findById(answerId);
+          if (answerOp.isEmpty())
+            throw new IllegalStateException("Unexpected state: Could not find answer entity for id: " + answerId);
+          existingAnswers.add(answerOp.get());
+        }
+
+        this.surveyResponseRepository.save(entityBuilder.answers(existingAnswers).build());
+
+        break;
+      case RANGE:
+        this.surveyResponseRepository.save(entityBuilder.rangeAnswer(surveyResponse.getRangeAnswer()).build());
+        break;
+      case TEXT:
+        this.surveyResponseRepository.save(entityBuilder.textAnswer(surveyResponse.getTextAnswer()).build());
+        break;
+      default:
+        // nothing
+        break;
+    }
+  }
+
+  private final boolean validateBoolResponse(final Question question, final SurveyResponseDto response) {
+
+    return response.getBoolAnswer() != null;
+  }
+
+  private final boolean validateTextResponse(final Question question, final SurveyResponseDto response) {
+
+    return response.getTextAnswer() != null && !response.getTextAnswer().isBlank()
+        && response.getTextAnswer().length() <= ((TextQuestion) question).getLength();
+  }
+
+  private final boolean validateChoiceResponse(final Question question, final SurveyResponseDto response) {
+
+    if (response.getAnswerIds() == null || response.getAnswerIds().isEmpty())
+      return false;
+
+    final ChoiceQuestion choiceQuestion = (ChoiceQuestion) question;
+
+    if (choiceQuestion.getMultiple() == false && response.getAnswerIds().size() > 1)
+      return false;
+
+    final List<Long> originAnswerIds =
+        choiceQuestion.getAnswers().stream().map(Answer::getId).collect(Collectors.toList());
+
+    return !response.getAnswerIds().retainAll(originAnswerIds);
+  }
+
+  private final boolean validateRangeResponse(final Question question, final SurveyResponseDto response) {
+
+    // TODO: introduce step
+    final RangeQuestion rangeQuestion = (RangeQuestion) question;
+    return response.getRangeAnswer() != null
+        && response.getRangeAnswer() >= rangeQuestion.getMinValue()
+        && response.getRangeAnswer() <= rangeQuestion.getMaxValue();
+  }
+
+  private final boolean validateTitleReponse(final Question question, final SurveyResponseDto response) {
+    return false; // title questions do not have an answer, they act as a container
+  }
+
+  private boolean validateResponse(final Question question, final QuestionType type, final SurveyResponseDto response) {
+
+    switch (type) {
+      case BOOL:
+        return validateBoolResponse(question, response);
+      case CHOICE:
+        return validateChoiceResponse(question, response);
+      case RANGE:
+        return validateRangeResponse(question, response);
+      case TEXT:
+        return validateTextResponse(question, response);
+      case TITLE:
+        return validateTitleReponse(question, response);
     }
 
-    if (type == QuestionType.CHOICE) {
-
-      if (!((ChoiceQuestion) question).getAnswers().stream().anyMatch(p -> p.getId().equals(input)))
-        throw new IllegalArgumentException("Invalid answerId");
-
-      return input;
-    }
-
-    if (type == QuestionType.RANGE) {
-
-      final RangeQuestion rangeQuestion = (RangeQuestion) question;
-      if (!(input < rangeQuestion.getMinValue() || input > rangeQuestion.getMaxValue()))
-        throw new IllegalArgumentException("Invalid answerId");
-
-      return input;
-    }
-
-    if (type == QuestionType.TITLE) {
-
-      throw new IllegalArgumentException("Title question does not support answers.");
-    }
-
-    if (type == QuestionType.TEXT) {
-
-      // FIXME
-      throw new UnsupportedOperationException("Text question type currently not supported.");
-    }
-
-    return null;
+    return false;
   }
 
   public String verifyEmail(final String hash) {
@@ -316,7 +354,7 @@ public class SurveyService {
    * @param event
    */
   @EventListener
-  private void handleEvent(final ApplicationStartedEvent event) {
+  void handleEvent(final ApplicationStartedEvent event) {
 
     createBasicSurvey();
     createRegularSurvey();
@@ -350,8 +388,8 @@ public class SurveyService {
     questions.add(createRangeQuestion(
         s256,
         order++,
-        Integer.MIN_VALUE,
-        Integer.MAX_VALUE,
+        0,
+        10,
         0,
         s32,
         s32));
@@ -818,6 +856,7 @@ public class SurveyService {
         .multiline(multiline)
         .container(container)
         .ranking(order)
+        .length(256)
         .build());
   }
 

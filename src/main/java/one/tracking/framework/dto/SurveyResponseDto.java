@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.dto;
 
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +21,11 @@ public class SurveyResponseDto {
   @NotNull
   private Long questionId;
 
-  @NotNull
-  private Long answerId;
+  private List<Long> answerIds;
+
+  private Boolean boolAnswer;
+
+  private String textAnswer;
+
+  private Integer rangeAnswer;
 }

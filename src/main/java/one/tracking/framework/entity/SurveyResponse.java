@@ -4,10 +4,12 @@
 package one.tracking.framework.entity;
 
 import java.time.Instant;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
@@ -16,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.question.Question;
 
@@ -46,14 +49,19 @@ public class SurveyResponse {
   @ManyToOne(optional = false)
   private Question question;
 
-  @Column(nullable = false)
-  private Long value;
+  @ManyToMany
+  private List<Answer> answers;
+
+  private Integer rangeAnswer;
+
+  @Column(nullable = true)
+  private Boolean boolAnswer;
+
+  @Column(nullable = true, length = 512)
+  private String textAnswer;
 
   @Column(nullable = false, updatable = false)
   private Instant createdAt;
-
-  @Column(nullable = true, updatable = true)
-  private Instant updatedAt;
 
   @PrePersist
   void onPrePersist() {

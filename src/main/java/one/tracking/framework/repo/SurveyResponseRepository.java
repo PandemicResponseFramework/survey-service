@@ -3,7 +3,7 @@
  */
 package one.tracking.framework.repo;
 
-import java.util.Optional;
+import java.util.List;
 import org.springframework.data.repository.CrudRepository;
 import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.User;
@@ -19,5 +19,7 @@ public interface SurveyResponseRepository extends CrudRepository<SurveyResponse,
   // Optional<SurveyResponse> findByUserIdAndSurveyIdAndQuestionId(String userId, Long surveyId, Long
   // questionId);
 
-  Optional<SurveyResponse> findByUserAndSurveyAndQuestion(User user, Survey survey, Question question);
+  List<SurveyResponse> findByUserAndSurveyAndQuestion(User user, Survey survey, Question question);
+
+  void deleteByUserAndSurveyAndQuestion(User user, Survey survey, Question question);
 }

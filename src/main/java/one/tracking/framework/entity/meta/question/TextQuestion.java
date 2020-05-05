@@ -31,6 +31,9 @@ public class TextQuestion extends Question {
   @Column(nullable = false)
   private boolean multiline;
 
+  @Column(nullable = false)
+  private int length;
+
   @OneToOne
   private DefaultContainer container;
 

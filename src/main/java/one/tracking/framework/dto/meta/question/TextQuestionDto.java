@@ -22,6 +22,8 @@ public class TextQuestionDto extends QuestionDto {
 
   private boolean multiline;
 
+  private int length;
+
   @Valid
   private DefaultContainerDto container;
 
