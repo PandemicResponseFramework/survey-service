@@ -12,8 +12,6 @@ import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,9 +29,9 @@ import one.tracking.framework.entity.meta.question.Question;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "survey_id", "question_id"})
-})
+// @Table(uniqueConstraints = {
+// @UniqueConstraint(columnNames = {"user_id", "survey_id", "question_id"})
+// })
 public class SurveyResponse {
 
   @Id

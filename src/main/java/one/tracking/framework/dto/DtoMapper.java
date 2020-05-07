@@ -11,6 +11,7 @@ import one.tracking.framework.dto.meta.container.BooleanContainerDto;
 import one.tracking.framework.dto.meta.container.ChoiceContainerDto;
 import one.tracking.framework.dto.meta.container.DefaultContainerDto;
 import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
+import one.tracking.framework.dto.meta.question.ChecklistQuestionDto;
 import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionType;
@@ -23,6 +24,7 @@ import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
 import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
+import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
@@ -69,6 +71,8 @@ public abstract class DtoMapper {
       return map((TextQuestion) entity);
     if (entity instanceof TitleQuestion)
       return map((TitleQuestion) entity);
+    if (entity instanceof ChecklistQuestion)
+      return map((ChecklistQuestion) entity);
 
     return null;
   }
@@ -113,7 +117,9 @@ public abstract class DtoMapper {
    *
    * @param entity
    * @return
+   * @deprecated
    */
+  @Deprecated
   public static final TitleQuestionDto map(final TitleQuestion entity) {
 
     return TitleQuestionDto.builder()
@@ -122,6 +128,16 @@ public abstract class DtoMapper {
         .question(entity.getQuestion())
         .container(map(entity.getContainer()))
         .type(QuestionType.valueOf(entity.getType()))
+        .build();
+  }
+
+  public static final ChecklistQuestionDto map(final ChecklistQuestion entity) {
+    return ChecklistQuestionDto.builder()
+        .id(entity.getId())
+        .order(entity.getRanking())
+        .question(entity.getQuestion())
+        .type(QuestionType.valueOf(entity.getType()))
+        .entries(entity.getEntries().stream().map(DtoMapper::map).collect(Collectors.toList()))
         .build();
   }
 

@@ -13,5 +13,6 @@ public enum QuestionType {
   BOOL,
   RANGE,
   TEXT,
-  TITLE;
+  TITLE,
+  CHECKLIST;
 }

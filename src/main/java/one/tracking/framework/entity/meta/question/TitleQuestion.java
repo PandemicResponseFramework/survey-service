@@ -19,6 +19,7 @@ import one.tracking.framework.entity.meta.container.DefaultContainer;
  * required sub-questions. This question type is more like a title to sub-questions. Therefore it
  * acts like a container.
  *
+ * @deprecated
  * @author Marko Voß
  *
  */
@@ -29,6 +30,7 @@ import one.tracking.framework.entity.meta.container.DefaultContainer;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @DiscriminatorValue("TITLE")
+@Deprecated
 public class TitleQuestion extends Question {
 
   @OneToOne(optional = false)
