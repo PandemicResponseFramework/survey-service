@@ -17,7 +17,6 @@ import one.tracking.framework.dto.meta.question.QuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionType;
 import one.tracking.framework.dto.meta.question.RangeQuestionDto;
 import one.tracking.framework.dto.meta.question.TextQuestionDto;
-import one.tracking.framework.dto.meta.question.TitleQuestionDto;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
@@ -29,7 +28,6 @@ import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
-import one.tracking.framework.entity.meta.question.TitleQuestion;
 
 /**
  * @author Marko Voß
@@ -69,8 +67,6 @@ public abstract class DtoMapper {
       return map((RangeQuestion) entity);
     if (entity instanceof TextQuestion)
       return map((TextQuestion) entity);
-    if (entity instanceof TitleQuestion)
-      return map((TitleQuestion) entity);
     if (entity instanceof ChecklistQuestion)
       return map((ChecklistQuestion) entity);
 
@@ -108,24 +104,6 @@ public abstract class DtoMapper {
         .defaultAnswer(entity.getDefaultValue() == null ? null : entity.getDefaultValue().getId())
         .answers(entity.getAnswers().stream().map(DtoMapper::map).collect(Collectors.toList()))
         .multiple(entity.getMultiple())
-        .container(map(entity.getContainer()))
-        .type(QuestionType.valueOf(entity.getType()))
-        .build();
-  }
-
-  /**
-   *
-   * @param entity
-   * @return
-   * @deprecated
-   */
-  @Deprecated
-  public static final TitleQuestionDto map(final TitleQuestion entity) {
-
-    return TitleQuestionDto.builder()
-        .id(entity.getId())
-        .order(entity.getRanking())
-        .question(entity.getQuestion())
         .container(map(entity.getContainer()))
         .type(QuestionType.valueOf(entity.getType()))
         .build();

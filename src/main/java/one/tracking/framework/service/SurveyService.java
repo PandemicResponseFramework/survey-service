@@ -189,11 +189,6 @@ public class SurveyService {
         && response.getRangeAnswer() <= rangeQuestion.getMaxValue();
   }
 
-  @Deprecated
-  private final boolean validateTitleReponse(final Question question, final SurveyResponseDto response) {
-    return false; // title questions do not have an answer, they act as a container
-  }
-
   private boolean validateChecklistResponse(final Question question, final SurveyResponseDto response) {
 
     if (response.getChecklistAnswer() == null || response.getChecklistAnswer().isEmpty())
@@ -218,8 +213,6 @@ public class SurveyService {
         return validateRangeResponse(question, response);
       case TEXT:
         return validateTextResponse(question, response);
-      case TITLE:
-        return validateTitleReponse(question, response);
       case CHECKLIST:
         return validateChecklistResponse(question, response);
       default:

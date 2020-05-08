@@ -23,7 +23,6 @@ import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
-import one.tracking.framework.entity.meta.question.TitleQuestion;
 import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.QuestionRepository;
@@ -555,34 +554,6 @@ public class ExampleDataService {
         .container(container)
         .ranking(order)
         .length(256)
-        .build());
-  }
-
-  /**
-   *
-   * @param question
-   * @param order
-   * @param subQuestions
-   * @return
-   * @deprecated
-   */
-  @Deprecated
-  private Question createTitleQuestion(
-      final String question,
-      final int order,
-      final List<Question> subQuestions) {
-
-    if (subQuestions == null || subQuestions.isEmpty())
-      throw new IllegalArgumentException("Sub questions must not be null or empty.");
-
-    final DefaultContainer container = this.containerRepository.save(DefaultContainer.builder()
-        .subQuestions(subQuestions)
-        .build());
-
-    return this.questionRepository.save(TitleQuestion.builder()
-        .question(question)
-        .container(container)
-        .ranking(order)
         .build());
   }
 

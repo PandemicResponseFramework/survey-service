@@ -22,7 +22,6 @@ import lombok.experimental.SuperBuilder;
     @JsonSubTypes.Type(value = ChoiceQuestionDto.class),
     @JsonSubTypes.Type(value = RangeQuestionDto.class),
     @JsonSubTypes.Type(value = TextQuestionDto.class),
-    @JsonSubTypes.Type(value = TitleQuestionDto.class),
     @JsonSubTypes.Type(value = ChecklistQuestionDto.class)
 })
 @ApiModel(discriminator = "type", subTypes = {
@@ -30,7 +29,6 @@ import lombok.experimental.SuperBuilder;
     ChoiceQuestionDto.class,
     RangeQuestionDto.class,
     TextQuestionDto.class,
-    TitleQuestionDto.class,
     ChecklistQuestionDto.class})
 public abstract class QuestionDto {
 
