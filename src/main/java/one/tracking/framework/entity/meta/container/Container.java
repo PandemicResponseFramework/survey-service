@@ -15,6 +15,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
+import org.hibernate.annotations.Formula;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,7 @@ import one.tracking.framework.entity.meta.question.Question;
 @AllArgsConstructor
 @NoArgsConstructor
 @Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn(name = "QUESTION_TYPE", discriminatorType = DiscriminatorType.STRING, length = 8)
+@DiscriminatorColumn(name = "CONTAINER_TYPE", discriminatorType = DiscriminatorType.STRING, length = 9)
 @Entity
 public class Container {
 
@@ -40,6 +41,9 @@ public class Container {
 
   @OneToMany
   private List<Question> subQuestions;
+
+  @Formula("CONTAINER_TYPE")
+  private String type;
 
   @Column(nullable = false, updatable = false)
   private Instant createdAt;
