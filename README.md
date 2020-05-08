@@ -66,7 +66,7 @@ Next to the common [server properties](https://docs.spring.io/spring-boot/docs/c
   </tr>
   <tr>
     <td>app.public.url</td>
-    <td>The public URL this server is available on. This will be used in the e-mails send to the participants in order to provide a verification, which points to the server instance.</td>
+    <td>The public URL this server is available on. This will be used in the e-mails send to the participants in order to provide a verification link, which points to the server instance.</td>
     <td>-</td>
   </tr>
   <tr>
