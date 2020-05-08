@@ -99,7 +99,6 @@ TODO
 
 * [Spring Boot](https://spring.io/projects/spring-boot) - Enterprise Application Framework
 * [Maven](https://maven.apache.org) - Dependency Management
-* [Tables Generator](https://www.tablesgenerator.com) - Creating beautiful tables for this document
 
 ## Contributing
 
