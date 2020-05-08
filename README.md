@@ -28,56 +28,56 @@ You can place a file named `application.properties` right next to this JAR file.
 
 ## Configuration
 
-Next to the common [server properties](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#server-properties)and [logging properties](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#core-properties), which can be placed on the customized configuration, the application uses the following configuration properties.
+Next to the common [server properties](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#server-properties) and [logging properties](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#core-properties), which can be placed on the customized configuration, the application uses the following configuration properties.
 
-<table class="tg">
+<table>
 <thead>
   <tr>
-    <th class="tg-c3ow">Property</th>
-    <th class="tg-c3ow">Description</th>
-    <th class="tg-c3ow">Example</th>
+    <th>Property</th>
+    <th>Description</th>
+    <th>Example</th>
   </tr>
 </thead>
 <tbody>
   <tr>
-    <td class="tg-0pky">app.sendgrid.api.key</td>
-    <td class="tg-0pky">The SendGrid API key to use for sending e-mails to the participants.</td>
-    <td class="tg-0pky">-</td>
+    <td>app.sendgrid.api.key</td>
+    <td>The SendGrid API key to use for sending e-mails to the participants.</td>
+    <td>-</td>
   </tr>
   <tr>
-    <td class="tg-0pky">app.email.reply.to</td>
-    <td class="tg-0pky">The reply-to e-mail address to be used. If single sender authentication is setup in SendGrid, please make sure, to use this reply-to e-mail address here.</td>
-    <td class="tg-0pky">-</td>
+    <td>app.email.reply.to</td>
+    <td>The reply-to e-mail address to be used. If single sender authentication is setup in SendGrid, please make sure, to use this reply-to e-mail address here.</td>
+    <td>-</td>
   </tr>
   <tr>
-    <td class="tg-0pky">app.email.from</td>
-    <td class="tg-0pky">The e-mail address to use as the sender of the e-mails sent to the participants. If single sender authentication is setup in SendGrid, please make sure, to use this e-mail address here.</td>
-    <td class="tg-0pky">-</td>
+    <td>app.email.from</td>
+    <td>The e-mail address to use as the sender of the e-mails sent to the participants. If single sender authentication is setup in SendGrid, please make sure, to use this e-mail address here.</td>
+    <td>-</td>
   </tr>
   <tr>
-    <td class="tg-0pky">app.verification.timeout</td>
-    <td class="tg-0pky">The timeout in seconds, how long the verification token stays valid.</td>
-    <td class="tg-0pky">-</td>
+    <td>app.verification.timeout</td>
+    <td>The timeout in seconds, how long the verification token stays valid.</td>
+    <td>-</td>
   </tr>
   <tr>
-    <td class="tg-0pky">app.custom.uri.prefix</td>
-    <td class="tg-0pky">The custom URI scheme to be used for redirection to trigger the App on mobile devices.</td>
-    <td class="tg-0pky">-</td>
+    <td>app.custom.uri.prefix</td>
+    <td>The custom URI scheme to be used for redirection to trigger the App on mobile devices.</td>
+    <td>-</td>
   </tr>
   <tr>
-    <td class="tg-0pky">app.public.url</td>
-    <td class="tg-0pky">The public URL this server is available on. This will be used in the e-mails send to the participants in order to provide a verification, which points to the server instance.</td>
-    <td class="tg-0pky">-</td>
+    <td>app.public.url</td>
+    <td>The public URL this server is available on. This will be used in the e-mails send to the participants in order to provide a verification, which points to the server instance.</td>
+    <td>-</td>
   </tr>
   <tr>
-    <td class="tg-0pky">app.token.secret</td>
-    <td class="tg-0pky">The secret to use for JWT signature generation and validation. This is required in order to create the access tokens for the participants.</td>
-    <td class="tg-0pky">-</td>
+    <td>app.token.secret</td>
+    <td>The secret to use for JWT signature generation and validation. This is required in order to create the access tokens for the participants.</td>
+    <td>-</td>
   </tr>
   <tr>
-    <td class="tg-0pky">logging.level.one.tracking.framework</td>
-    <td class="tg-0pky">Setup of the LOG level for the entire service.</td>
-    <td class="tg-0pky">INFO | DEBUG | WARN | ERROR</td>
+    <td>logging.level.one.tracking.framework</td>
+    <td>Setup of the LOG level for the entire service.</td>
+    <td>INFO | DEBUG | WARN | ERROR</td>
   </tr>
 </tbody>
 </table>
