@@ -13,10 +13,7 @@ You need to have [Maven](https://maven.apache.org/) installed on your machine. Y
 
 ### Installing
 
-A step by step series of examples that tell you how to get a development env running
-
-Run
-
+To build the executable JAR, execute the following command in the root directory of this project.
 ```
 mvn clean package
 ```
