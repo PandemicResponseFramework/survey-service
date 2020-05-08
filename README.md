@@ -82,6 +82,10 @@ Next to the common [server properties](https://docs.spring.io/spring-boot/docs/c
 </tbody>
 </table>
 
+## Database
+
+This service is currently utilizing a H2 in-memory database. This will be adjusted in the future of course.
+
 ## API Documentation
 
 The API documentation will be available at runtime on the path `/swagger-ui.html#`.
