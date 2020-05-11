@@ -52,8 +52,13 @@ Next to the common [server properties](https://docs.spring.io/spring-boot/docs/c
     <td>-</td>
   </tr>
   <tr>
-    <td>app.verification.timeout</td>
+    <td>app.timeout.verification</td>
     <td>The timeout in seconds, how long the verification token stays valid.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>app.timeout.access</td>
+    <td>The timeout in seconds, how long the access token stays valid.</td>
     <td>-</td>
   </tr>
   <tr>
