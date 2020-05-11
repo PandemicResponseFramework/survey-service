@@ -5,7 +5,6 @@ package one.tracking.framework.dto.meta.container;
 
 import java.util.List;
 import javax.validation.Valid;
-import com.nimbusds.jose.util.Container;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,7 +17,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-@ApiModel(parent = Container.class)
+@ApiModel(parent = ContainerDto.class)
 public class ChoiceContainerDto extends ContainerDto {
 
   @Valid
