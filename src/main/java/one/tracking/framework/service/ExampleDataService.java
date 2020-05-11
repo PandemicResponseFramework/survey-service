@@ -8,10 +8,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import one.tracking.framework.entity.User;
+import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
@@ -27,13 +31,20 @@ import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.QuestionRepository;
 import one.tracking.framework.repo.SurveyRepository;
+import one.tracking.framework.repo.UserRepository;
+import one.tracking.framework.repo.VerificationRepository;
+import one.tracking.framework.util.JWTHelper;
 
 /**
+ * FIXME DEV only
+ *
  * @author Marko Voß
  *
  */
 @Service
 public class ExampleDataService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ExampleDataService.class);
 
   @Autowired
   private AnswerRepository answerRepository;
@@ -47,6 +58,15 @@ public class ExampleDataService {
   @Autowired
   private SurveyRepository surveyRepository;
 
+  @Autowired
+  private VerificationRepository verificationRepository;
+
+  @Autowired
+  private UserRepository userRepository;
+
+  @Autowired
+  private JWTHelper jwtHelper;
+
   /**
    * FIXME DEV only
    *
@@ -55,8 +75,29 @@ public class ExampleDataService {
   @EventListener
   void handleEvent(final ApplicationStartedEvent event) {
 
+    createAccount();
     createBasicSurvey();
     createRegularSurvey();
+  }
+
+  /**
+   * FIXME DEV only
+   */
+  private void createAccount() {
+
+    this.verificationRepository.save(Verification.builder()
+        .email("foo@example.com")
+        .hash("example")
+        .verified(true)
+        .build());
+
+    final User user = this.userRepository.save(User.builder()
+        .userToken("12345678")
+        .build());
+
+    final String token = this.jwtHelper.createJWT(user.getId(), 365 * 24 * 60 * 60);
+
+    LOG.info("Token for example user: {}", token);
   }
 
   /**
