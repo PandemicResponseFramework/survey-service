@@ -3,6 +3,8 @@
  */
 package one.tracking.framework.service;
 
+import static one.tracking.framework.entity.DataConstants.TOKEN_CONFIRM_LENGTH;
+import static one.tracking.framework.entity.DataConstants.TOKEN_VERIFY_LENGTH;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +14,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.Random;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
@@ -24,7 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import one.tracking.framework.dto.RegistrationDto;
 import one.tracking.framework.dto.SurveyResponseDto;
+import one.tracking.framework.dto.VerificationDto;
 import one.tracking.framework.dto.meta.question.QuestionType;
 import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.SurveyResponse.SurveyResponseBuilder;
@@ -53,6 +57,8 @@ import one.tracking.framework.util.JWTHelper;
 public class SurveyService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SurveyService.class);
+
+  private static final Random RANDOM = new Random();
 
   @Autowired
   private AnswerRepository answerRepository;
@@ -84,8 +90,11 @@ public class SurveyService {
   @Value("${app.public.url}")
   private String publicUrl;
 
-  @Value("${app.verification.timeout}")
-  private int verificationTimeoutSeconds;
+  @Value("${app.timeout.verification}")
+  private int timeoutVerificationSeconds;
+
+  @Value("${app.timeout.access}")
+  private int timeoutAccessSeconds;
 
   @Value("${app.custom.uri.prefix}")
   private String customUriPrefix;
@@ -220,9 +229,10 @@ public class SurveyService {
     }
   }
 
-  public String verifyEmail(final String hash) {
+  public String verifyEmail(final VerificationDto verificationDto) throws IOException {
 
-    final Optional<Verification> verificationOp = this.verificationRepository.findByHashAndVerified(hash, false);
+    final Optional<Verification> verificationOp =
+        this.verificationRepository.findByHashAndVerified(verificationDto.getVerificationToken(), false);
 
     if (verificationOp.isEmpty())
       throw new IllegalArgumentException();
@@ -233,40 +243,51 @@ public class SurveyService {
 
     final Instant instant =
         verification.getUpdatedAt() == null ? verification.getCreatedAt() : verification.getUpdatedAt();
-    if (instant.plusSeconds(this.verificationTimeoutSeconds).isBefore(Instant.now())) {
+    if (instant.plusSeconds(this.timeoutVerificationSeconds).isBefore(Instant.now())) {
 
       LOG.info("Expired email verification requested.");
-      throw new IllegalArgumentException(); // keep silence about it
+      throw new IllegalArgumentException(); // keep silent about it
     }
 
-    // Update verification
-
+    // Update verification - do not delete hash to avoid other users receiving the same hash later
     verification.setVerified(true);
     verification.setUpdatedAt(Instant.now());
     this.verificationRepository.save(verification);
 
-    // TODO: send confirmation email maybe?
-    // final String email = verificationOp.get().getEmail();
+    final Optional<User> userOp = this.userRepository.findByUserToken(verificationDto.getConfirmationToken());
+    User user = null;
 
-    // Generate new User ID
-    final User user = this.userRepository.save(User.builder().build());
+    final String newUserToken = generateString(TOKEN_CONFIRM_LENGTH);
 
-    return this.jwtHelper.createJWT(user.getId(), 365 * 24 * 60 * 60);
+    if (userOp.isEmpty()) {
+      // Generate new User ID
+      user = this.userRepository.save(User.builder().userToken(newUserToken).build());
+    } else {
+      final User existingUser = userOp.get();
+      existingUser.setUserToken(newUserToken);
+      user = this.userRepository.save(existingUser);
+    }
+
+    final String email = verification.getEmail();
+    sendConfirmationEmail(email, user.getUserToken());
+
+    return this.jwtHelper.createJWT(user.getId(), this.timeoutAccessSeconds);
   }
 
-  public void registerParticipant(final String email, final boolean autoUpdateInvitation) throws IOException {
+  public void registerParticipant(final RegistrationDto registration, final boolean autoUpdateInvitation)
+      throws IOException {
 
-    final String hash = getValidHash();
+    final String verificationToken = getValidVerificationToken();
 
-    final Optional<Verification> verificationOp = this.verificationRepository.findByEmail(email);
+    final Optional<Verification> verificationOp = this.verificationRepository.findByEmail(registration.getEmail());
 
     boolean continueInivitation = false;
 
     if (verificationOp.isEmpty()) {
       // add new entity
       final Verification verification = Verification.builder()
-          .email(email)
-          .hash(hash)
+          .email(registration.getEmail())
+          .hash(verificationToken)
           .verified(false)
           .build();
       this.verificationRepository.save(verification);
@@ -277,30 +298,13 @@ public class SurveyService {
       final Verification verification = verificationOp.get();
       verification.setUpdatedAt(Instant.now());
       verification.setVerified(false);
-      verification.setHash(hash);
+      verification.setHash(verificationToken);
       this.verificationRepository.save(verification);
       continueInivitation = true;
     }
 
-    if (continueInivitation) {
-
-      final String publicLink = this.publicUrlBuilder.cloneBuilder()
-          .path("/verify")
-          .queryParam("token", hash)
-          .build()
-          .encode()
-          .toString();
-
-      LOG.debug("Sending email to '{}' with verification link: '{}'", email, publicLink);
-
-      final Context context = new Context();
-      context.setVariable("link", publicLink);
-      final String message = this.templateEngine.process("registrationTemplate", context);
-      final boolean success = this.emailService.sendHTML(email, "Registration", message);
-
-      if (!success)
-        throw new IOException("Sending email to receipient '" + email + "' was not successful.");
-    }
+    if (continueInivitation)
+      sendRegistrationEmail(registration.getEmail(), verificationToken, registration.getConfirmationToken());
   }
 
   public void importParticipants(final InputStream inputStream) throws IOException {
@@ -309,7 +313,7 @@ public class SurveyService {
 
       reader.lines().forEach(line -> {
         try {
-          registerParticipant(line, false);
+          registerParticipant(RegistrationDto.builder().email(line).build(), false);
         } catch (final IOException e) {
           LOG.error("IMPORT: Unable to register participant: {}", line);
         }
@@ -317,18 +321,13 @@ public class SurveyService {
     }
   }
 
-  public String handleVerificationRequest(final String token) {
+  public String handleVerificationRequest(final String verificationToken, final String userToken) {
 
-    final String publicLink = this.publicUrlBuilder.cloneBuilder()
-        .path("/verify")
-        .queryParam("token", token)
-        .build()
-        .encode()
-        .toString();
+    final String path =
+        userToken == null || userToken.isBlank() ? verificationToken : verificationToken + "/" + userToken;
 
     final Context context = new Context();
-    context.setVariable("customURI", this.customUriPrefix + "://verify/" + token);
-    context.setVariable("publicURI", publicLink);
+    context.setVariable("customURI", this.customUriPrefix + "://verify/" + path);
 
     return this.templateEngine.process("verifyTemplate", context);
   }
@@ -337,15 +336,80 @@ public class SurveyService {
    *
    * @return
    */
-  private String getValidHash() {
+  private String getValidVerificationToken() {
 
-    final String hash = UUID.randomUUID().toString();
+    final String hash = generateString(TOKEN_VERIFY_LENGTH);
     if (this.verificationRepository.existsByHash(hash))
-      return getValidHash(); // repeat
+      return getValidVerificationToken(); // repeat
 
     return hash;
   }
 
+  /**
+   *
+   * @param length
+   * @return
+   */
+  private String generateString(final int length) {
+    final int leftLimit = 48; // numeral '0'
+    final int rightLimit = 122; // letter 'z'
 
+    final String generatedString = RANDOM.ints(leftLimit, rightLimit + 1)
+        .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+        .limit(length)
+        .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+        .toString();
 
+    return generatedString;
+  }
+
+  /**
+   * @param email
+   * @param verificationToken
+   * @throws IOException
+   */
+  private void sendRegistrationEmail(final String email, final String verificationToken, final String userToken)
+      throws IOException {
+
+    final UriComponentsBuilder builder = this.publicUrlBuilder.cloneBuilder()
+        .path("/verify")
+        .queryParam("token", verificationToken);
+
+    if (userToken != null && !userToken.isBlank())
+      builder.queryParam("userToken", userToken);
+
+    final String publicLink = builder
+        .build()
+        .encode()
+        .toString();
+
+    LOG.debug("Sending email to '{}' with verification link: '{}'", email, publicLink);
+
+    final Context context = new Context();
+    context.setVariable("link", publicLink);
+    final String message = this.templateEngine.process("registrationTemplate", context);
+    final boolean success = this.emailService.sendHTML(email, "Registration", message);
+
+    if (!success)
+      throw new IOException("Sending email to receipient '" + email + "' was not successful.");
+  }
+
+  /**
+   *
+   * @param email
+   * @param hash
+   * @throws IOException
+   */
+  private void sendConfirmationEmail(final String email, final String hash) throws IOException {
+
+    LOG.debug("Sending email to '{}' with confirmation token: '{}'", email, hash);
+
+    final Context context = new Context();
+    context.setVariable("token", hash);
+    final String message = this.templateEngine.process("confirmationTemplate", context);
+    final boolean success = this.emailService.sendHTML(email, "Confirmation", message);
+
+    if (!success)
+      throw new IOException("Sending email to receipient '" + email + "' was not successful.");
+  }
 }

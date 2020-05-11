@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.entity;
 
+import static one.tracking.framework.entity.DataConstants.TOKEN_VERIFY_LENGTH;
 import java.time.Instant;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -38,7 +39,7 @@ public class Verification {
   @Column(nullable = false, length = 256, unique = true)
   private String email;
 
-  @Column(nullable = false, length = 256, unique = true)
+  @Column(nullable = false, length = TOKEN_VERIFY_LENGTH, unique = true)
   private String hash;
 
   @Column(nullable = false)

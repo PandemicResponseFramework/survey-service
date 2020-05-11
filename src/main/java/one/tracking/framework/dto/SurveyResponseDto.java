@@ -6,6 +6,7 @@ package one.tracking.framework.dto;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
+import io.swagger.annotations.ApiModel;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,6 +18,7 @@ import lombok.Data;
  */
 @Data
 @Builder
+@ApiModel
 public class SurveyResponseDto {
 
   @NotNull
