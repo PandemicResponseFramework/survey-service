@@ -92,7 +92,6 @@ public class ExampleDataService {
         .build());
 
     final User user = this.userRepository.save(User.builder()
-        .userToken("12345678")
         .build());
 
     final String token = this.jwtHelper.createJWT(user.getId(), 365 * 24 * 60 * 60);
