@@ -101,7 +101,6 @@ The tests will be performed on the maven package build automatically.
 
 TODO
 
-
 ## Built With
 
 * [Spring Boot](https://spring.io/projects/spring-boot) - Enterprise Application Framework
