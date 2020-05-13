@@ -146,54 +146,73 @@ public class SurveyService {
     if (!validateResponse(question, type, surveyResponse))
       throw new IllegalArgumentException("Invalid Survey Response.");
 
-    this.surveyResponseRepository.deleteByUserAndSurveyInstanceAndQuestion(user, instance, question);
+    /*
+     * Handling of Checklist question differs a lot related to the other question types. Therefore, we
+     * split the logic here
+     */
 
-    final SurveyResponseBuilder entityBuilder = SurveyResponse.builder()
-        .question(question)
-        .surveyInstance(instance)
-        .user(user);
+    if (type == QuestionType.CHECKLIST) {
 
-    switch (type) {
-      case BOOL:
-        this.surveyResponseRepository.save(entityBuilder.boolAnswer(surveyResponse.getBoolAnswer()).build());
-        break;
-      case CHOICE:
-        final List<Answer> existingAnswers = new ArrayList<>(surveyResponse.getAnswerIds().size());
+      final ChecklistQuestion checklistQuestion = (ChecklistQuestion) question;
+      for (final BooleanQuestion entry : checklistQuestion.getEntries()) {
 
-        for (final Long answerId : surveyResponse.getAnswerIds()) {
-          final Optional<Answer> answerOp = this.answerRepository.findById(answerId);
-          if (answerOp.isEmpty())
-            throw new IllegalStateException("Unexpected state: Could not find answer entity for id: " + answerId);
-          existingAnswers.add(answerOp.get());
-        }
+        final Optional<SurveyResponse> entityOp =
+            this.surveyResponseRepository.findByUserAndSurveyInstanceAndQuestion(user, instance, entry);
+        final Boolean response = surveyResponse.getChecklistAnswer().get(entry.getId());
 
-        this.surveyResponseRepository.save(entityBuilder.answers(existingAnswers).build());
-        break;
-      case RANGE:
-        this.surveyResponseRepository.save(entityBuilder.rangeAnswer(surveyResponse.getRangeAnswer()).build());
-        break;
-      case TEXT:
-        this.surveyResponseRepository.save(entityBuilder.textAnswer(surveyResponse.getTextAnswer()).build());
-        break;
-      case CHECKLIST:
+        if (entityOp.isEmpty()) {
 
-        final ChecklistQuestion checklistQuestion = (ChecklistQuestion) question;
-        for (final BooleanQuestion entry : checklistQuestion.getEntries()) {
-
-          final Boolean response = surveyResponse.getChecklistAnswer().get(entry.getId());
-          // Ignore the centrally created builder on purpose
           this.surveyResponseRepository.save(SurveyResponse.builder()
               .question(entry)
               .surveyInstance(instance)
               .user(user)
               .boolAnswer(response == null ? false : response)
               .build());
-        }
 
-        break;
-      default:
-        // nothing
-        break;
+        } else {
+
+          final SurveyResponse entity = entityOp.get();
+          entity.setBoolAnswer(response == null ? false : response);
+          this.surveyResponseRepository.save(entity);
+        }
+      }
+
+    } else {
+
+      this.surveyResponseRepository.deleteByUserAndSurveyInstanceAndQuestion(user, instance, question);
+
+      final SurveyResponseBuilder entityBuilder = SurveyResponse.builder()
+          .question(question)
+          .surveyInstance(instance)
+          .user(user);
+
+      switch (type) {
+        case BOOL:
+          this.surveyResponseRepository.save(entityBuilder.boolAnswer(surveyResponse.getBoolAnswer()).build());
+          break;
+        case CHOICE:
+          final List<Answer> existingAnswers = new ArrayList<>(surveyResponse.getAnswerIds().size());
+
+          for (final Long answerId : surveyResponse.getAnswerIds()) {
+            final Optional<Answer> answerOp = this.answerRepository.findById(answerId);
+            if (answerOp.isEmpty())
+              throw new IllegalStateException("Unexpected state: Could not find answer entity for id: " + answerId);
+            existingAnswers.add(answerOp.get());
+          }
+
+          this.surveyResponseRepository.save(entityBuilder.answers(existingAnswers).build());
+          break;
+        case RANGE:
+          this.surveyResponseRepository.save(entityBuilder.rangeAnswer(surveyResponse.getRangeAnswer()).build());
+          break;
+        case TEXT:
+          this.surveyResponseRepository.save(entityBuilder.textAnswer(surveyResponse.getTextAnswer()).build());
+          break;
+        default:
+          // nothing
+          break;
+      }
+
     }
 
     final Optional<SurveyStatus> statusOp = this.surveyStatusRepository.findByUserAndSurveyInstance(user, instance);
