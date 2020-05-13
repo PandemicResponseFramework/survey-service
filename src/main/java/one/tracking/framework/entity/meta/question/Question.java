@@ -48,6 +48,10 @@ public class Question {
   @Formula("QUESTION_TYPE")
   private String type;
 
+  public boolean hasContainer() {
+    return false;
+  }
+
   @PrePersist
   void onPrePersist() {
     if (this.id == null) {

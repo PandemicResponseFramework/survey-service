@@ -46,6 +46,11 @@ public class ChoiceQuestion extends Question {
   private ChoiceContainer container;
 
   @Override
+  public boolean hasContainer() {
+    return this.container != null;
+  }
+
+  @Override
   @PrePersist
   void onPrePersist() {
 

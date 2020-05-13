@@ -35,6 +35,11 @@ public class BooleanQuestion extends Question {
   private BooleanContainer container;
 
   @Override
+  public boolean hasContainer() {
+    return this.container != null;
+  }
+
+  @Override
   @PrePersist
   void onPrePersist() {
     super.onPrePersist();

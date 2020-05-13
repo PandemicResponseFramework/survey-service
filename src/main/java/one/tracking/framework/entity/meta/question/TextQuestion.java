@@ -38,6 +38,11 @@ public class TextQuestion extends Question {
   private DefaultContainer container;
 
   @Override
+  public boolean hasContainer() {
+    return this.container != null;
+  }
+
+  @Override
   @PrePersist
   void onPrePersist() {
     super.onPrePersist();
