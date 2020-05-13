@@ -30,14 +30,16 @@ import lombok.experimental.SuperBuilder;
     @Type(value = ChoiceQuestionDto.class, name = "CHOICE"),
     @Type(value = RangeQuestionDto.class, name = "RANGE"),
     @Type(value = TextQuestionDto.class, name = "TEXT"),
-    @Type(value = ChecklistQuestionDto.class, name = "CHECKLIST")
+    @Type(value = ChecklistQuestionDto.class, name = "CHECKLIST"),
+    @Type(value = ChecklistEntryDto.class, name = "CHECKLIST_ENTRY")
 })
 @ApiModel(discriminator = "type", subTypes = {
     BooleanQuestionDto.class,
     ChoiceQuestionDto.class,
     RangeQuestionDto.class,
     TextQuestionDto.class,
-    ChecklistQuestionDto.class})
+    ChecklistQuestionDto.class,
+    ChecklistEntryDto.class})
 public abstract class QuestionDto {
 
   @NotNull

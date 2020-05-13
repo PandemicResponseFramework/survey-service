@@ -3,11 +3,8 @@
  */
 package one.tracking.framework.entity.meta.question;
 
-import java.util.List;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.OneToMany;
-import javax.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -19,15 +16,13 @@ import lombok.experimental.SuperBuilder;
  *
  */
 @Data
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@DiscriminatorValue("CHECKLIST")
-public class ChecklistQuestion extends Question {
+@DiscriminatorValue("CHECKLIST_ENTRY")
+public class ChecklistEntry extends Question {
 
-  @NotEmpty
-  @OneToMany
-  private List<ChecklistEntry> entries;
+  private Boolean defaultAnswer;
 }

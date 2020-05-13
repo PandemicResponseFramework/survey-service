@@ -48,6 +48,7 @@ import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
+import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
@@ -154,7 +155,7 @@ public class SurveyService {
     if (type == QuestionType.CHECKLIST) {
 
       final ChecklistQuestion checklistQuestion = (ChecklistQuestion) question;
-      for (final BooleanQuestion entry : checklistQuestion.getEntries()) {
+      for (final ChecklistEntry entry : checklistQuestion.getEntries()) {
 
         final Optional<SurveyResponse> entityOp =
             this.surveyResponseRepository.findByUserAndSurveyInstanceAndQuestion(user, instance, entry);
@@ -295,6 +296,7 @@ public class SurveyService {
         return validateTextResponse(question, response);
       case CHECKLIST:
         return validateChecklistResponse(question, response);
+      case CHECKLIST_ENTRY:
       default:
         return false;
     }
@@ -626,7 +628,7 @@ public class SurveyService {
       case CHECKLIST: {
 
         final ChecklistQuestion checklistQuestion = (ChecklistQuestion) question;
-        for (final BooleanQuestion entry : checklistQuestion.getEntries()) {
+        for (final ChecklistEntry entry : checklistQuestion.getEntries()) {
 
           final SurveyResponse response = responses.get(entry.getId());
           if (response == null || response.getBoolAnswer() == null)

@@ -39,6 +39,7 @@ import one.tracking.framework.dto.SurveyStatusDto;
 import one.tracking.framework.dto.SurveyStatusType;
 import one.tracking.framework.dto.meta.SurveyDto;
 import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
+import one.tracking.framework.dto.meta.question.ChecklistEntryDto;
 import one.tracking.framework.dto.meta.question.ChecklistQuestionDto;
 import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
@@ -530,19 +531,16 @@ public class SurveyIT {
     assertThat(checklistQuestionDto.getEntries(), is(not(nullValue())));
     assertThat(checklistQuestionDto.getEntries().size(), is(3));
 
-    assertThat(checklistQuestionDto.getEntries().get(0), is(instanceOf(BooleanQuestionDto.class)));
+    assertThat(checklistQuestionDto.getEntries().get(0), is(instanceOf(ChecklistEntryDto.class)));
     assertThat(checklistQuestionDto.getEntries().get(0).getQuestion(), is("Q7E1"));
-    assertThat(checklistQuestionDto.getEntries().get(0).getContainer(), is(nullValue()));
     assertThat(checklistQuestionDto.getEntries().get(0).getDefaultAnswer(), is(nullValue()));
 
-    assertThat(checklistQuestionDto.getEntries().get(1), is(instanceOf(BooleanQuestionDto.class)));
+    assertThat(checklistQuestionDto.getEntries().get(1), is(instanceOf(ChecklistEntryDto.class)));
     assertThat(checklistQuestionDto.getEntries().get(1).getQuestion(), is("Q7E2"));
-    assertThat(checklistQuestionDto.getEntries().get(1).getContainer(), is(nullValue()));
     assertThat(checklistQuestionDto.getEntries().get(1).getDefaultAnswer(), is(nullValue()));
 
-    assertThat(checklistQuestionDto.getEntries().get(2), is(instanceOf(BooleanQuestionDto.class)));
+    assertThat(checklistQuestionDto.getEntries().get(2), is(instanceOf(ChecklistEntryDto.class)));
     assertThat(checklistQuestionDto.getEntries().get(2).getQuestion(), is("Q7E3"));
-    assertThat(checklistQuestionDto.getEntries().get(2).getContainer(), is(nullValue()));
     assertThat(checklistQuestionDto.getEntries().get(2).getDefaultAnswer(), is(nullValue()));
 
     // Test empty checklist -> all false
@@ -577,5 +575,17 @@ public class SurveyIT {
         .andExpect(status().isOk());
 
     testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+
+    // Sending an entry of the checklist as a separated answer should fail
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(checklistQuestionDto.getEntries().get(0).getId())
+            .boolAnswer(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
   }
 }

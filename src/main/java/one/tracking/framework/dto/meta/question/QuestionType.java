@@ -13,7 +13,8 @@ public enum QuestionType {
   BOOL,
   RANGE,
   TEXT,
-  CHECKLIST;
+  CHECKLIST,
+  CHECKLIST_ENTRY;
 
   public static QuestionType valueOf(final Class<? extends QuestionDto> clazz) {
 
@@ -27,6 +28,8 @@ public enum QuestionType {
       return RANGE;
     if (TextQuestionDto.class.isAssignableFrom(clazz))
       return TEXT;
+    if (ChecklistEntryDto.class.isAssignableFrom(clazz))
+      return CHECKLIST_ENTRY;
 
     return null;
   }

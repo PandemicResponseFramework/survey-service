@@ -16,6 +16,7 @@ import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
 import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
+import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
@@ -109,9 +110,9 @@ public class HelperBean {
         "Q7",
         order++,
         Arrays.asList(
-            createBoolQuestion("Q7E1", 1),
-            createBoolQuestion("Q7E2", 2),
-            createBoolQuestion("Q7E3", 3))));
+            createChecklistEntry("Q7E1", 1),
+            createChecklistEntry("Q7E2", 2),
+            createChecklistEntry("Q7E3", 3))));
 
     // Range - no children
     questions.add(createRangeQuestion(
@@ -270,6 +271,16 @@ public class HelperBean {
         .build());
   }
 
+  public ChecklistEntry createChecklistEntry(
+      final String question,
+      final int order) {
+
+    return this.questionRepository.save(ChecklistEntry.builder()
+        .question(question)
+        .ranking(order)
+        .build());
+  }
+
   /**
    *
    * @param question
@@ -325,7 +336,7 @@ public class HelperBean {
   public Question createChecklistQuestion(
       final String question,
       final int order,
-      final List<BooleanQuestion> entries) {
+      final List<ChecklistEntry> entries) {
 
     if (entries == null || entries.isEmpty())
       throw new IllegalArgumentException("Entries must not be null or empty.");

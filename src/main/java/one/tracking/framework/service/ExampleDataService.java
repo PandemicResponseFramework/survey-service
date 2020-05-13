@@ -24,6 +24,7 @@ import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
 import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
+import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
@@ -327,15 +328,15 @@ public class ExampleDataService {
         "To what degree have you experienced the following symptoms in the last 7 days:",
         order++,
         Arrays.asList(
-            createBoolQuestion("Headache", 1),
-            createBoolQuestion("Muscle pain/aches", 2),
-            createBoolQuestion("Difficulty breathing", 3),
-            createBoolQuestion("Fever/ high temperature", 4),
-            createBoolQuestion("Sore throat", 5),
-            createBoolQuestion("Dry cough", 6),
-            createBoolQuestion("Wet cough", 7),
-            createBoolQuestion("I felt physically exhausted", 8),
-            createBoolQuestion("loss of smell and taste", 9))));
+            createChecklistEntry("Headache", 1),
+            createChecklistEntry("Muscle pain/aches", 2),
+            createChecklistEntry("Difficulty breathing", 3),
+            createChecklistEntry("Fever/ high temperature", 4),
+            createChecklistEntry("Sore throat", 5),
+            createChecklistEntry("Dry cough", 6),
+            createChecklistEntry("Wet cough", 7),
+            createChecklistEntry("I felt physically exhausted", 8),
+            createChecklistEntry("loss of smell and taste", 9))));
 
     // 24
     questions.add(createRangeQuestion(
@@ -562,6 +563,16 @@ public class ExampleDataService {
         .build());
   }
 
+  public ChecklistEntry createChecklistEntry(
+      final String question,
+      final int order) {
+
+    return this.questionRepository.save(ChecklistEntry.builder()
+        .question(question)
+        .ranking(order)
+        .build());
+  }
+
   /**
    *
    * @param question
@@ -617,7 +628,7 @@ public class ExampleDataService {
   public Question createChecklistQuestion(
       final String question,
       final int order,
-      final List<BooleanQuestion> entries) {
+      final List<ChecklistEntry> entries) {
 
     if (entries == null || entries.isEmpty())
       throw new IllegalArgumentException("Entries must not be null or empty.");

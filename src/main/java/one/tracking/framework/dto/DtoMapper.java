@@ -11,6 +11,7 @@ import one.tracking.framework.dto.meta.container.BooleanContainerDto;
 import one.tracking.framework.dto.meta.container.ChoiceContainerDto;
 import one.tracking.framework.dto.meta.container.DefaultContainerDto;
 import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
+import one.tracking.framework.dto.meta.question.ChecklistEntryDto;
 import one.tracking.framework.dto.meta.question.ChecklistQuestionDto;
 import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
@@ -22,6 +23,7 @@ import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
 import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
+import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
@@ -112,6 +114,14 @@ public abstract class DtoMapper {
         .order(entity.getRanking())
         .question(entity.getQuestion())
         .entries(entity.getEntries().stream().map(DtoMapper::map).collect(Collectors.toList()))
+        .build();
+  }
+
+  public static final ChecklistEntryDto map(final ChecklistEntry entity) {
+    return ChecklistEntryDto.builder()
+        .id(entity.getId())
+        .order(entity.getRanking())
+        .question(entity.getQuestion())
         .build();
   }
 
