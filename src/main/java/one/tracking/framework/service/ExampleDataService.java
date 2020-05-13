@@ -12,11 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
+import one.tracking.framework.entity.meta.IntervalType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
@@ -42,6 +44,7 @@ import one.tracking.framework.util.JWTHelper;
  *
  */
 @Service
+@Profile("example")
 public class ExampleDataService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ExampleDataService.class);
@@ -75,9 +78,13 @@ public class ExampleDataService {
   @EventListener
   void handleEvent(final ApplicationStartedEvent event) {
 
+    LOG.info("Creating example data...");
+
     createAccount();
     createBasicSurvey();
     createRegularSurvey();
+
+    LOG.info("Creation of example data finished.");
   }
 
   /**
@@ -219,6 +226,7 @@ public class ExampleDataService {
         .nameId("BASIC")
         .title(s32)
         .description(s256)
+        .intervalType(IntervalType.NONE)
         .build());
   }
 
@@ -440,6 +448,8 @@ public class ExampleDataService {
         .questions(questions)
         .nameId("REGULAR")
         .title("Regular survey")
+        .intervalType(IntervalType.WEEK)
+        .intervalLength(1)
         .build());
   }
 
@@ -454,7 +464,7 @@ public class ExampleDataService {
         .build());
   }
 
-  private Question createChoiceQuestion(
+  public Question createChoiceQuestion(
       final String question,
       final int order,
       final boolean multiple,
@@ -473,7 +483,7 @@ public class ExampleDataService {
    * @param subQuestions
    * @return
    */
-  private Question createChoiceQuestion(
+  public Question createChoiceQuestion(
       final String question,
       final int order,
       final boolean multiple,
@@ -514,7 +524,7 @@ public class ExampleDataService {
    * @param order
    * @return
    */
-  private BooleanQuestion createBoolQuestion(
+  public BooleanQuestion createBoolQuestion(
       final String question,
       final int order) {
 
@@ -529,7 +539,7 @@ public class ExampleDataService {
    * @param subQuestions
    * @return
    */
-  private BooleanQuestion createBoolQuestion(
+  public BooleanQuestion createBoolQuestion(
       final String question,
       final int order,
       final Boolean dependsOn,
@@ -558,7 +568,7 @@ public class ExampleDataService {
    * @param order
    * @return
    */
-  private Question createTextQuestion(
+  public Question createTextQuestion(
       final String question,
       final int order,
       final boolean multiline) {
@@ -573,7 +583,7 @@ public class ExampleDataService {
    * @param subQuestions
    * @return
    */
-  private Question createTextQuestion(
+  public Question createTextQuestion(
       final String question,
       final int order,
       final boolean multiline,
@@ -604,7 +614,7 @@ public class ExampleDataService {
    * @param entries
    * @return
    */
-  private Question createChecklistQuestion(
+  public Question createChecklistQuestion(
       final String question,
       final int order,
       final List<BooleanQuestion> entries) {
@@ -630,7 +640,7 @@ public class ExampleDataService {
    * @param maxText
    * @return
    */
-  private Question createRangeQuestion(
+  public Question createRangeQuestion(
       final String question,
       final int order,
       final int minValue, final int maxValue,
@@ -647,7 +657,7 @@ public class ExampleDataService {
    * @param subQuestions
    * @return
    */
-  private Question createRangeQuestion(
+  public Question createRangeQuestion(
       final String question,
       final int order,
       final int minValue, final int maxValue,
