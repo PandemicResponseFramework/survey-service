@@ -663,7 +663,7 @@ public class SurveyService {
       case TEXT: {
 
         final SurveyResponse response = responses.get(question.getId());
-        return response.getTextAnswer() != null && !response.getTextAnswer().isBlank();
+        return response != null && response.getTextAnswer() != null && !response.getTextAnswer().isBlank();
 
       }
       default:

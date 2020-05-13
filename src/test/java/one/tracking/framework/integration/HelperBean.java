@@ -126,31 +126,39 @@ public class HelperBean {
     questions.add(createRangeQuestion(
         "Q9",
         order++,
-        1, 10,
-        5,
+        2, 11,
+        6,
         "Q9MIN", "Q9MAX",
         Collections.singletonList(createBoolQuestion("Q9C1", 1))));
 
     // TextField - no children
     questions.add(createTextQuestion(
         "Q10",
-        order++, false));
+        order++,
+        false,
+        256));
 
     // TextField - with children
     questions.add(createTextQuestion(
         "Q11",
-        order++, false,
+        order++,
+        false,
+        256,
         Collections.singletonList(createBoolQuestion("Q11C1", 1))));
 
     // TextArea - no children
     questions.add(createTextQuestion(
         "Q12",
-        order++, true));
+        order++,
+        true,
+        512));
 
     // TextArea - with children
     questions.add(createTextQuestion(
         "Q13",
-        order++, true,
+        order++,
+        true,
+        512,
         Collections.singletonList(createBoolQuestion("Q13C1", 1))));
 
     this.surveyRepository.save(Survey.builder()
@@ -290,15 +298,17 @@ public class HelperBean {
   public Question createTextQuestion(
       final String question,
       final int order,
-      final boolean multiline) {
+      final boolean multiline,
+      final int length) {
 
-    return createTextQuestion(question, order, multiline, null);
+    return createTextQuestion(question, order, multiline, length, null);
   }
 
   /**
    *
    * @param question
    * @param order
+   * @param length
    * @param subQuestions
    * @return
    */
@@ -306,6 +316,7 @@ public class HelperBean {
       final String question,
       final int order,
       final boolean multiline,
+      final int length,
       final List<Question> subQuestions) {
 
     DefaultContainer container = null;
@@ -322,7 +333,7 @@ public class HelperBean {
         .multiline(multiline)
         .container(container)
         .ranking(order)
-        .length(256)
+        .length(length)
         .build());
   }
 
