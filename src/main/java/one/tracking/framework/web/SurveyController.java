@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import one.tracking.framework.dto.AuthNTokenResponseDto;
 import one.tracking.framework.dto.DtoMapper;
 import one.tracking.framework.dto.RegistrationDto;
 import one.tracking.framework.dto.SurveyResponseDto;
@@ -62,14 +63,13 @@ public class SurveyController {
 
   @RequestMapping(
       method = RequestMethod.POST,
-      path = "/verify",
-      produces = MediaType.TEXT_PLAIN_VALUE)
-  public String verify(
+      path = "/verify")
+  public AuthNTokenResponseDto verify(
       @RequestBody
       @Valid
       final VerificationDto verification) throws IOException {
 
-    return this.surveyService.verifyEmail(verification);
+    return AuthNTokenResponseDto.builder().token(this.surveyService.verifyEmail(verification)).build();
   }
 
   @RequestMapping(
