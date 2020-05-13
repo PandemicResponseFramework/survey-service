@@ -114,7 +114,11 @@ You can also view the current API documentation on [SwaggerHub](https://app.swag
 
 ## Running the tests
 
-The tests will be performed on the maven package build automatically.
+The unit tests will be performed on the maven package build automatically. In order to perform the integration tests, execute the following command.
+
+```
+mvn clean integration-test
+```
 
 ## Deployment
 
