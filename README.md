@@ -57,7 +57,7 @@ Next to the common [server properties](https://docs.spring.io/spring-boot/docs/c
 <tbody>
   <tr>
     <td>app.sendgrid.api.key</td>
-    <td>The SendGrid API key to use for sending e-mails to the participants.</td>
+    <td>The SendGrid API key to use for sending e-mails to the participants.<br/>:warning: This property is subject to be removed and replaced by the built-in property spring.sendgrid.api-key</td>
     <td>-</td>
   </tr>
   <tr>
