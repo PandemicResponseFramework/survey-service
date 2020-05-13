@@ -11,6 +11,25 @@ These instructions will get you a copy of the project up and running on your loc
 
 You need to have [Maven](https://maven.apache.org/) installed on your machine. You will also need to have a [SendGrid](https://sendgrid.com/) account setup with the desired [sender authentication](https://app.sendgrid.com/settings/sender_auth).
 
+This project depends on the [commons-boot](https://github.com/OneTrackingFramework/commons-boot) project. Therefore you need to [create an access token](https://help.github.com/en/packages/publishing-and-managing-packages/about-github-packages) in order to be able to access the package. You will also need to setup maven to use this access token by creating or modifying your `settings.xml`, which is usually located at `<USER_HOME>/.m2`. Add the following server-element to the `settings.xml`.
+
+```
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <servers>
+    <server>
+      <id>com.github.OneTrackingFramework.commons-boot</id>
+      <username>GITHUB_USERID</username>
+      <password>GITHUB_TOKEN</password>
+    </server>
+  </servers>
+
+</settings>
+```
+
 ### Installing
 
 To build the executable JAR, execute the following command in the root directory of this project.
@@ -38,7 +57,7 @@ Next to the common [server properties](https://docs.spring.io/spring-boot/docs/c
 <tbody>
   <tr>
     <td>app.sendgrid.api.key</td>
-    <td>The SendGrid API key to use for sending e-mails to the participants.</td>
+    <td>The SendGrid API key to use for sending e-mails to the participants.<br/>:warning: This property is subject to be removed and replaced by the built-in property spring.sendgrid.api-key</td>
     <td>-</td>
   </tr>
   <tr>
