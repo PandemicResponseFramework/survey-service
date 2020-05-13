@@ -5,6 +5,7 @@ package one.tracking.framework.web;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import one.tracking.framework.dto.DtoMapper;
 import one.tracking.framework.dto.RegistrationDto;
 import one.tracking.framework.dto.SurveyResponseDto;
+import one.tracking.framework.dto.SurveyStatusDto;
 import one.tracking.framework.dto.VerificationDto;
 import one.tracking.framework.dto.meta.SurveyDto;
 import one.tracking.framework.service.SurveyService;
@@ -45,6 +47,14 @@ public class SurveyController {
       final String nameId) {
 
     return DtoMapper.map(this.surveyService.getSurvey(nameId));
+  }
+
+  @RequestMapping(method = RequestMethod.GET, path = "/survey")
+  public List<SurveyStatusDto> getSurveyOverview(
+      @ApiIgnore
+      final Authentication authentication) {
+
+    return this.surveyService.getSurveyOverview(authentication.getName());
   }
 
   @RequestMapping(method = RequestMethod.POST, path = "/survey/{nameId}/answer")

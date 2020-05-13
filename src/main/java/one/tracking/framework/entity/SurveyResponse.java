@@ -17,7 +17,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import one.tracking.framework.entity.meta.Answer;
-import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.question.Question;
 
 /**
@@ -42,7 +41,7 @@ public class SurveyResponse {
   private User user;
 
   @ManyToOne(optional = false)
-  private Survey survey;
+  private SurveyInstance surveyInstance;
 
   @ManyToOne(optional = false)
   private Question question;

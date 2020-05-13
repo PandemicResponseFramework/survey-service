@@ -7,6 +7,8 @@ import java.time.Instant;
 import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -50,6 +52,13 @@ public class Survey {
 
   @Column(length = 256, nullable = true)
   private String description;
+
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private IntervalType intervalType;
+
+  @Column(nullable = true)
+  private Integer intervalLength;
 
   @Column(nullable = false, updatable = false)
   private Instant createdAt;
