@@ -8,6 +8,7 @@ import javax.validation.Valid;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -17,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@NoArgsConstructor
 @ApiModel(parent = ContainerDto.class)
 public class ChoiceContainerDto extends ContainerDto {
 

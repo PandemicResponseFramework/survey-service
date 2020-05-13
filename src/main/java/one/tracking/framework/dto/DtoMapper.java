@@ -14,7 +14,6 @@ import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
 import one.tracking.framework.dto.meta.question.ChecklistQuestionDto;
 import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
-import one.tracking.framework.dto.meta.question.QuestionType;
 import one.tracking.framework.dto.meta.question.RangeQuestionDto;
 import one.tracking.framework.dto.meta.question.TextQuestionDto;
 import one.tracking.framework.entity.meta.Answer;
@@ -86,7 +85,6 @@ public abstract class DtoMapper {
         .question(entity.getQuestion())
         .defaultAnswer(entity.getDefaultValue())
         .container(map(entity.getContainer()))
-        .type(QuestionType.valueOf(entity.getType()))
         .build();
   }
 
@@ -105,7 +103,6 @@ public abstract class DtoMapper {
         .answers(entity.getAnswers().stream().map(DtoMapper::map).collect(Collectors.toList()))
         .multiple(entity.getMultiple())
         .container(map(entity.getContainer()))
-        .type(QuestionType.valueOf(entity.getType()))
         .build();
   }
 
@@ -114,7 +111,6 @@ public abstract class DtoMapper {
         .id(entity.getId())
         .order(entity.getRanking())
         .question(entity.getQuestion())
-        .type(QuestionType.valueOf(entity.getType()))
         .entries(entity.getEntries().stream().map(DtoMapper::map).collect(Collectors.toList()))
         .build();
   }
@@ -136,7 +132,6 @@ public abstract class DtoMapper {
         .minText(entity.getMinText())
         .maxText(entity.getMaxText())
         .container(map(entity.getContainer()))
-        .type(QuestionType.valueOf(entity.getType()))
         .build();
   }
 
@@ -153,7 +148,6 @@ public abstract class DtoMapper {
         .question(entity.getQuestion())
         .multiline(entity.isMultiline())
         .container(map(entity.getContainer()))
-        .type(QuestionType.valueOf(entity.getType()))
         .length(entity.getLength())
         .build();
   }

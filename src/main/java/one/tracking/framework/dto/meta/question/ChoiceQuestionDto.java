@@ -9,6 +9,7 @@ import javax.validation.constraints.NotEmpty;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import one.tracking.framework.dto.meta.AnswerDto;
 import one.tracking.framework.dto.meta.container.ChoiceContainerDto;
@@ -20,6 +21,7 @@ import one.tracking.framework.dto.meta.container.ChoiceContainerDto;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@NoArgsConstructor
 @ApiModel(parent = QuestionDto.class)
 public class ChoiceQuestionDto extends QuestionDto {
 

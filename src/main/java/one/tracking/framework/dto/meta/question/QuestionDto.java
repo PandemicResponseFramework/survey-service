@@ -7,8 +7,11 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -17,12 +20,17 @@ import lombok.experimental.SuperBuilder;
  */
 @Data
 @SuperBuilder
+@NoArgsConstructor
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = BooleanQuestionDto.class),
-    @JsonSubTypes.Type(value = ChoiceQuestionDto.class),
-    @JsonSubTypes.Type(value = RangeQuestionDto.class),
-    @JsonSubTypes.Type(value = TextQuestionDto.class),
-    @JsonSubTypes.Type(value = ChecklistQuestionDto.class)
+    @Type(value = BooleanQuestionDto.class, name = "BOOL"),
+    @Type(value = ChoiceQuestionDto.class, name = "CHOICE"),
+    @Type(value = RangeQuestionDto.class, name = "RANGE"),
+    @Type(value = TextQuestionDto.class, name = "TEXT"),
+    @Type(value = ChecklistQuestionDto.class, name = "CHECKLIST")
 })
 @ApiModel(discriminator = "type", subTypes = {
     BooleanQuestionDto.class,
@@ -40,8 +48,6 @@ public abstract class QuestionDto {
   private String question;
 
   @NotNull
-  private QuestionType type;
-
-  @NotNull
   private Integer order;
+
 }
