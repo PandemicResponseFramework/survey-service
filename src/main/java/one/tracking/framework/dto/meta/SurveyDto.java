@@ -27,8 +27,7 @@ public class SurveyDto {
   private Long id;
 
   @NotEmpty
-  @Valid
-  private List<QuestionDto> questions;
+  private List<@Valid QuestionDto> questions;
 
   @NotBlank
   private String nameId;

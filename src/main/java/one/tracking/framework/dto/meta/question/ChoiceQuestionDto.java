@@ -26,8 +26,7 @@ import one.tracking.framework.dto.meta.container.ChoiceContainerDto;
 public class ChoiceQuestionDto extends QuestionDto {
 
   @NotEmpty
-  @Valid
-  private List<AnswerDto> answers;
+  private List<@Valid AnswerDto> answers;
 
   private Long defaultAnswer;
 

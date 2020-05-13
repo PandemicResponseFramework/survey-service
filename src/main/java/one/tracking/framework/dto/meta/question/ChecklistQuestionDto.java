@@ -23,8 +23,7 @@ import lombok.experimental.SuperBuilder;
 @ApiModel(parent = QuestionDto.class)
 public class ChecklistQuestionDto extends QuestionDto {
 
-  @Valid
   @NotEmpty
-  private List<BooleanQuestionDto> entries;
+  private List<@Valid BooleanQuestionDto> entries;
 
 }

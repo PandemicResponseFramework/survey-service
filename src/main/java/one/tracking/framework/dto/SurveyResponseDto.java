@@ -27,7 +27,7 @@ public class SurveyResponseDto {
   @NotNull
   private Long questionId;
 
-  private List<Long> answerIds;
+  private List<@NotNull Long> answerIds;
 
   private Boolean boolAnswer;
 
@@ -35,7 +35,7 @@ public class SurveyResponseDto {
 
   private Integer rangeAnswer;
 
-  private Map<Long, Boolean> checklistAnswer;
+  private Map<@NotNull Long, @NotNull Boolean> checklistAnswer;
 
   @NotBlank
   @Size(max = TOKEN_SURVEY_LENGTH)

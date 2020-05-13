@@ -37,7 +37,6 @@ import one.tracking.framework.dto.meta.question.QuestionDto;
 public abstract class ContainerDto {
 
   @NotEmpty
-  @Valid
-  private List<QuestionDto> subQuestions;
+  private List<@Valid QuestionDto> subQuestions;
 
 }
