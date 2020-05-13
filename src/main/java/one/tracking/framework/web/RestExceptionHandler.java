@@ -70,14 +70,24 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(value = {IllegalArgumentException.class, NoSuchElementException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ResponseEntity<String> badRequest(final Exception e) {
-    LOG.debug(e.getMessage(), e);
+
+    if (!LOG.isTraceEnabled())
+      LOG.debug(e.getMessage());
+    else
+      LOG.trace(e.getMessage(), e);
+
     return ResponseEntity.badRequest().build();
   }
 
   @ExceptionHandler(value = {IllegalStateException.class})
   @ResponseStatus(HttpStatus.FORBIDDEN)
   public ResponseEntity<String> forbidden(final Exception e) {
-    LOG.debug(e.getMessage(), e);
+
+    if (!LOG.isTraceEnabled())
+      LOG.debug(e.getMessage());
+    else
+      LOG.trace(e.getMessage(), e);
+
     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
   }
 }
