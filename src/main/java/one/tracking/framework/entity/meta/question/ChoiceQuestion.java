@@ -31,7 +31,7 @@ import one.tracking.framework.entity.meta.container.ChoiceContainer;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @DiscriminatorValue("CHOICE")
-public class ChoiceQuestion extends Question {
+public class ChoiceQuestion extends Question implements IContainerQuestion {
 
   @ManyToMany(fetch = FetchType.LAZY)
   private List<Answer> answers;

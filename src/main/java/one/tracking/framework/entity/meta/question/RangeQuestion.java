@@ -26,7 +26,7 @@ import one.tracking.framework.entity.meta.container.DefaultContainer;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @DiscriminatorValue("RANGE")
-public class RangeQuestion extends Question {
+public class RangeQuestion extends Question implements IContainerQuestion {
 
   @Column(nullable = false)
   private Integer minValue;

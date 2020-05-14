@@ -5,6 +5,7 @@ package one.tracking.framework.entity;
 
 import java.time.Instant;
 import java.util.List;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -48,7 +49,7 @@ public class SurveyResponse {
   @ManyToOne(optional = false)
   private Question question;
 
-  @ManyToMany
+  @ManyToMany(cascade = CascadeType.ALL)
   private List<Answer> answers;
 
   private Integer rangeAnswer;

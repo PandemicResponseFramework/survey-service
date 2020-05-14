@@ -26,7 +26,7 @@ import one.tracking.framework.entity.meta.container.DefaultContainer;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @DiscriminatorValue("TEXT")
-public class TextQuestion extends Question {
+public class TextQuestion extends Question implements IContainerQuestion {
 
   @Column(nullable = false)
   private boolean multiline;

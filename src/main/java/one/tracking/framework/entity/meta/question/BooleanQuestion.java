@@ -26,7 +26,7 @@ import one.tracking.framework.entity.meta.container.BooleanContainer;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @DiscriminatorValue("BOOL")
-public class BooleanQuestion extends Question {
+public class BooleanQuestion extends Question implements IContainerQuestion {
 
   @Column(nullable = true)
   private Boolean defaultValue;
