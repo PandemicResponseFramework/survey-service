@@ -75,6 +75,9 @@ public class SurveyService {
 
   private static final Random RANDOM = new Random();
 
+  private static final Instant INSTANT_MIN = Instant.ofEpochMilli(Long.MIN_VALUE);
+  private static final Instant INSTANT_MAX = Instant.ofEpochMilli(Long.MAX_VALUE);
+
   @Autowired
   private AnswerRepository answerRepository;
 
@@ -643,6 +646,8 @@ public class SurveyService {
           .status(status)
           .lastQuestionId(lastQuestionId)
           .token(instance.getToken())
+          .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime())
+          .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime())
           .build());
     }
 

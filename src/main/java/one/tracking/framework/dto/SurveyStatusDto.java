@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.dto;
 
+import java.time.Instant;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
@@ -26,4 +27,8 @@ public class SurveyStatusDto {
 
   @NotBlank
   private String token;
+
+  private Instant startTime;
+
+  private Instant endTime;
 }
