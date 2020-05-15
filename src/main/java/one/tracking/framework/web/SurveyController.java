@@ -23,6 +23,8 @@ import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.dto.SurveyStatusDto;
 import one.tracking.framework.dto.VerificationDto;
 import one.tracking.framework.dto.meta.SurveyDto;
+import one.tracking.framework.service.SurveyManagementService;
+import one.tracking.framework.service.SurveyResponseService;
 import one.tracking.framework.service.SurveyService;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -37,6 +39,12 @@ public class SurveyController {
   @Autowired
   private SurveyService surveyService;
 
+  @Autowired
+  private SurveyResponseService surveyResponseService;
+
+  @Autowired
+  private SurveyManagementService surveyManagementService;
+
   @RequestMapping(method = RequestMethod.GET, path = "/check")
   public void checkAuthN() {
     // Call this endpoint to evaluate if bearer token is still valid
@@ -47,7 +55,7 @@ public class SurveyController {
       @PathVariable("nameId")
       final String nameId) {
 
-    return DtoMapper.map(this.surveyService.getSurvey(nameId));
+    return DtoMapper.map(this.surveyService.getReleasedSurvey(nameId));
   }
 
   @RequestMapping(method = RequestMethod.GET, path = "/survey")
@@ -68,7 +76,7 @@ public class SurveyController {
       @ApiIgnore
       final Authentication authentication) {
 
-    this.surveyService.handleSurveyResponse(authentication.getName(), nameId, surveyResponse);
+    this.surveyResponseService.handleSurveyResponse(authentication.getName(), nameId, surveyResponse);
   }
 
   @RequestMapping(

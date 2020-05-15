@@ -8,6 +8,7 @@ import javax.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -16,8 +17,9 @@ import lombok.experimental.SuperBuilder;
  */
 @Data
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @DiscriminatorValue("DEFAULT")
 public class DefaultContainer extends Container {

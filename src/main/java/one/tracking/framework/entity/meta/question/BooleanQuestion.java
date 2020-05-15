@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 
@@ -22,8 +23,9 @@ import one.tracking.framework.entity.meta.container.BooleanContainer;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @DiscriminatorValue("BOOL")
 public class BooleanQuestion extends Question implements IContainerQuestion {

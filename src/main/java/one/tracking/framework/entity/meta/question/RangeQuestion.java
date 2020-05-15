@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import one.tracking.framework.entity.meta.container.DefaultContainer;
 
@@ -22,8 +23,9 @@ import one.tracking.framework.entity.meta.container.DefaultContainer;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @DiscriminatorValue("RANGE")
 public class RangeQuestion extends Question implements IContainerQuestion {

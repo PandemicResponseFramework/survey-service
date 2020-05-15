@@ -24,7 +24,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,28 +33,24 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import one.tracking.framework.dto.RegistrationDto;
-import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.dto.SurveyStatusDto;
 import one.tracking.framework.dto.SurveyStatusType;
 import one.tracking.framework.dto.VerificationDto;
-import one.tracking.framework.dto.meta.question.QuestionType;
 import one.tracking.framework.entity.SurveyInstance;
 import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.SurveyStatus;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
+import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
-import one.tracking.framework.entity.meta.question.IContainerQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
-import one.tracking.framework.repo.AnswerRepository;
-import one.tracking.framework.repo.QuestionRepository;
 import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
@@ -75,11 +70,8 @@ public class SurveyService {
 
   private static final Random RANDOM = new Random();
 
-  @Autowired
-  private AnswerRepository answerRepository;
-
-  @Autowired
-  private QuestionRepository questionRepository;
+  private static final Instant INSTANT_MIN = Instant.ofEpochMilli(Long.MIN_VALUE);
+  private static final Instant INSTANT_MAX = Instant.ofEpochMilli(Long.MAX_VALUE);
 
   @Autowired
   private SurveyRepository surveyRepository;
@@ -129,307 +121,10 @@ public class SurveyService {
     this.publicUrlBuilder = UriComponentsBuilder.fromUriString(this.publicUrl);
   }
 
-  public Survey getSurvey(final String nameId) {
+  public Survey getReleasedSurvey(final String nameId) {
 
-    return this.surveyRepository.findByNameId(nameId).get();
-  }
-
-  @Transactional
-  public void handleSurveyResponse(final String userId, final String nameId, final SurveyResponseDto surveyResponse) {
-
-    final User user = this.userRepository.findById(userId).get();
-    final Survey survey = this.surveyRepository.findByNameId(nameId).get();
-    final SurveyInstance instance = this.surveyInstanceRepository.findBySurveyAndToken(
-        survey, surveyResponse.getSurveyToken()).get();
-    final Question question = this.questionRepository.findById(surveyResponse.getQuestionId()).get();
-    final QuestionType type = QuestionType.valueOf(question.getType());
-
-    if (!validateResponse(question, type, surveyResponse))
-      throw new IllegalArgumentException("Invalid Survey Response.");
-
-    switch (type) {
-      case BOOL:
-        storeBooleanResponse(surveyResponse, user, instance, question);
-        break;
-      case CHECKLIST:
-        storeChecklistResponse(surveyResponse, user, instance, question);
-        break;
-      case CHOICE:
-        storeChoiceResponse(surveyResponse, user, instance, question);
-        break;
-      case RANGE:
-        storeRangeResponse(surveyResponse, user, instance, question);
-        break;
-      case TEXT:
-        storeTextResponse(surveyResponse, user, instance, question);
-        break;
-      default:
-        // nothing got changed -> no need to continue
-        return;
-    }
-
-    deleteSubQuestionTree(user, instance, question);
-
-    final Optional<SurveyStatus> statusOp = this.surveyStatusRepository.findByUserAndSurveyInstance(user, instance);
-
-    if (statusOp.isEmpty()) {
-
-      this.surveyStatusRepository.save(SurveyStatus.builder()
-          .lastQuestion(question)
-          .surveyInstance(instance)
-          .user(user)
-          .build());
-    } else {
-
-      final SurveyStatus status = statusOp.get();
-      status.setLastQuestion(question);
-      this.surveyStatusRepository.save(status);
-    }
-  }
-
-  /**
-   * @param surveyResponse
-   * @param user
-   * @param instance
-   * @param question
-   */
-  private final void storeChecklistResponse(
-      final SurveyResponseDto surveyResponse,
-      final User user,
-      final SurveyInstance instance,
-      final Question question) {
-
-    final ChecklistQuestion checklistQuestion = (ChecklistQuestion) question;
-    for (final ChecklistEntry entry : checklistQuestion.getEntries()) {
-
-      final Optional<SurveyResponse> entityOp =
-          this.surveyResponseRepository.findByUserAndSurveyInstanceAndQuestion(user, instance, entry);
-      final Boolean response = surveyResponse.getChecklistAnswer().get(entry.getId());
-
-      if (entityOp.isEmpty()) {
-
-        this.surveyResponseRepository.save(SurveyResponse.builder()
-            .question(entry)
-            .surveyInstance(instance)
-            .user(user)
-            .boolAnswer(response == null ? false : response)
-            .build());
-
-      } else {
-
-        final SurveyResponse entity = entityOp.get();
-        entity.setBoolAnswer(response == null ? false : response);
-        this.surveyResponseRepository.save(entity);
-      }
-    }
-  }
-
-  private final void storeBooleanResponse(
-      final SurveyResponseDto surveyResponse,
-      final User user,
-      final SurveyInstance instance,
-      final Question question) {
-
-    final Optional<SurveyResponse> entityOp =
-        this.surveyResponseRepository.findByUserAndSurveyInstanceAndQuestion(user, instance, question);
-
-    if (entityOp.isEmpty()) {
-
-      this.surveyResponseRepository.save(SurveyResponse.builder()
-          .question(question)
-          .surveyInstance(instance)
-          .user(user)
-          .boolAnswer(surveyResponse.getBoolAnswer())
-          .build());
-
-    } else {
-
-      final SurveyResponse entity = entityOp.get();
-      entity.setBoolAnswer(surveyResponse.getBoolAnswer());
-      this.surveyResponseRepository.save(entity);
-    }
-  }
-
-  private final void storeChoiceResponse(
-      final SurveyResponseDto surveyResponse,
-      final User user,
-      final SurveyInstance instance,
-      final Question question) {
-
-    final List<Answer> existingAnswers = new ArrayList<>(surveyResponse.getAnswerIds().size());
-
-    for (final Long answerId : surveyResponse.getAnswerIds()) {
-
-      final Optional<Answer> answerOp = this.answerRepository.findById(answerId);
-
-      if (answerOp.isEmpty())
-        throw new IllegalStateException("Unexpected state: Could not find answer entity for id: " + answerId);
-
-      existingAnswers.add(answerOp.get());
-    }
-
-    final Optional<SurveyResponse> entityOp =
-        this.surveyResponseRepository.findByUserAndSurveyInstanceAndQuestion(user, instance, question);
-
-    if (entityOp.isEmpty()) {
-
-      this.surveyResponseRepository.save(SurveyResponse.builder()
-          .question(question)
-          .surveyInstance(instance)
-          .user(user)
-          .answers(existingAnswers)
-          .build());
-
-    } else {
-
-      final SurveyResponse entity = entityOp.get();
-      entity.setAnswers(existingAnswers);
-      this.surveyResponseRepository.save(entity);
-    }
-  }
-
-  private final void storeRangeResponse(
-      final SurveyResponseDto surveyResponse,
-      final User user,
-      final SurveyInstance instance,
-      final Question question) {
-
-    final Optional<SurveyResponse> entityOp =
-        this.surveyResponseRepository.findByUserAndSurveyInstanceAndQuestion(user, instance, question);
-
-    if (entityOp.isEmpty()) {
-
-      this.surveyResponseRepository.save(SurveyResponse.builder()
-          .question(question)
-          .surveyInstance(instance)
-          .user(user)
-          .rangeAnswer(surveyResponse.getRangeAnswer())
-          .build());
-
-    } else {
-
-      final SurveyResponse entity = entityOp.get();
-      entity.setRangeAnswer(surveyResponse.getRangeAnswer());
-      this.surveyResponseRepository.save(entity);
-    }
-  }
-
-  private final void storeTextResponse(
-      final SurveyResponseDto surveyResponse,
-      final User user,
-      final SurveyInstance instance,
-      final Question question) {
-
-    final Optional<SurveyResponse> entityOp =
-        this.surveyResponseRepository.findByUserAndSurveyInstanceAndQuestion(user, instance, question);
-
-    if (entityOp.isEmpty()) {
-
-      this.surveyResponseRepository.save(SurveyResponse.builder()
-          .question(question)
-          .surveyInstance(instance)
-          .user(user)
-          .textAnswer(surveyResponse.getTextAnswer())
-          .build());
-
-    } else {
-
-      final SurveyResponse entity = entityOp.get();
-      entity.setTextAnswer(surveyResponse.getTextAnswer());
-      this.surveyResponseRepository.save(entity);
-    }
-  }
-
-  private final void deleteSubQuestionTree(
-      final User user,
-      final SurveyInstance instance,
-      final Question question) {
-
-    if (!(question instanceof IContainerQuestion))
-      return;
-
-    final IContainerQuestion cQuestion = (IContainerQuestion) question;
-
-    if (cQuestion.getContainer() == null
-        || cQuestion.getContainer().getSubQuestions() == null
-        || cQuestion.getContainer().getSubQuestions().isEmpty())
-      return;
-
-    for (final Question subQuestion : cQuestion.getContainer().getSubQuestions()) {
-
-      deleteSubQuestionTree(user, instance, subQuestion);
-
-      this.surveyResponseRepository.deleteByUserAndSurveyInstanceAndQuestion(user, instance, subQuestion);
-    }
-  }
-
-  private final boolean validateBoolResponse(final Question question, final SurveyResponseDto response) {
-
-    return response.getBoolAnswer() != null;
-  }
-
-  private final boolean validateTextResponse(final Question question, final SurveyResponseDto response) {
-
-    return response.getTextAnswer() != null && !response.getTextAnswer().isBlank()
-        && response.getTextAnswer().length() <= ((TextQuestion) question).getLength();
-  }
-
-  private final boolean validateChoiceResponse(final Question question, final SurveyResponseDto response) {
-
-    if (response.getAnswerIds() == null || response.getAnswerIds().isEmpty())
-      return false;
-
-    final ChoiceQuestion choiceQuestion = (ChoiceQuestion) question;
-
-    if (choiceQuestion.getMultiple() == false && response.getAnswerIds().size() > 1)
-      return false;
-
-    final List<Long> originAnswerIds =
-        choiceQuestion.getAnswers().stream().map(Answer::getId).collect(Collectors.toList());
-
-    // Does modify the response object but the request will be denied if modification occurred
-    return !response.getAnswerIds().retainAll(originAnswerIds);
-  }
-
-  private final boolean validateRangeResponse(final Question question, final SurveyResponseDto response) {
-
-    // TODO: introduce step
-    final RangeQuestion rangeQuestion = (RangeQuestion) question;
-    return response.getRangeAnswer() != null
-        && response.getRangeAnswer() >= rangeQuestion.getMinValue()
-        && response.getRangeAnswer() <= rangeQuestion.getMaxValue();
-  }
-
-  private boolean validateChecklistResponse(final Question question, final SurveyResponseDto response) {
-
-    if (response.getChecklistAnswer() == null)
-      return false;
-
-    final ChecklistQuestion checklistQuestion = (ChecklistQuestion) question;
-    final List<Long> originQuestionIds =
-        checklistQuestion.getEntries().stream().map(Question::getId).collect(Collectors.toList());
-
-    // Does modify the response object but the request will be denied if modification occurred
-    return !response.getChecklistAnswer().keySet().retainAll(originQuestionIds);
-  }
-
-  private boolean validateResponse(final Question question, final QuestionType type, final SurveyResponseDto response) {
-
-    switch (type) {
-      case BOOL:
-        return validateBoolResponse(question, response);
-      case CHOICE:
-        return validateChoiceResponse(question, response);
-      case RANGE:
-        return validateRangeResponse(question, response);
-      case TEXT:
-        return validateTextResponse(question, response);
-      case CHECKLIST:
-        return validateChecklistResponse(question, response);
-      case CHECKLIST_ENTRY:
-      default:
-        return false;
-    }
+    return this.surveyRepository.findTopByNameIdAndReleaseStatusOrderByVersionDesc(nameId, ReleaseStatusType.RELEASED)
+        .get();
   }
 
   public String verifyEmail(final VerificationDto verificationDto) throws IOException {
@@ -628,7 +323,7 @@ public class SurveyService {
 
     final List<SurveyStatusDto> result = new ArrayList<>();
 
-    for (final Survey survey : this.surveyRepository.findAll()) {
+    for (final Survey survey : this.surveyRepository.findAll()) { // FIXME
 
       final SurveyInstance instance = getCurrentInstance(survey);
 
@@ -643,6 +338,8 @@ public class SurveyService {
           .status(status)
           .lastQuestionId(lastQuestionId)
           .token(instance.getToken())
+          .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime())
+          .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime())
           .build());
     }
 
@@ -687,9 +384,7 @@ public class SurveyService {
 
   private List<Question> getSubQuestions(final Question question) {
 
-    final QuestionType type = QuestionType.valueOf(question.getType());
-
-    switch (type) {
+    switch (question.getType()) {
       case BOOL:
         return ((BooleanQuestion) question).getContainer().getSubQuestions();
       case CHOICE:
@@ -716,9 +411,7 @@ public class SurveyService {
     if (question == null || response == null || !question.hasContainer())
       return false;
 
-    final QuestionType type = QuestionType.valueOf(question.getType());
-
-    switch (type) {
+    switch (question.getType()) {
       case BOOL:
 
         final BooleanQuestion booleanQuestion = (BooleanQuestion) question;
@@ -748,9 +441,7 @@ public class SurveyService {
 
   private boolean isAnswered(final Question question, final Map<Long, SurveyResponse> responses) {
 
-    final QuestionType type = QuestionType.valueOf(question.getType());
-
-    switch (type) {
+    switch (question.getType()) {
       case BOOL: {
 
         final SurveyResponse response = responses.get(question.getId());
@@ -838,9 +529,7 @@ public class SurveyService {
 
   private SurveyInstance getPermanentInstance(final Survey survey) {
 
-    return getInstance(survey,
-        Instant.ofEpochMilli(Long.MIN_VALUE),
-        Instant.ofEpochMilli(Long.MAX_VALUE));
+    return getInstance(survey, INSTANT_MIN, INSTANT_MAX);
   }
 
   private SurveyInstance getInstance(final Survey survey, final Instant min, final Instant max) {
