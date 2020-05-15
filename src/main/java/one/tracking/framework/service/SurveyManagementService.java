@@ -5,9 +5,12 @@ package one.tracking.framework.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
+import one.tracking.framework.dto.meta.question.QuestionDto;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.Survey;
@@ -67,6 +70,64 @@ public class SurveyManagementService {
         .releaseStatus(ReleaseStatusType.NEW)
         .questions(copiedQuestions)
         .build());
+  }
+
+  public Question updateQuestion(final String nameId, final QuestionDto questionDto) {
+
+    final List<Survey> surveys =
+        this.surveyRepository.findByNameIdAndQuestionIdOrderByVersionDesc(nameId, questionDto.getId());
+
+    if (surveys == null || surveys.isEmpty())
+      throw new IllegalArgumentException(
+          "No survey found for nameId: " + nameId + " and questionId: " + questionDto.getId());
+
+    if (surveys.get(0).getReleaseStatus() == ReleaseStatusType.RELEASED)
+      throw new ConflictException("Current survey with nameId: " + nameId + " got released already.");
+
+    final Optional<Question> questionOp = this.questionRepository.findById(questionDto.getId());
+
+    if (questionOp.isEmpty()) // unexpected
+      throw new IllegalStateException("No question found for id: " + questionDto.getId());
+
+    updateQuestion(questionOp.get(), questionDto);
+
+    return null;
+  }
+
+  /**
+   * @param question
+   */
+  private Question updateQuestion(final Question question, final QuestionDto questionDto) {
+
+    switch (question.getType()) {
+      case BOOL:
+        return updateBoolQuestion((BooleanQuestion) question, (BooleanQuestionDto) questionDto);
+      case CHECKLIST:
+        break;
+      case CHECKLIST_ENTRY:
+        break;
+      case CHOICE:
+        break;
+      case RANGE:
+        break;
+      case TEXT:
+        break;
+      default:
+        break;
+    }
+
+    return null;
+  }
+
+  /**
+   * @param question
+   * @param questionDto
+   * @return
+   */
+  private Question updateBoolQuestion(final BooleanQuestion question, final BooleanQuestionDto questionDto) {
+
+    question.setDefaultValue(questionDto.getDefaultAnswer());
+    return null;
   }
 
   /**
