@@ -19,10 +19,10 @@ jobs:
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: $SETTINGS_PATH # location for the settings.xml file
 
-    - name: Deploy to Github Package Registry
+    - name: Build package and perform integration tests
       env:
         GITHUB_USERNAME: x-access-token
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SETTINGS_PATH: ${{ github.workspace }}/.github/workflows/settings.xml
       run:
-        mvn compile -B -s $SETTINGS_PATH
+        mvn integration-test -B -s $SETTINGS_PATH
