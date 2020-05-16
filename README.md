@@ -1,4 +1,4 @@
-![Maven Package](https://github.com/OneTrackingFramework/survey-service/workflows/Maven%20Package/badge.svg)
+![Maven Package & Integration Tests](https://github.com/OneTrackingFramework/survey-service/workflows/Maven%20Package%20&%20Integration%20Tests/badge.svg)
 
 # Survey Service
 Survey management and evaluation service
