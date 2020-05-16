@@ -692,7 +692,7 @@ public class ExampleDataService {
         .question(question)
         .minValue(minValue)
         .maxValue(maxValue)
-        .defaultValue(defaultValue)
+        .defaultAnswer(defaultValue)
         .minText(minText)
         .maxText(maxText)
         .container(container)

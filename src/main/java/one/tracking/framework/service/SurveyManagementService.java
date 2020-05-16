@@ -9,8 +9,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import one.tracking.framework.domain.SearchResult;
 import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
+import one.tracking.framework.dto.meta.question.ChecklistEntryDto;
+import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
+import one.tracking.framework.dto.meta.question.QuestionType;
+import one.tracking.framework.dto.meta.question.RangeQuestionDto;
+import one.tracking.framework.dto.meta.question.TextQuestionDto;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.Survey;
@@ -21,14 +27,15 @@ import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
+import one.tracking.framework.entity.meta.question.IContainerQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
+import one.tracking.framework.exception.ConflictException;
 import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.QuestionRepository;
 import one.tracking.framework.repo.SurveyRepository;
-import one.tracking.framework.service.exception.ConflictException;
 
 /**
  * @author Marko Voß
@@ -49,7 +56,7 @@ public class SurveyManagementService {
   @Autowired
   private AnswerRepository answerRepository;
 
-  public Survey createNewVersion(final String nameId) {
+  public Survey createNewSurveyVersion(final String nameId) {
 
     final List<Survey> surveys = this.surveyRepository.findByNameIdOrderByVersionDesc(nameId);
 
@@ -72,68 +79,178 @@ public class SurveyManagementService {
         .build());
   }
 
-  public Question updateQuestion(final String nameId, final QuestionDto questionDto) {
+  public Question updateQuestion(final String nameId, final QuestionDto data) {
 
-    final List<Survey> surveys =
-        this.surveyRepository.findByNameIdAndQuestionIdOrderByVersionDesc(nameId, questionDto.getId());
+    final List<Survey> surveys = this.surveyRepository.findByNameIdOrderByVersionDesc(nameId);
 
     if (surveys == null || surveys.isEmpty())
       throw new IllegalArgumentException(
-          "No survey found for nameId: " + nameId + " and questionId: " + questionDto.getId());
+          "No survey found for nameId: " + nameId + " and questionId: " + data.getId());
 
-    if (surveys.get(0).getReleaseStatus() == ReleaseStatusType.RELEASED)
+    final Survey survey = surveys.get(0);
+
+    if (survey.getReleaseStatus() == ReleaseStatusType.RELEASED)
       throw new ConflictException("Current survey with nameId: " + nameId + " got released already.");
 
-    final Optional<Question> questionOp = this.questionRepository.findById(questionDto.getId());
+    /*
+     * We have to check, if the specified ID in questionData is actually part of the current survey
+     * entity. So we have to look for it and because of that, we do not need to request the question
+     * entity via the question repository.
+     */
+    final SearchResult searchResult = searchQuestion(survey.getQuestions(), data.getId());
 
-    if (questionOp.isEmpty()) // unexpected
-      throw new IllegalStateException("No question found for id: " + questionDto.getId());
+    if (searchResult == null)
+      throw new IllegalArgumentException(
+          "Specified questionId is not part of the current survey: questionId: " + data.getId());
 
-    updateQuestion(questionOp.get(), questionDto);
+    final Question question = searchResult.getQuestion();
+    final int currentRanking = question.getRanking();
 
-    return null;
+    final QuestionType dataType = QuestionType.valueOf(data.getClass());
+
+    if (!question.getType().equals(dataType))
+      throw new IllegalArgumentException("The question type does not match the expected question type. Expected: "
+          + question.getType() + "; Received: " + dataType);
+
+    // FIXME start ranking/order at zero in example data and IT
+    if (data.getOrder() >= searchResult.getQuestionContainer().size())
+      throw new IllegalArgumentException("The specified order is greater than the possible value. Expected: "
+          + searchResult.getQuestionContainer().size() + " Received: " + data.getOrder());
+
+    updateQuestionData(question, data);
+
+    // Persist updates
+    final Question updatedQuestion = this.questionRepository.save(question);
+
+    // Update ranking of siblings if required
+    if (question.getRanking() != currentRanking)
+      updateRankings(searchResult, updatedQuestion);
+
+    return updatedQuestion;
   }
 
   /**
-   * @param question
+   * @param searchResult
+   * @param updatedQuestion
    */
-  private Question updateQuestion(final Question question, final QuestionDto questionDto) {
+  private void updateRankings(final SearchResult searchResult, final Question updatedQuestion) {
 
-    switch (question.getType()) {
-      case BOOL:
-        return updateBoolQuestion((BooleanQuestion) question, (BooleanQuestionDto) questionDto);
-      case CHECKLIST:
+    for (int i = 0; i < searchResult.getQuestionContainer().size(); i++) {
+
+      final Question currentSibling = searchResult.getQuestionContainer().get(i);
+
+      // Skip updating updatedQuestion
+      if (currentSibling.getId().equals(updatedQuestion.getId()))
+        continue;
+
+      if (currentSibling.getRanking() <= updatedQuestion.getRanking()) {
+
+        currentSibling.setRanking(i);
+        this.questionRepository.save(currentSibling);
+
+      } else {
         break;
-      case CHECKLIST_ENTRY:
-        break;
-      case CHOICE:
-        break;
-      case RANGE:
-        break;
-      case TEXT:
-        break;
-      default:
-        break;
+      }
+    }
+  }
+
+  private SearchResult searchQuestion(final List<Question> questions, final Long id) {
+
+    if (questions == null || questions.isEmpty())
+      return null;
+
+    for (int i = 0; i < questions.size(); i++) {
+
+      final Question question = questions.get(i);
+
+      if (question.hasContainer()) {
+        final SearchResult result =
+            searchQuestion(((IContainerQuestion) question).getContainer().getSubQuestions(), id);
+        if (result != null)
+          return result;
+      }
+
+      if (question.getId().equals(id))
+        return SearchResult.builder()
+            .question(question)
+            .questionContainer(questions)
+            .position(i)
+            .build();
     }
 
     return null;
   }
 
-  /**
-   * @param question
-   * @param questionDto
-   * @return
-   */
-  private Question updateBoolQuestion(final BooleanQuestion question, final BooleanQuestionDto questionDto) {
+  private void updateQuestionData(final Question question, final QuestionDto data) {
 
-    question.setDefaultValue(questionDto.getDefaultAnswer());
-    return null;
+    question.setQuestion(data.getQuestion());
+    question.setRanking(data.getOrder());
+
+    switch (question.getType()) {
+      case BOOL:
+        updateQuestion((BooleanQuestion) question, (BooleanQuestionDto) data);
+        break;
+      case CHECKLIST:
+        // nothing special
+        break;
+      case CHECKLIST_ENTRY:
+        updateQuestion((ChecklistEntry) question, (ChecklistEntryDto) data);
+        break;
+      case CHOICE:
+        updateQuestion((ChoiceQuestion) question, (ChoiceQuestionDto) data);
+        break;
+      case RANGE:
+        updateQuestion((RangeQuestion) question, (RangeQuestionDto) data);
+        break;
+      case TEXT:
+        updateQuestion((TextQuestion) question, (TextQuestionDto) data);
+        break;
+      default:
+        break;
+    }
   }
 
-  /**
-   * @param questions
-   * @return
-   */
+  private void updateQuestion(final BooleanQuestion question, final BooleanQuestionDto data) {
+
+    question.setDefaultAnswer(data.getDefaultAnswer());
+  }
+
+  private void updateQuestion(final ChecklistEntry question, final ChecklistEntryDto data) {
+
+    question.setDefaultAnswer(data.getDefaultAnswer());
+  }
+
+  private void updateQuestion(final ChoiceQuestion question, final ChoiceQuestionDto data) {
+
+    final Optional<Answer> answerOp = question.getAnswers().stream()
+        .filter(p -> p.getId().equals(data.getDefaultAnswer()))
+        .reduce((a, b) -> {
+          throw new IllegalStateException("Multiple elements: " + a + ", " + b);
+        });
+
+    if (answerOp.isEmpty())
+      throw new IllegalArgumentException(
+          "Specified default answer ID does not exists in the question scope. Specified: " + data.getDefaultAnswer());
+
+    question.setDefaultAnswer(answerOp.get());
+    question.setMultiple(data.isMultiple());
+  }
+
+  private void updateQuestion(final RangeQuestion question, final RangeQuestionDto data) {
+
+    question.setDefaultAnswer(data.getDefaultValue());
+    question.setMaxText(data.getMaxText());
+    question.setMaxValue(data.getMaxValue());
+    question.setMinText(data.getMinText());
+    question.setMinValue(data.getMinValue());
+  }
+
+  private void updateQuestion(final TextQuestion question, final TextQuestionDto data) {
+
+    question.setLength(data.getLength());
+    question.setMultiline(data.isMultiline());
+  }
+
   private List<Question> copyQuestions(final List<Question> questions) {
 
     if (questions == null)
@@ -238,10 +355,6 @@ public class SurveyManagementService {
         .build());
   }
 
-  /**
-   * @param answers
-   * @return
-   */
   private List<Answer> copyAnswers(final List<Answer> answers) {
 
     if (answers == null || answers.isEmpty())

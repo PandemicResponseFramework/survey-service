@@ -85,7 +85,7 @@ public abstract class DtoMapper {
         .id(entity.getId())
         .order(entity.getRanking())
         .question(entity.getQuestion())
-        .defaultAnswer(entity.getDefaultValue())
+        .defaultAnswer(entity.getDefaultAnswer())
         .container(map(entity.getContainer()))
         .build();
   }
@@ -101,7 +101,7 @@ public abstract class DtoMapper {
         .id(entity.getId())
         .order(entity.getRanking())
         .question(entity.getQuestion())
-        .defaultAnswer(entity.getDefaultValue() == null ? null : entity.getDefaultValue().getId())
+        .defaultAnswer(entity.getDefaultAnswer() == null ? null : entity.getDefaultAnswer().getId())
         .answers(entity.getAnswers().stream().map(DtoMapper::map).collect(Collectors.toList()))
         .multiple(entity.getMultiple())
         .container(map(entity.getContainer()))
@@ -136,7 +136,7 @@ public abstract class DtoMapper {
         .id(entity.getId())
         .order(entity.getRanking())
         .question(entity.getQuestion())
-        .defaultValue(entity.getDefaultValue())
+        .defaultValue(entity.getDefaultAnswer())
         .minValue(entity.getMinValue())
         .maxValue(entity.getMaxValue())
         .minText(entity.getMinText())

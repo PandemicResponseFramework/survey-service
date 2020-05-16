@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-import one.tracking.framework.service.exception.ConflictException;
+import one.tracking.framework.exception.ConflictException;
 
 /**
  * This is the default {@link ResponseEntityExceptionHandler} used to map {@link Exception}s to HTTP

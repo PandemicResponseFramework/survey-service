@@ -13,6 +13,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -70,6 +71,7 @@ public class Survey {
   private Instant createdAt;
 
   @OneToMany(fetch = FetchType.LAZY)
+  @OrderBy("ranking ASC")
   private List<Question> questions;
 
   @PrePersist

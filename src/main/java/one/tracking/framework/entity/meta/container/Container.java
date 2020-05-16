@@ -14,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import org.hibernate.annotations.Formula;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,7 @@ public class Container {
   private Long id;
 
   @OneToMany
+  @OrderBy("ranking ASC")
   private List<Question> subQuestions;
 
   @Formula("CONTAINER_TYPE")

@@ -1,7 +1,7 @@
 /**
  *
  */
-package one.tracking.framework.service.exception;
+package one.tracking.framework.exception;
 
 /**
  * @author Marko Voß

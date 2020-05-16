@@ -42,7 +42,7 @@ public class ChoiceQuestion extends Question implements IContainerQuestion {
   private Boolean multiple;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  private Answer defaultValue;
+  private Answer defaultAnswer;
 
   @OneToOne
   private ChoiceContainer container;
@@ -59,8 +59,8 @@ public class ChoiceQuestion extends Question implements IContainerQuestion {
     super.onPrePersist();
 
     // Only allow a default answer, which is part of the available answers
-    if (this.answers != null && this.defaultValue != null
-        && this.answers.stream().noneMatch(p -> p.equals(this.defaultValue)))
-      this.defaultValue = null;
+    if (this.answers != null && this.defaultAnswer != null
+        && this.answers.stream().noneMatch(p -> p.equals(this.defaultAnswer)))
+      this.defaultAnswer = null;
   }
 }

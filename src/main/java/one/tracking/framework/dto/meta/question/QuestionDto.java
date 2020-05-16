@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.dto.meta.question;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -50,6 +51,7 @@ public abstract class QuestionDto {
   private String question;
 
   @NotNull
+  @Min(0)
   private Integer order;
 
 }

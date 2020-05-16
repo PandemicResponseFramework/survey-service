@@ -31,7 +31,7 @@ import one.tracking.framework.entity.meta.container.BooleanContainer;
 public class BooleanQuestion extends Question implements IContainerQuestion {
 
   @Column(nullable = true)
-  private Boolean defaultValue;
+  private Boolean defaultAnswer;
 
   @OneToOne
   private BooleanContainer container;
