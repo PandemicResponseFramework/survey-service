@@ -215,26 +215,29 @@ public class HelperBean {
 
     final List<Answer> answerEntities = answers.stream().map(f -> createAnswer(f)).collect(Collectors.toList());
 
-    ChoiceContainer container = null;
+    ChoiceQuestion parent = this.questionRepository.save(ChoiceQuestion.builder()
+        .question(question)
+        .ranking(order)
+        .answers(answerEntities)
+        .multiple(multiple)
+        .build());
 
     if (questions != null && !questions.isEmpty()) {
 
       final List<Answer> dependsOnAnswers = dependsOn == null || dependsOn.isEmpty() ? null
           : answerEntities.stream().filter(p -> dependsOn.contains(p.getValue())).collect(Collectors.toList());
 
-      container = this.containerRepository.save(ChoiceContainer.builder()
+      final ChoiceContainer container = this.containerRepository.save(ChoiceContainer.builder()
           .dependsOn(dependsOnAnswers)
           .questions(questions)
+          .parent(parent)
           .build());
+
+      parent.setContainer(container);
+      parent = this.questionRepository.save(parent);
     }
 
-    return this.questionRepository.save(ChoiceQuestion.builder()
-        .question(question)
-        .ranking(order)
-        .container(container)
-        .answers(answerEntities)
-        .multiple(multiple)
-        .build());
+    return parent;
   }
 
   /**
@@ -264,21 +267,24 @@ public class HelperBean {
       final Boolean dependsOn,
       final List<Question> questions) {
 
-    BooleanContainer container = null;
+    BooleanQuestion parent = this.questionRepository.save(BooleanQuestion.builder()
+        .question(question)
+        .ranking(order)
+        .build());
 
     if (questions != null && !questions.isEmpty()) {
 
-      container = this.containerRepository.save(BooleanContainer.builder()
+      final BooleanContainer container = this.containerRepository.save(BooleanContainer.builder()
           .questions(questions)
           .dependsOn(dependsOn)
+          .parent(parent)
           .build());
+
+      parent.setContainer(container);
+      parent = this.questionRepository.save(parent);
     }
 
-    return this.questionRepository.save(BooleanQuestion.builder()
-        .question(question)
-        .container(container)
-        .ranking(order)
-        .build());
+    return parent;
   }
 
   public ChecklistEntry createChecklistEntry(
@@ -321,22 +327,25 @@ public class HelperBean {
       final int length,
       final List<Question> questions) {
 
-    DefaultContainer container = null;
-
-    if (questions != null && !questions.isEmpty()) {
-
-      container = this.containerRepository.save(DefaultContainer.builder()
-          .questions(questions)
-          .build());
-    }
-
-    return this.questionRepository.save(TextQuestion.builder()
+    TextQuestion parent = this.questionRepository.save(TextQuestion.builder()
         .question(question)
         .multiline(multiline)
-        .container(container)
         .ranking(order)
         .length(length)
         .build());
+
+    if (questions != null && !questions.isEmpty()) {
+
+      final DefaultContainer container = this.containerRepository.save(DefaultContainer.builder()
+          .questions(questions)
+          .parent(parent)
+          .build());
+
+      parent.setContainer(container);
+      parent = this.questionRepository.save(parent);
+    }
+
+    return parent;
   }
 
   /**
@@ -397,24 +406,27 @@ public class HelperBean {
       final String minText, final String maxText,
       final List<Question> questions) {
 
-    DefaultContainer container = null;
-
-    if (questions != null && !questions.isEmpty()) {
-
-      container = this.containerRepository.save(DefaultContainer.builder()
-          .questions(questions)
-          .build());
-    }
-
-    return this.questionRepository.save(RangeQuestion.builder()
+    RangeQuestion parent = this.questionRepository.save(RangeQuestion.builder()
         .question(question)
         .minValue(minValue)
         .maxValue(maxValue)
         .defaultAnswer(defaultValue)
         .minText(minText)
         .maxText(maxText)
-        .container(container)
         .ranking(order)
         .build());
+
+    if (questions != null && !questions.isEmpty()) {
+
+      final DefaultContainer container = this.containerRepository.save(DefaultContainer.builder()
+          .questions(questions)
+          .parent(parent)
+          .build());
+
+      parent.setContainer(container);
+      parent = this.questionRepository.save(parent);
+    }
+
+    return parent;
   }
 }

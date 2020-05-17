@@ -8,8 +8,7 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import lombok.AllArgsConstructor;
@@ -35,13 +34,13 @@ import one.tracking.framework.entity.meta.container.ChoiceContainer;
 @DiscriminatorValue("CHOICE")
 public class ChoiceQuestion extends Question implements IContainerQuestion {
 
-  @ManyToMany(fetch = FetchType.LAZY)
+  @OneToMany(fetch = FetchType.LAZY)
   private List<Answer> answers;
 
   @Column(nullable = false)
   private Boolean multiple;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @OneToOne(fetch = FetchType.LAZY)
   private Answer defaultAnswer;
 
   @OneToOne
