@@ -3,9 +3,11 @@
  */
 package one.tracking.framework.dto.meta.question;
 
+import java.util.List;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -52,4 +54,8 @@ public abstract class QuestionDto {
   @NotNull
   private Integer order;
 
+  @JsonIgnore
+  public List<QuestionDto> getSubQuestions() {
+    return null;
+  }
 }

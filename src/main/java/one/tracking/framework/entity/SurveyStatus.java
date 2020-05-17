@@ -41,4 +41,7 @@ public class SurveyStatus {
 
   @ManyToOne(optional = false)
   private Question lastQuestion;
+
+  @ManyToOne(optional = true)
+  private Question nextQuestion;
 }

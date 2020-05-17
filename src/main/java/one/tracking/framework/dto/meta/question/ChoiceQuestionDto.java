@@ -34,4 +34,9 @@ public class ChoiceQuestionDto extends QuestionDto {
 
   @Valid
   private ChoiceContainerDto container;
+
+  @Override
+  public List<QuestionDto> getSubQuestions() {
+    return this.container == null ? null : this.container.getSubQuestions();
+  }
 }

@@ -18,6 +18,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +48,7 @@ import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.Survey;
+import one.tracking.framework.entity.meta.container.Container;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
@@ -55,6 +58,7 @@ import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
 import one.tracking.framework.repo.AnswerRepository;
+import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.QuestionRepository;
 import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
@@ -71,18 +75,21 @@ import one.tracking.framework.util.JWTHelper;
 @Service
 public class SurveyService {
 
+  public static final Instant INSTANT_MIN = Instant.ofEpochMilli(Long.MIN_VALUE);
+  public static final Instant INSTANT_MAX = Instant.ofEpochMilli(Long.MAX_VALUE);
+
   private static final Logger LOG = LoggerFactory.getLogger(SurveyService.class);
 
   private static final Random RANDOM = new Random();
-
-  private static final Instant INSTANT_MIN = Instant.ofEpochMilli(Long.MIN_VALUE);
-  private static final Instant INSTANT_MAX = Instant.ofEpochMilli(Long.MAX_VALUE);
 
   @Autowired
   private AnswerRepository answerRepository;
 
   @Autowired
   private QuestionRepository questionRepository;
+
+  @Autowired
+  private ContainerRepository containerRepository;
 
   @Autowired
   private SurveyRepository surveyRepository;
@@ -150,25 +157,36 @@ public class SurveyService {
     if (!validateResponse(question, type, surveyResponse))
       throw new IllegalArgumentException("Invalid Survey Response.");
 
+    Question nextQuestion = null;
+
     switch (type) {
       case BOOL:
         storeBooleanResponse(surveyResponse, user, instance, question);
+        nextQuestion = getNextSubQuestionId((BooleanQuestion) question, surveyResponse);
         break;
       case CHECKLIST:
         storeChecklistResponse(surveyResponse, user, instance, question);
         break;
       case CHOICE:
         storeChoiceResponse(surveyResponse, user, instance, question);
+        nextQuestion = getNextSubQuestionId((ChoiceQuestion) question, surveyResponse);
         break;
       case RANGE:
         storeRangeResponse(surveyResponse, user, instance, question);
+        nextQuestion = getNextSubQuestionId((RangeQuestion) question, surveyResponse);
         break;
       case TEXT:
         storeTextResponse(surveyResponse, user, instance, question);
+        nextQuestion = getNextSubQuestionId((TextQuestion) question, surveyResponse);
         break;
       default:
         // nothing got changed -> no need to continue
         return;
+    }
+
+    // Set next sibling
+    if (nextQuestion == null) {
+      nextQuestion = getNextSiblingId(nameId, question);
     }
 
     deleteSubQuestionTree(user, instance, question);
@@ -179,6 +197,7 @@ public class SurveyService {
 
       this.surveyStatusRepository.save(SurveyStatus.builder()
           .lastQuestion(question)
+          .nextQuestion(nextQuestion)
           .surveyInstance(instance)
           .user(user)
           .build());
@@ -186,8 +205,112 @@ public class SurveyService {
 
       final SurveyStatus status = statusOp.get();
       status.setLastQuestion(question);
+      status.setNextQuestion(nextQuestion);
       this.surveyStatusRepository.save(status);
     }
+  }
+
+  /**
+   * @param nameId
+   * @param question
+   */
+  private Question getNextSiblingId(final String nameId, final Question question) {
+
+    List<Question> siblings = null;
+
+    final Optional<Survey> parentSurveyOp =
+        this.surveyRepository.findByNameIdAndQuestionsIn(nameId, Collections.singleton(question));
+
+    if (parentSurveyOp.isPresent()) {
+      siblings = parentSurveyOp.get().getQuestions();
+
+    } else {
+
+      final Optional<Container> parentContainerOp =
+          this.containerRepository.findBySubQuestionsIn(Collections.singleton(question));
+
+      if (parentContainerOp.isEmpty())
+        throw new IllegalStateException(
+            "Unexpected state: Could not find question id as a child of the survey nor any container. Question id: "
+                + question.getId());
+
+      siblings = parentContainerOp.get().getSubQuestions();
+    }
+
+    final Iterator<Question> it = siblings.iterator();
+    while (it.hasNext()) {
+      if (it.next().getId().equals(question.getId())) {
+        return it.hasNext() ? it.next() : null;
+      }
+    }
+
+    return null;
+  }
+
+  private Question seekNextQuestion(final Question question) {
+
+    final Optional<Container> parentContainerOp =
+        this.containerRepository.findBySubQuestionsIn(Collections.singleton(question));
+
+    if (parentContainerOp.isEmpty())
+      throw new IllegalStateException(
+          "Unexpected state: Could not find question id as a child of the survey nor any container. Question id: "
+              + question.getId());
+
+    final List<Question> siblings = parentContainerOp.get().getSubQuestions();
+    Question result = null;
+
+    final Iterator<Question> it = siblings.iterator();
+    while (it.hasNext()) {
+      if (it.next().getId().equals(question.getId())) {
+        result = it.hasNext() ? it.next() : null;
+      }
+    }
+    return result;
+  }
+
+  private Question getNextSubQuestionId(final BooleanQuestion question, final SurveyResponseDto response) {
+
+    if (!question.hasContainer()
+        || question.getContainer().getSubQuestions() == null
+        || question.getContainer().getSubQuestions().isEmpty()
+        || !response.getBoolAnswer().equals(question.getContainer().getDependsOn()))
+      return null;
+
+    return question.getContainer().getSubQuestions().get(0);
+  }
+
+  private Question getNextSubQuestionId(final ChoiceQuestion question, final SurveyResponseDto response) {
+
+    if (!question.hasContainer()
+        || question.getContainer().getSubQuestions() == null
+        || question.getContainer().getSubQuestions().isEmpty()
+        || question.getContainer().getDependsOn() == null
+        || question.getContainer().getDependsOn().isEmpty()
+        || question.getContainer().getDependsOn().stream().noneMatch(p -> response.getAnswerIds().contains(p.getId())))
+      return null;
+
+    return question.getContainer().getSubQuestions().get(0);
+  }
+
+  private Question getNextSubQuestionId(final RangeQuestion question, final SurveyResponseDto response) {
+
+    if (!question.hasContainer()
+        || question.getContainer().getSubQuestions() == null
+        || question.getContainer().getSubQuestions().isEmpty())
+      return null;
+
+    return question.getContainer().getSubQuestions().get(0);
+  }
+
+  private Question getNextSubQuestionId(final TextQuestion question, final SurveyResponseDto response) {
+
+    if (!question.hasContainer()
+        || question.getContainer().getSubQuestions() == null
+        || question.getContainer().getSubQuestions().isEmpty())
+      return null;
+
+    return question.getContainer().getSubQuestions().get(0);
   }
 
   /**
@@ -637,7 +760,15 @@ public class SurveyService {
 
       final Optional<SurveyStatus> surveyStatusOp =
           this.surveyStatusRepository.findByUserAndSurveyInstance(user, instance);
-      final Long lastQuestionId = surveyStatusOp.isEmpty() ? null : surveyStatusOp.get().getLastQuestion().getId();
+
+      Long lastQuestionId = null;
+      Long nextQuestionId = null;
+
+      if (surveyStatusOp.isPresent()) {
+        final SurveyStatus surveyStatus = surveyStatusOp.get();
+        lastQuestionId = surveyStatus.getLastQuestion().getId();
+        nextQuestionId = surveyStatus.getNextQuestion() == null ? null : surveyStatus.getNextQuestion().getId();
+      }
 
       final SurveyStatusType status = calculateSurveyStatus(user, instance);
 
@@ -645,6 +776,7 @@ public class SurveyService {
           .nameId(survey.getNameId())
           .status(status)
           .lastQuestionId(lastQuestionId)
+          .nextQuestionId(nextQuestionId)
           .token(instance.getToken())
           .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime())
           .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime())

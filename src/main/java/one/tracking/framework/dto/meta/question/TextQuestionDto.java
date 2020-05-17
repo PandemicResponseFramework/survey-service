@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.dto.meta.question;
 
+import java.util.List;
 import javax.validation.Valid;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
@@ -29,4 +30,8 @@ public class TextQuestionDto extends QuestionDto {
   @Valid
   private DefaultContainerDto container;
 
+  @Override
+  public List<QuestionDto> getSubQuestions() {
+    return this.container == null ? null : this.container.getSubQuestions();
+  }
 }

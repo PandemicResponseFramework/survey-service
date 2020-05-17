@@ -25,6 +25,8 @@ public class SurveyStatusDto {
 
   private Long lastQuestionId;
 
+  private Long nextQuestionId;
+
   @NotBlank
   private String token;
 

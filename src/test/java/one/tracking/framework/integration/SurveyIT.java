@@ -104,7 +104,7 @@ public class SurveyIT {
      * Test overview
      */
 
-    final String token = testOverview(SurveyStatusType.INCOMPLETE, null);
+    final String token = testOverview(SurveyStatusType.INCOMPLETE, null, null);
 
     /*
      * Test survey meta data
@@ -133,8 +133,10 @@ public class SurveyIT {
     performSurvey(survey, token);
   }
 
-  private String testOverview(final SurveyStatusType expectedStatus, final Long expectedLastQuestionId)
-      throws Exception {
+  private String testOverview(
+      final SurveyStatusType expectedStatus,
+      final Long expectedLastQuestionId,
+      final Long expectedNextQuestionId) throws Exception {
 
     this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT_OVERVIEW)
         .with(csrf())
@@ -163,6 +165,11 @@ public class SurveyIT {
     else
       assertThat(status.getLastQuestionId(), is(expectedLastQuestionId));
 
+    if (expectedNextQuestionId == null)
+      assertThat(status.getNextQuestionId(), is(nullValue()));
+    else
+      assertThat(status.getNextQuestionId(), is(expectedNextQuestionId));
+
     assertThat(status.getStatus(), is(expectedStatus));
     assertThat(status.getToken(), is(not(nullValue())));
 
@@ -170,6 +177,12 @@ public class SurveyIT {
   }
 
   private void performSurvey(final SurveyDto survey, final String surveyToken) throws Exception {
+
+    /*
+     * We do iterate through the list of questions in order to test the correct order of the question.
+     * If specific questions need to be selected, we can use the getQuestion(List<Question>, String)
+     * method.
+     */
 
     final Iterator<QuestionDto> iterator = survey.getQuestions().iterator();
 
@@ -229,7 +242,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    QuestionDto nextQuestion = getQuestion(survey.getQuestions(), "Q2");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q2"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q2 - boolean - with children
@@ -259,7 +276,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q2C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q2C1"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q2C1
@@ -285,7 +306,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q3");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q3"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q3 - single choice - no children
@@ -338,7 +363,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q4");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q4"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q4 - multiple choice - no children
@@ -379,7 +408,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q5");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q5"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q5 - single choice - with children
@@ -427,7 +460,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q5C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q5C1"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q5C1
@@ -453,7 +490,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q6");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q6"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q6 - multiple choice - with children
@@ -502,7 +543,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q6C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q6C1"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q6C1
@@ -528,7 +573,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q7");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q7"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q7 - checklist
@@ -570,7 +619,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q8");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q8"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     // Replace answer with some entries set to true and some to false
     // -> result should be Q7E1=true, Q7E2=false, Q7E3=false
@@ -589,7 +642,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     // Sending an entry of the checklist as a separated answer must fail
     this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
@@ -603,7 +656,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q8 - Range - no children
@@ -660,7 +713,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q9");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q9"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q9 - Range - with children
@@ -720,7 +777,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q9C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q9C1"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q9C1
@@ -746,7 +807,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q10");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q10"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q10 - TextField - no children
@@ -818,7 +883,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q11");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q11"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q11 - TextField - with children
@@ -892,7 +961,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q11C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q11C1"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q11C1
@@ -917,7 +990,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q12");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q12"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q12 - TextArea - no children
@@ -989,7 +1066,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q13");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q13"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q13 - TextArea - with children
@@ -1063,7 +1144,11 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    nextQuestion = getQuestion(survey.getQuestions(), "Q13C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q13C1"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q13C1
@@ -1088,7 +1173,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), null);
 
     /*
      * Survey completed successfully. Now let us change answers and check the behavior. Special behavior
@@ -1117,7 +1202,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     // Answer = true -> Child question required -> SurveyStatusType = INCOMPLETE
     this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
@@ -1131,7 +1216,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q2C1
@@ -1151,7 +1236,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     /*
      * Q5 - single choice - with children
@@ -1179,7 +1264,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     // Child question depends on answers Q5A1 OR Q5A2 -> answer Q5A2 -> SurveyStatusType = INCOMPLETE
     answer = choiceQuestion.getAnswers().get(1);
@@ -1197,7 +1282,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q5C1
@@ -1218,7 +1303,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     /*
      * Q6 - multiple choice - with children
@@ -1246,7 +1331,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     // Child question depends on answers Q6A1 OR Q6A2 -> answer Q6A2 -> SurveyStatusType = INCOMPLETE
     answer = choiceQuestion.getAnswers().get(1);
@@ -1264,7 +1349,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q6C1
@@ -1285,7 +1370,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     /*
      * Q9 - Range - with children
@@ -1308,7 +1393,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q9C1
@@ -1329,7 +1414,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     /*
      * Q11 - TextField - with children
@@ -1355,7 +1440,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q11C1
@@ -1375,7 +1460,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     /*
      * Q13 - TextArea - with children
@@ -1401,7 +1486,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
      * Q13C1
@@ -1421,7 +1506,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
   }
 
   /**
@@ -1448,8 +1533,19 @@ public class SurveyIT {
     if (questions == null || questions.isEmpty() || questionText == null)
       return null;
 
-    return questions.stream().filter(p -> questionText.equals(p.getQuestion())).reduce((a, b) -> {
-      throw new IllegalStateException("Multiple elements: " + a + ", " + b);
-    }).get();
+    for (final QuestionDto question : questions) {
+
+      if (questionText.equals(question.getQuestion()))
+        return question;
+
+      final List<QuestionDto> subQuestions = question.getSubQuestions();
+      if (subQuestions != null) {
+        final QuestionDto result = getQuestion(subQuestions, questionText);
+        if (result != null)
+          return result;
+      }
+    }
+
+    return null;
   }
 }

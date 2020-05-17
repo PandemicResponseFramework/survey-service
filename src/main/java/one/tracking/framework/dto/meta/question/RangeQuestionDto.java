@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.dto.meta.question;
 
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -40,5 +41,10 @@ public class RangeQuestionDto extends QuestionDto {
 
   @Valid
   private DefaultContainerDto container;
+
+  @Override
+  public List<QuestionDto> getSubQuestions() {
+    return this.container == null ? null : this.container.getSubQuestions();
+  }
 
 }
