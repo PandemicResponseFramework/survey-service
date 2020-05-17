@@ -23,7 +23,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import one.tracking.framework.dto.meta.question.QuestionType;
 
 /**
  * @author Marko Voß

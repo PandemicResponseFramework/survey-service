@@ -1,7 +1,15 @@
 /**
  *
  */
-package one.tracking.framework.dto.meta.question;
+package one.tracking.framework.entity.meta.question;
+
+import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
+import one.tracking.framework.dto.meta.question.ChecklistEntryDto;
+import one.tracking.framework.dto.meta.question.ChecklistQuestionDto;
+import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
+import one.tracking.framework.dto.meta.question.QuestionDto;
+import one.tracking.framework.dto.meta.question.RangeQuestionDto;
+import one.tracking.framework.dto.meta.question.TextQuestionDto;
 
 /**
  * @author Marko Voß

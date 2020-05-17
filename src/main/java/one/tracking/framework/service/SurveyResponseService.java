@@ -120,43 +120,6 @@ public class SurveyResponseService {
     }
   }
 
-  /**
-   * @param nameId
-   * @param question
-   */
-  private Question getNextSiblingId(final String nameId, final Question question) {
-
-    List<Question> siblings = null;
-
-    final Optional<Survey> parentSurveyOp =
-        this.surveyRepository.findByNameIdAndQuestionsIn(nameId, Collections.singleton(question));
-
-    if (parentSurveyOp.isPresent()) {
-      siblings = parentSurveyOp.get().getQuestions();
-
-    } else {
-
-      final Optional<Container> parentContainerOp =
-          this.containerRepository.findByQuestionsIn(Collections.singleton(question));
-
-      if (parentContainerOp.isEmpty())
-        throw new IllegalStateException(
-            "Unexpected state: Could not find question id as a child of the survey nor any container. Question id: "
-                + question.getId());
-
-      siblings = parentContainerOp.get().getQuestions();
-    }
-
-    final Iterator<Question> it = siblings.iterator();
-    while (it.hasNext()) {
-      if (it.next().getId().equals(question.getId())) {
-        return it.hasNext() ? it.next() : null;
-      }
-    }
-
-    return null;
-  }
-
   private Question seekNextQuestion(final Question question) {
 
     final Optional<Container> parentContainerOp =

@@ -4,17 +4,16 @@
 package one.tracking.framework.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import one.tracking.framework.domain.SearchResult;
 import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
 import one.tracking.framework.dto.meta.question.ChecklistEntryDto;
 import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
-import one.tracking.framework.dto.meta.question.QuestionType;
 import one.tracking.framework.dto.meta.question.RangeQuestionDto;
 import one.tracking.framework.dto.meta.question.TextQuestionDto;
 import one.tracking.framework.entity.meta.Answer;
@@ -22,13 +21,15 @@ import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
+import one.tracking.framework.entity.meta.container.Container;
+import one.tracking.framework.entity.meta.container.ContainerType;
 import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
-import one.tracking.framework.entity.meta.question.IContainerQuestion;
 import one.tracking.framework.entity.meta.question.Question;
+import one.tracking.framework.entity.meta.question.QuestionType;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
 import one.tracking.framework.exception.ConflictException;
@@ -100,21 +101,23 @@ public class SurveyManagementService {
 
     final Survey survey = surveys.get(0);
 
+    // Highest version must not be released
     if (survey.getReleaseStatus() == ReleaseStatusType.RELEASED)
       throw new ConflictException("Current survey with nameId: " + nameId + " got released already.");
 
+    final Optional<Question> questionOp = this.questionRepository.findById(data.getId());
+    if (questionOp.isEmpty())
+      throw new IllegalArgumentException("No such question found for id: " + data.getId());
+
+    final Question question = questionOp.get();
+
     /*
-     * We have to check, if the specified ID in questionData is actually part of the current survey
-     * entity. So we have to look for it and because of that, we do not need to request the question
-     * entity via the question repository.
+     * We have to check, if the specified ID in data is actually part of the current survey entity. So
+     * we have to look for it and because of that, we do not need to request the question entity via the
+     * question repository.
      */
-    final SearchResult searchResult = searchQuestion(survey.getQuestions(), data.getId());
+    final Container container = searchQuestion(survey, question);
 
-    if (searchResult == null)
-      throw new IllegalArgumentException(
-          "Specified questionId is not part of the current survey: questionId: " + data.getId());
-
-    final Question question = searchResult.getQuestion();
     final int currentRanking = question.getRanking();
 
     final QuestionType dataType = QuestionType.valueOf(data.getClass());
@@ -124,9 +127,9 @@ public class SurveyManagementService {
           + question.getType() + "; Received: " + dataType);
 
     // FIXME start ranking/order at zero in example data and IT
-    if (data.getOrder() >= searchResult.getQuestionContainer().size())
+    if (data.getOrder() >= container.getQuestions().size())
       throw new IllegalArgumentException("The specified order is greater than the possible value. Expected: "
-          + searchResult.getQuestionContainer().size() + " Received: " + data.getOrder());
+          + container.getQuestions().size() + " Received: " + data.getOrder());
 
     updateQuestionData(question, data);
 
@@ -135,7 +138,7 @@ public class SurveyManagementService {
 
     // Update ranking of siblings if required
     if (question.getRanking() != currentRanking)
-      updateRankings(searchResult, updatedQuestion);
+      updateRankings(container, updatedQuestion);
 
     return updatedQuestion;
   }
@@ -144,11 +147,11 @@ public class SurveyManagementService {
    * @param searchResult
    * @param updatedQuestion
    */
-  private void updateRankings(final SearchResult searchResult, final Question updatedQuestion) {
+  private void updateRankings(final Container container, final Question updatedQuestion) {
 
-    for (int i = 0; i < searchResult.getQuestionContainer().size(); i++) {
+    for (int i = 0; i < container.getQuestions().size(); i++) {
 
-      final Question currentSibling = searchResult.getQuestionContainer().get(i);
+      final Question currentSibling = container.getQuestions().get(i);
 
       // Skip updating updatedQuestion
       if (currentSibling.getId().equals(updatedQuestion.getId()))
@@ -165,31 +168,45 @@ public class SurveyManagementService {
     }
   }
 
-  private SearchResult searchQuestion(final List<Question> questions, final Long id) {
+  private Container searchQuestion(final Survey survey, final Question question) {
 
-    if (questions == null || questions.isEmpty())
+    if (survey == null || question == null)
       return null;
 
-    for (int i = 0; i < questions.size(); i++) {
+    final Optional<Container> originContainerOp =
+        this.containerRepository.findByQuestionsIn(Collections.singleton(question));
 
-      final Question question = questions.get(i);
+    if (originContainerOp.isEmpty())
+      throw new IllegalStateException(
+          "Unexpected state. No container found containing question id: " + question.getId());
 
-      if (question.hasContainer()) {
-        final SearchResult result =
-            searchQuestion(((IContainerQuestion) question).getContainer().getQuestions(), id);
-        if (result != null)
-          return result;
+    Optional<Container> containerOp = originContainerOp;
+
+    // Iterate up the tree to the root and check if question belongs to expected survey
+    while (containerOp.isPresent()) {
+
+      final Container container = containerOp.get();
+      if (container.getParent() != null) {
+
+        containerOp = this.containerRepository.findByQuestionsIn(Collections.singleton(container.getParent()));
+
+      } else if (container.getType() != ContainerType.SURVEY) {
+
+        throw new IllegalStateException(
+            "Expected survey to be root of tree. Found root container id: " + container.getId());
+
+      } else {
+
+        final Survey foundSurvey = (Survey) container;
+
+        if (!survey.getId().equals(foundSurvey.getId()))
+          throw new IllegalArgumentException(
+              "Question does not belong to current survey version. Question id: " + question.getId()
+                  + "; Expected survey id: " + survey.getId() + " Found survey id: " + foundSurvey.getId());
       }
-
-      if (question.getId().equals(id))
-        return SearchResult.builder()
-            .question(question)
-            .questionContainer(questions)
-            .position(i)
-            .build();
     }
 
-    return null;
+    return originContainerOp.get();
   }
 
   private void updateQuestionData(final Question question, final QuestionDto data) {
