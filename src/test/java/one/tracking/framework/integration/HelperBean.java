@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.IntervalType;
+import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
@@ -167,6 +168,7 @@ public class HelperBean {
         .title("TITLE")
         .description("DESCRIPTION")
         .intervalType(IntervalType.NONE)
+        .releaseStatus(ReleaseStatusType.RELEASED)
         .build());
   }
 
