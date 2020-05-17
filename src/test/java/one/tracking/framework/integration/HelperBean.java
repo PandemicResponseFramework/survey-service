@@ -48,7 +48,7 @@ public class HelperBean {
 
   public void createTestSurvey() {
 
-    int order = 1;
+    int order = 0;
     final List<Question> questions = new ArrayList<>(12);
 
     // boolean - no children
@@ -59,7 +59,7 @@ public class HelperBean {
     questions.add(createBoolQuestion(
         "Q2", order++,
         true,
-        Collections.singletonList(createBoolQuestion("Q2C1", 1))));
+        Collections.singletonList(createBoolQuestion("Q2C1", 0))));
 
     // single choice - no children
     questions.add(createChoiceQuestion(
@@ -91,7 +91,7 @@ public class HelperBean {
         Arrays.asList(
             "Q5A1",
             "Q5A2"),
-        Collections.singletonList(createBoolQuestion("Q5C1", 1))));
+        Collections.singletonList(createBoolQuestion("Q5C1", 0))));
 
     // multiple choice - with children
     questions.add(createChoiceQuestion(
@@ -104,16 +104,16 @@ public class HelperBean {
         Arrays.asList(
             "Q6A1",
             "Q6A2"),
-        Collections.singletonList(createBoolQuestion("Q6C1", 1))));
+        Collections.singletonList(createBoolQuestion("Q6C1", 0))));
 
     // checklist
     questions.add(createChecklistQuestion(
         "Q7",
         order++,
         Arrays.asList(
-            createChecklistEntry("Q7E1", 1),
-            createChecklistEntry("Q7E2", 2),
-            createChecklistEntry("Q7E3", 3))));
+            createChecklistEntry("Q7E1", 0),
+            createChecklistEntry("Q7E2", 1),
+            createChecklistEntry("Q7E3", 2))));
 
     // Range - no children
     questions.add(createRangeQuestion(
@@ -130,7 +130,7 @@ public class HelperBean {
         2, 11,
         6,
         "Q9MIN", "Q9MAX",
-        Collections.singletonList(createBoolQuestion("Q9C1", 1))));
+        Collections.singletonList(createBoolQuestion("Q9C1", 0))));
 
     // TextField - no children
     questions.add(createTextQuestion(
@@ -145,7 +145,7 @@ public class HelperBean {
         order++,
         false,
         256,
-        Collections.singletonList(createBoolQuestion("Q11C1", 1))));
+        Collections.singletonList(createBoolQuestion("Q11C1", 0))));
 
     // TextArea - no children
     questions.add(createTextQuestion(
@@ -160,7 +160,7 @@ public class HelperBean {
         order++,
         true,
         512,
-        Collections.singletonList(createBoolQuestion("Q13C1", 1))));
+        Collections.singletonList(createBoolQuestion("Q13C1", 0))));
 
     this.surveyRepository.save(Survey.builder()
         .questions(questions)

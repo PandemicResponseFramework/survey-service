@@ -113,7 +113,7 @@ public class ExampleDataService {
    */
   private void createBasicSurvey() {
 
-    int order = 1;
+    int order = 0;
     final List<Question> questions = new ArrayList<>(12);
 
     final String s256 =
@@ -179,7 +179,7 @@ public class ExampleDataService {
         Arrays.asList(
             "Full time employment",
             "Part time employment"),
-        Collections.singletonList(createTextQuestion("Type of employment:", 1, false))));
+        Collections.singletonList(createTextQuestion("Type of employment:", 0, false))));
 
     // 5
     questions.add(createChoiceQuestion(
@@ -201,7 +201,7 @@ public class ExampleDataService {
         "In general, do you have any health problems that require you to limit your activities?", order++,
         true,
         Collections
-            .singletonList(createTextQuestion("If yes, what health problem limits your activities?", 1, false))));
+            .singletonList(createTextQuestion("If yes, what health problem limits your activities?", 0, false))));
 
     // 8
     questions.add(createBoolQuestion(
@@ -238,7 +238,7 @@ public class ExampleDataService {
    */
   private void createRegularSurvey() {
 
-    int order = 1;
+    int order = 0;
     final List<Question> questions = new ArrayList<>(12);
 
     // 13
@@ -323,22 +323,22 @@ public class ExampleDataService {
         "Have you been hospitalised for a COVID-19 infection?",
         order++,
         true,
-        Collections.singletonList(createTextQuestion("How many days were you sick?", 1, false))));
+        Collections.singletonList(createTextQuestion("How many days were you sick?", 0, false))));
 
     // 23
     questions.add(createChecklistQuestion(
         "To what degree have you experienced the following symptoms in the last 7 days:",
         order++,
         Arrays.asList(
-            createChecklistEntry("Headache", 1),
-            createChecklistEntry("Muscle pain/aches", 2),
-            createChecklistEntry("Difficulty breathing", 3),
-            createChecklistEntry("Fever/ high temperature", 4),
-            createChecklistEntry("Sore throat", 5),
-            createChecklistEntry("Dry cough", 6),
-            createChecklistEntry("Wet cough", 7),
-            createChecklistEntry("I felt physically exhausted", 8),
-            createChecklistEntry("loss of smell and taste", 9))));
+            createChecklistEntry("Headache", 0),
+            createChecklistEntry("Muscle pain/aches", 1),
+            createChecklistEntry("Difficulty breathing", 2),
+            createChecklistEntry("Fever/ high temperature", 3),
+            createChecklistEntry("Sore throat", 4),
+            createChecklistEntry("Dry cough", 5),
+            createChecklistEntry("Wet cough", 6),
+            createChecklistEntry("I felt physically exhausted", 7),
+            createChecklistEntry("loss of smell and taste", 8))));
 
     // 24
     questions.add(createRangeQuestion(
@@ -440,7 +440,7 @@ public class ExampleDataService {
         "Has the COVID-19 crisis affected your ability to exercise?",
         order++,
         true,
-        Collections.singletonList(createTextQuestion("If yes, how?", 1, false))));
+        Collections.singletonList(createTextQuestion("If yes, how?", 0, false))));
 
     // 36
     questions.add(createTextQuestion(
