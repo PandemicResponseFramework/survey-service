@@ -9,6 +9,7 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
@@ -40,7 +41,7 @@ public class Container {
   @GeneratedValue
   private Long id;
 
-  @OneToMany
+  @OneToMany(fetch = FetchType.LAZY)
   @OrderBy("ranking ASC")
   private List<Question> questions;
 
@@ -51,7 +52,7 @@ public class Container {
   private Instant createdAt;
 
   @PrePersist
-  void onPrePersist() {
+  protected void onPrePersist() {
     if (this.id == null) {
       setCreatedAt(Instant.now());
     }
