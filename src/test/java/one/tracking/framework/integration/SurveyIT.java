@@ -165,10 +165,10 @@ public class SurveyIT {
     else
       assertThat(status.getLastQuestionId(), is(expectedLastQuestionId));
 
-    // if (expectedNextQuestionId == null)
-    // assertThat(status.getNextQuestionId(), is(nullValue()));
-    // else
-    // assertThat(status.getNextQuestionId(), is(expectedNextQuestionId));
+    if (expectedNextQuestionId == null)
+      assertThat(status.getNextQuestionId(), is(nullValue()));
+    else
+      assertThat(status.getNextQuestionId(), is(expectedNextQuestionId));
 
     assertThat(status.getStatus(), is(expectedStatus));
     assertThat(status.getToken(), is(not(nullValue())));
@@ -1202,6 +1202,10 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
+    nextQuestion = getQuestion(survey.getQuestions(), "Q3");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q3"));
+
     testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     // Answer = true -> Child question required -> SurveyStatusType = INCOMPLETE
@@ -1215,6 +1219,10 @@ public class SurveyIT {
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q2C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q2C1"));
 
     testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
@@ -1235,6 +1243,10 @@ public class SurveyIT {
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q3");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q3"));
 
     testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
@@ -1264,6 +1276,10 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
+    nextQuestion = getQuestion(survey.getQuestions(), "Q6");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q6"));
+
     testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     // Child question depends on answers Q5A1 OR Q5A2 -> answer Q5A2 -> SurveyStatusType = INCOMPLETE
@@ -1281,6 +1297,10 @@ public class SurveyIT {
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q5C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q5C1"));
 
     testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
@@ -1302,6 +1322,10 @@ public class SurveyIT {
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q6");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q6"));
 
     testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
@@ -1331,6 +1355,10 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
+    nextQuestion = getQuestion(survey.getQuestions(), "Q7");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q7"));
+
     testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
     // Child question depends on answers Q6A1 OR Q6A2 -> answer Q6A2 -> SurveyStatusType = INCOMPLETE
@@ -1348,6 +1376,10 @@ public class SurveyIT {
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q6C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q6C1"));
 
     testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
@@ -1369,6 +1401,10 @@ public class SurveyIT {
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q7");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q7"));
 
     testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
@@ -1393,6 +1429,10 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
+    nextQuestion = getQuestion(survey.getQuestions(), "Q9C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q9C1"));
+
     testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
@@ -1413,6 +1453,10 @@ public class SurveyIT {
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q10");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q10"));
 
     testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
@@ -1440,6 +1484,10 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
+    nextQuestion = getQuestion(survey.getQuestions(), "Q11C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q11C1"));
+
     testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
@@ -1459,6 +1507,10 @@ public class SurveyIT {
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q12");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q12"));
 
     testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
 
@@ -1486,6 +1538,10 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
+    nextQuestion = getQuestion(survey.getQuestions(), "Q13C1");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q13C1"));
+
     testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
@@ -1506,7 +1562,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.COMPLETED, question.getId(), null);
   }
 
   /**

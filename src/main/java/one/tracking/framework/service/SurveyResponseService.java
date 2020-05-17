@@ -80,26 +80,35 @@ public class SurveyResponseService {
     if (!validateResponse(question, surveyResponse))
       throw new IllegalArgumentException("Invalid Survey Response.");
 
+    Question nextQuestion = null;
+
     switch (question.getType()) {
       case BOOL:
         storeBooleanResponse(surveyResponse, user, instance, question);
+        nextQuestion = getNextSubQuestion((BooleanQuestion) question, surveyResponse);
         break;
       case CHECKLIST:
         storeChecklistResponse(surveyResponse, user, instance, question);
         break;
       case CHOICE:
         storeChoiceResponse(surveyResponse, user, instance, question);
+        nextQuestion = getNextSubQuestion((ChoiceQuestion) question, surveyResponse);
         break;
       case RANGE:
         storeRangeResponse(surveyResponse, user, instance, question);
+        nextQuestion = getNextSubQuestion((RangeQuestion) question, surveyResponse);
         break;
       case TEXT:
         storeTextResponse(surveyResponse, user, instance, question);
+        nextQuestion = getNextSubQuestion((TextQuestion) question, surveyResponse);
         break;
       default:
         // nothing got changed -> no need to continue
         return;
     }
+
+    if (nextQuestion == null)
+      nextQuestion = seekNextQuestion(question);
 
     deleteSubQuestionTree(user, instance, question);
 
@@ -109,6 +118,7 @@ public class SurveyResponseService {
 
       this.surveyStatusRepository.save(SurveyStatus.builder()
           .lastQuestion(question)
+          .nextQuestion(nextQuestion)
           .surveyInstance(instance)
           .user(user)
           .build());
@@ -116,33 +126,44 @@ public class SurveyResponseService {
 
       final SurveyStatus status = statusOp.get();
       status.setLastQuestion(question);
+      status.setNextQuestion(nextQuestion);
       this.surveyStatusRepository.save(status);
     }
   }
 
   private Question seekNextQuestion(final Question question) {
 
-    final Optional<Container> parentContainerOp =
+    if (question == null)
+      return null;
+
+    final Optional<Container> containerOp =
         this.containerRepository.findByQuestionsIn(Collections.singleton(question));
 
-    if (parentContainerOp.isEmpty())
-      throw new IllegalStateException(
-          "Unexpected state: Could not find question id as a child of the survey nor any container. Question id: "
-              + question.getId());
+    if (containerOp.isEmpty())
+      return null;
 
-    final List<Question> siblings = parentContainerOp.get().getQuestions();
+    final Container container = containerOp.get();
+
     Question result = null;
 
-    final Iterator<Question> it = siblings.iterator();
+    final Iterator<Question> it = container.getQuestions().iterator();
+
     while (it.hasNext()) {
+      // Find current question and return next sibling if exists
       if (it.next().getId().equals(question.getId())) {
         result = it.hasNext() ? it.next() : null;
       }
     }
-    return result;
+
+    // If no next sibling exists go up a level and look for next sibling of parent question
+    if (result == null)
+      return seekNextQuestion(container.getParent());
+    else
+      return result;
+
   }
 
-  private Question getNextSubQuestionId(final BooleanQuestion question, final SurveyResponseDto response) {
+  private Question getNextSubQuestion(final BooleanQuestion question, final SurveyResponseDto response) {
 
     if (!question.hasContainer()
         || question.getContainer().getQuestions() == null
@@ -153,7 +174,7 @@ public class SurveyResponseService {
     return question.getContainer().getQuestions().get(0);
   }
 
-  private Question getNextSubQuestionId(final ChoiceQuestion question, final SurveyResponseDto response) {
+  private Question getNextSubQuestion(final ChoiceQuestion question, final SurveyResponseDto response) {
 
     if (!question.hasContainer()
         || question.getContainer().getQuestions() == null
@@ -166,7 +187,7 @@ public class SurveyResponseService {
     return question.getContainer().getQuestions().get(0);
   }
 
-  private Question getNextSubQuestionId(final RangeQuestion question, final SurveyResponseDto response) {
+  private Question getNextSubQuestion(final RangeQuestion question, final SurveyResponseDto response) {
 
     if (!question.hasContainer()
         || question.getContainer().getQuestions() == null
@@ -176,7 +197,7 @@ public class SurveyResponseService {
     return question.getContainer().getQuestions().get(0);
   }
 
-  private Question getNextSubQuestionId(final TextQuestion question, final SurveyResponseDto response) {
+  private Question getNextSubQuestion(final TextQuestion question, final SurveyResponseDto response) {
 
     if (!question.hasContainer()
         || question.getContainer().getQuestions() == null
