@@ -169,12 +169,12 @@ public abstract class DtoMapper {
    */
   public static final BooleanContainerDto map(final BooleanContainer entity) {
 
-    if (entity == null || entity.getSubQuestions() == null || entity.getSubQuestions().isEmpty())
+    if (entity == null || entity.getQuestions() == null || entity.getQuestions().isEmpty())
       return null;
 
     return BooleanContainerDto.builder()
         .boolDependsOn(entity.getDependsOn())
-        .subQuestions(map(entity.getSubQuestions()))
+        .subQuestions(map(entity.getQuestions()))
         .build();
   }
 
@@ -185,7 +185,7 @@ public abstract class DtoMapper {
    */
   public static final ChoiceContainerDto map(final ChoiceContainer entity) {
 
-    if (entity == null || entity.getSubQuestions() == null || entity.getSubQuestions().isEmpty())
+    if (entity == null || entity.getQuestions() == null || entity.getQuestions().isEmpty())
       return null;
 
     final List<Long> dependsOn = entity.getDependsOn() == null || entity.getDependsOn().isEmpty() ? null
@@ -193,7 +193,7 @@ public abstract class DtoMapper {
 
     return ChoiceContainerDto.builder()
         .choiceDependsOn(dependsOn)
-        .subQuestions(map(entity.getSubQuestions()))
+        .subQuestions(map(entity.getQuestions()))
         .build();
   }
 
@@ -204,11 +204,11 @@ public abstract class DtoMapper {
    */
   public static final DefaultContainerDto map(final DefaultContainer entity) {
 
-    if (entity == null || entity.getSubQuestions() == null || entity.getSubQuestions().isEmpty())
+    if (entity == null || entity.getQuestions() == null || entity.getQuestions().isEmpty())
       return null;
 
     return DefaultContainerDto.builder()
-        .subQuestions(map(entity.getSubQuestions()))
+        .subQuestions(map(entity.getQuestions()))
         .build();
   }
 

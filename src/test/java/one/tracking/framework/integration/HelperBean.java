@@ -199,7 +199,7 @@ public class HelperBean {
    * @param multiple
    * @param answers
    * @param dependsOn
-   * @param subQuestions
+   * @param questions
    * @return
    */
   public Question createChoiceQuestion(
@@ -208,7 +208,7 @@ public class HelperBean {
       final boolean multiple,
       final List<String> answers,
       final List<String> dependsOn,
-      final List<Question> subQuestions) {
+      final List<Question> questions) {
 
     if (answers == null || answers.isEmpty())
       throw new IllegalArgumentException("Answers must not be null or empty.");
@@ -217,14 +217,14 @@ public class HelperBean {
 
     ChoiceContainer container = null;
 
-    if (subQuestions != null && !subQuestions.isEmpty()) {
+    if (questions != null && !questions.isEmpty()) {
 
       final List<Answer> dependsOnAnswers = dependsOn == null || dependsOn.isEmpty() ? null
           : answerEntities.stream().filter(p -> dependsOn.contains(p.getValue())).collect(Collectors.toList());
 
       container = this.containerRepository.save(ChoiceContainer.builder()
           .dependsOn(dependsOnAnswers)
-          .subQuestions(subQuestions)
+          .questions(questions)
           .build());
     }
 
@@ -255,21 +255,21 @@ public class HelperBean {
    * @param question
    * @param order
    * @param dependsOn
-   * @param subQuestions
+   * @param questions
    * @return
    */
   public BooleanQuestion createBoolQuestion(
       final String question,
       final int order,
       final Boolean dependsOn,
-      final List<Question> subQuestions) {
+      final List<Question> questions) {
 
     BooleanContainer container = null;
 
-    if (subQuestions != null && !subQuestions.isEmpty()) {
+    if (questions != null && !questions.isEmpty()) {
 
       container = this.containerRepository.save(BooleanContainer.builder()
-          .subQuestions(subQuestions)
+          .questions(questions)
           .dependsOn(dependsOn)
           .build());
     }
@@ -311,7 +311,7 @@ public class HelperBean {
    * @param question
    * @param order
    * @param length
-   * @param subQuestions
+   * @param questions
    * @return
    */
   public Question createTextQuestion(
@@ -319,14 +319,14 @@ public class HelperBean {
       final int order,
       final boolean multiline,
       final int length,
-      final List<Question> subQuestions) {
+      final List<Question> questions) {
 
     DefaultContainer container = null;
 
-    if (subQuestions != null && !subQuestions.isEmpty()) {
+    if (questions != null && !questions.isEmpty()) {
 
       container = this.containerRepository.save(DefaultContainer.builder()
-          .subQuestions(subQuestions)
+          .questions(questions)
           .build());
     }
 
@@ -386,7 +386,7 @@ public class HelperBean {
    *
    * @param question
    * @param order
-   * @param subQuestions
+   * @param questions
    * @return
    */
   public Question createRangeQuestion(
@@ -395,14 +395,14 @@ public class HelperBean {
       final int minValue, final int maxValue,
       final Integer defaultValue,
       final String minText, final String maxText,
-      final List<Question> subQuestions) {
+      final List<Question> questions) {
 
     DefaultContainer container = null;
 
-    if (subQuestions != null && !subQuestions.isEmpty()) {
+    if (questions != null && !questions.isEmpty()) {
 
       container = this.containerRepository.save(DefaultContainer.builder()
-          .subQuestions(subQuestions)
+          .questions(questions)
           .build());
     }
 

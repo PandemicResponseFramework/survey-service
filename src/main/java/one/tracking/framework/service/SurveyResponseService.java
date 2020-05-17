@@ -137,14 +137,14 @@ public class SurveyResponseService {
     } else {
 
       final Optional<Container> parentContainerOp =
-          this.containerRepository.findBySubQuestionsIn(Collections.singleton(question));
+          this.containerRepository.findByQuestionsIn(Collections.singleton(question));
 
       if (parentContainerOp.isEmpty())
         throw new IllegalStateException(
             "Unexpected state: Could not find question id as a child of the survey nor any container. Question id: "
                 + question.getId());
 
-      siblings = parentContainerOp.get().getSubQuestions();
+      siblings = parentContainerOp.get().getQuestions();
     }
 
     final Iterator<Question> it = siblings.iterator();
@@ -160,14 +160,14 @@ public class SurveyResponseService {
   private Question seekNextQuestion(final Question question) {
 
     final Optional<Container> parentContainerOp =
-        this.containerRepository.findBySubQuestionsIn(Collections.singleton(question));
+        this.containerRepository.findByQuestionsIn(Collections.singleton(question));
 
     if (parentContainerOp.isEmpty())
       throw new IllegalStateException(
           "Unexpected state: Could not find question id as a child of the survey nor any container. Question id: "
               + question.getId());
 
-    final List<Question> siblings = parentContainerOp.get().getSubQuestions();
+    final List<Question> siblings = parentContainerOp.get().getQuestions();
     Question result = null;
 
     final Iterator<Question> it = siblings.iterator();
@@ -182,45 +182,45 @@ public class SurveyResponseService {
   private Question getNextSubQuestionId(final BooleanQuestion question, final SurveyResponseDto response) {
 
     if (!question.hasContainer()
-        || question.getContainer().getSubQuestions() == null
-        || question.getContainer().getSubQuestions().isEmpty()
+        || question.getContainer().getQuestions() == null
+        || question.getContainer().getQuestions().isEmpty()
         || !response.getBoolAnswer().equals(question.getContainer().getDependsOn()))
       return null;
 
-    return question.getContainer().getSubQuestions().get(0);
+    return question.getContainer().getQuestions().get(0);
   }
 
   private Question getNextSubQuestionId(final ChoiceQuestion question, final SurveyResponseDto response) {
 
     if (!question.hasContainer()
-        || question.getContainer().getSubQuestions() == null
-        || question.getContainer().getSubQuestions().isEmpty()
+        || question.getContainer().getQuestions() == null
+        || question.getContainer().getQuestions().isEmpty()
         || question.getContainer().getDependsOn() == null
         || question.getContainer().getDependsOn().isEmpty()
         || question.getContainer().getDependsOn().stream().noneMatch(p -> response.getAnswerIds().contains(p.getId())))
       return null;
 
-    return question.getContainer().getSubQuestions().get(0);
+    return question.getContainer().getQuestions().get(0);
   }
 
   private Question getNextSubQuestionId(final RangeQuestion question, final SurveyResponseDto response) {
 
     if (!question.hasContainer()
-        || question.getContainer().getSubQuestions() == null
-        || question.getContainer().getSubQuestions().isEmpty())
+        || question.getContainer().getQuestions() == null
+        || question.getContainer().getQuestions().isEmpty())
       return null;
 
-    return question.getContainer().getSubQuestions().get(0);
+    return question.getContainer().getQuestions().get(0);
   }
 
   private Question getNextSubQuestionId(final TextQuestion question, final SurveyResponseDto response) {
 
     if (!question.hasContainer()
-        || question.getContainer().getSubQuestions() == null
-        || question.getContainer().getSubQuestions().isEmpty())
+        || question.getContainer().getQuestions() == null
+        || question.getContainer().getQuestions().isEmpty())
       return null;
 
-    return question.getContainer().getSubQuestions().get(0);
+    return question.getContainer().getQuestions().get(0);
   }
 
   /**
@@ -387,11 +387,11 @@ public class SurveyResponseService {
     final IContainerQuestion cQuestion = (IContainerQuestion) question;
 
     if (cQuestion.getContainer() == null
-        || cQuestion.getContainer().getSubQuestions() == null
-        || cQuestion.getContainer().getSubQuestions().isEmpty())
+        || cQuestion.getContainer().getQuestions() == null
+        || cQuestion.getContainer().getQuestions().isEmpty())
       return;
 
-    for (final Question subQuestion : cQuestion.getContainer().getSubQuestions()) {
+    for (final Question subQuestion : cQuestion.getContainer().getQuestions()) {
 
       deleteSubQuestionTree(user, instance, subQuestion);
 

@@ -383,7 +383,7 @@ public class SurveyService {
         return false;
 
       if (isSubQuestionRequired(question, responses.get(question.getId()))) {
-        if (!checkAnswers(getSubQuestions(question), responses))
+        if (!checkAnswers(getQuestions(question), responses))
           return false;
       }
     }
@@ -391,17 +391,17 @@ public class SurveyService {
     return true;
   }
 
-  private List<Question> getSubQuestions(final Question question) {
+  private List<Question> getQuestions(final Question question) {
 
     switch (question.getType()) {
       case BOOL:
-        return ((BooleanQuestion) question).getContainer().getSubQuestions();
+        return ((BooleanQuestion) question).getContainer().getQuestions();
       case CHOICE:
-        return ((ChoiceQuestion) question).getContainer().getSubQuestions();
+        return ((ChoiceQuestion) question).getContainer().getQuestions();
       case RANGE:
-        return ((RangeQuestion) question).getContainer().getSubQuestions();
+        return ((RangeQuestion) question).getContainer().getQuestions();
       case TEXT:
-        return ((TextQuestion) question).getContainer().getSubQuestions();
+        return ((TextQuestion) question).getContainer().getQuestions();
       case CHECKLIST:
       default:
         return null;

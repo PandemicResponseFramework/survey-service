@@ -176,7 +176,7 @@ public class SurveyManagementService {
 
       if (question.hasContainer()) {
         final SearchResult result =
-            searchQuestion(((IContainerQuestion) question).getContainer().getSubQuestions(), id);
+            searchQuestion(((IContainerQuestion) question).getContainer().getQuestions(), id);
         if (result != null)
           return result;
       }
@@ -389,12 +389,12 @@ public class SurveyManagementService {
     if (container == null)
       return null;
 
-    final List<Question> questions = copyQuestions(container.getSubQuestions());
+    final List<Question> questions = copyQuestions(container.getQuestions());
 
     return this.containerRepository.save(container.toBuilder()
         .id(null)
         .createdAt(null)
-        .subQuestions(questions)
+        .questions(questions)
         .build());
   }
 
@@ -403,7 +403,7 @@ public class SurveyManagementService {
     if (container == null)
       return null;
 
-    final List<Question> questions = copyQuestions(container.getSubQuestions());
+    final List<Question> questions = copyQuestions(container.getQuestions());
 
     List<Answer> dependsOn = null;
 
@@ -417,7 +417,7 @@ public class SurveyManagementService {
     return this.containerRepository.save(container.toBuilder()
         .id(null)
         .createdAt(null)
-        .subQuestions(questions)
+        .questions(questions)
         .dependsOn(dependsOn)
         .build());
   }
@@ -427,12 +427,12 @@ public class SurveyManagementService {
     if (container == null)
       return null;
 
-    final List<Question> questions = copyQuestions(container.getSubQuestions());
+    final List<Question> questions = copyQuestions(container.getQuestions());
 
     return this.containerRepository.save(container.toBuilder()
         .id(null)
         .createdAt(null)
-        .subQuestions(questions)
+        .questions(questions)
         .build());
   }
 

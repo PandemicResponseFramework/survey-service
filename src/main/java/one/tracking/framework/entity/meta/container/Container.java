@@ -42,7 +42,7 @@ public class Container {
 
   @OneToMany
   @OrderBy("ranking ASC")
-  private List<Question> subQuestions;
+  private List<Question> questions;
 
   @Formula("CONTAINER_TYPE")
   private String type;

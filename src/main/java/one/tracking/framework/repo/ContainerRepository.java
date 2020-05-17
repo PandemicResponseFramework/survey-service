@@ -15,5 +15,5 @@ import one.tracking.framework.entity.meta.question.Question;
  */
 public interface ContainerRepository extends CrudRepository<Container, Long> {
 
-  Optional<Container> findBySubQuestionsIn(Set<Question> questions);
+  Optional<Container> findByQuestionsIn(Set<Question> questions);
 }
