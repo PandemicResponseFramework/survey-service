@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import one.tracking.framework.entity.meta.container.DefaultContainer;
 
@@ -22,8 +23,9 @@ import one.tracking.framework.entity.meta.container.DefaultContainer;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @DiscriminatorValue("RANGE")
 public class RangeQuestion extends Question implements IContainerQuestion {
@@ -41,7 +43,7 @@ public class RangeQuestion extends Question implements IContainerQuestion {
   private String maxText;
 
   @Column(nullable = true)
-  private Integer defaultValue;
+  private Integer defaultAnswer;
 
   @OneToOne
   private DefaultContainer container;
@@ -58,11 +60,11 @@ public class RangeQuestion extends Question implements IContainerQuestion {
     super.onPrePersist();
 
     // Only allow a default value, which is within the range of minValue and maxValue
-    if (this.defaultValue != null) {
-      if (this.defaultValue < this.minValue)
-        this.defaultValue = null;
-      if (this.defaultValue > this.maxValue)
-        this.defaultValue = null;
+    if (this.defaultAnswer != null) {
+      if (this.defaultAnswer < this.minValue)
+        this.defaultAnswer = null;
+      if (this.defaultAnswer > this.maxValue)
+        this.defaultAnswer = null;
     }
   }
 }

@@ -13,10 +13,10 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import javax.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,7 +28,7 @@ import one.tracking.framework.entity.meta.question.Question;
  *
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -41,7 +41,10 @@ public class Survey {
   @GeneratedValue
   private Long id;
 
-  @Version
+  /*
+   * No using @Version here as for each version a new entry must exist.
+   */
+  @Column(nullable = false, updatable = false)
   private Integer version;
 
   @Column(length = 32, nullable = false, updatable = false)
@@ -57,6 +60,10 @@ public class Survey {
   @Enumerated(EnumType.STRING)
   private IntervalType intervalType;
 
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private ReleaseStatusType releaseStatus;
+
   @Column(nullable = true)
   private Integer intervalLength;
 
@@ -64,12 +71,17 @@ public class Survey {
   private Instant createdAt;
 
   @OneToMany(fetch = FetchType.LAZY)
+  @OrderBy("ranking ASC")
   private List<Question> questions;
 
   @PrePersist
   void onPrePersist() {
     if (this.id == null) {
       setCreatedAt(Instant.now());
+
+      if (this.version == null) {
+        setVersion(0);
+      }
     }
   }
 

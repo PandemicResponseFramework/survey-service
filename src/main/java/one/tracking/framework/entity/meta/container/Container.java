@@ -14,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import org.hibernate.annotations.Formula;
 import lombok.AllArgsConstructor;
@@ -27,9 +28,9 @@ import one.tracking.framework.entity.meta.question.Question;
  *
  */
 @Data
-@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
+@SuperBuilder(toBuilder = true)
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "CONTAINER_TYPE", discriminatorType = DiscriminatorType.STRING, length = 9)
 @Entity
@@ -40,6 +41,7 @@ public class Container {
   private Long id;
 
   @OneToMany
+  @OrderBy("ranking ASC")
   private List<Question> subQuestions;
 
   @Formula("CONTAINER_TYPE")

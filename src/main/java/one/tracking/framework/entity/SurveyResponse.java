@@ -15,6 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import javax.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,6 +40,9 @@ public class SurveyResponse {
   @Id
   @GeneratedValue
   private Long id;
+
+  @Version
+  private Integer version;
 
   @ManyToOne(optional = false)
   private User user;
