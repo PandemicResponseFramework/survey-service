@@ -13,6 +13,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -43,6 +45,14 @@ import lombok.experimental.SuperBuilder;
     TextQuestionDto.class,
     ChecklistQuestionDto.class,
     ChecklistEntryDto.class})
+@Schema(discriminatorProperty = "type", discriminatorMapping = {
+    @DiscriminatorMapping(value = "BOOL", schema = BooleanQuestionDto.class),
+    @DiscriminatorMapping(value = "CHOICE", schema = ChoiceQuestionDto.class),
+    @DiscriminatorMapping(value = "RANGE", schema = RangeQuestionDto.class),
+    @DiscriminatorMapping(value = "TEXT", schema = TextQuestionDto.class),
+    @DiscriminatorMapping(value = "CHECKLIST", schema = ChecklistQuestionDto.class),
+    @DiscriminatorMapping(value = "CHECKLIST_ENTRY", schema = ChecklistEntryDto.class)
+})
 public abstract class QuestionDto {
 
   @NotNull
