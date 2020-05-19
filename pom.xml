@@ -11,7 +11,7 @@
 	<groupId>one.tracking.framework</groupId>
 	<artifactId>survey-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>survey-service</name>
+	<name>Survey Service</name>
 	<description>Survey management and evaluation service</description>
 
 	<properties>
@@ -81,6 +81,12 @@
 	</dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 		<testResources>
 			<testResource>
 				<directory>src/test/resources</directory>
@@ -99,11 +105,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<profiles>
-						<profile>${boot.profile}</profile>
-					</profiles>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

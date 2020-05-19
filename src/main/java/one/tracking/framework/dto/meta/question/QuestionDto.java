@@ -31,12 +31,12 @@ import lombok.experimental.SuperBuilder;
     include = JsonTypeInfo.As.PROPERTY,
     property = "type")
 @JsonSubTypes({
-    @Type(value = BooleanQuestionDto.class, name = "BOOL"),
-    @Type(value = ChoiceQuestionDto.class, name = "CHOICE"),
-    @Type(value = RangeQuestionDto.class, name = "RANGE"),
-    @Type(value = TextQuestionDto.class, name = "TEXT"),
-    @Type(value = ChecklistQuestionDto.class, name = "CHECKLIST"),
-    @Type(value = ChecklistEntryDto.class, name = "CHECKLIST_ENTRY")
+    @Type(name = "BOOL", value = BooleanQuestionDto.class),
+    @Type(name = "CHOICE", value = ChoiceQuestionDto.class),
+    @Type(name = "RANGE", value = RangeQuestionDto.class),
+    @Type(name = "TEXT", value = TextQuestionDto.class),
+    @Type(name = "CHECKLIST", value = ChecklistQuestionDto.class),
+    @Type(name = "CHECKLIST_ENTRY", value = ChecklistEntryDto.class)
 })
 @ApiModel(discriminator = "type", subTypes = {
     BooleanQuestionDto.class,
