@@ -5,7 +5,7 @@ package one.tracking.framework.web;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.util.Collection;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -59,7 +59,7 @@ public class SurveyController {
   }
 
   @RequestMapping(method = RequestMethod.GET, path = "/survey")
-  public List<SurveyStatusDto> getSurveyOverview(
+  public Collection<SurveyStatusDto> getSurveyOverview(
       @ApiIgnore
       final Authentication authentication) {
 

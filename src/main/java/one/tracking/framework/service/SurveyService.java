@@ -17,7 +17,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -315,13 +316,18 @@ public class SurveyService {
    *
    * @return
    */
-  public List<SurveyStatusDto> getSurveyOverview(final String userId) {
+  public Collection<SurveyStatusDto> getSurveyOverview(final String userId) {
 
     final User user = this.userRepository.findById(userId).get();
 
-    final List<SurveyStatusDto> result = new ArrayList<>();
+    final Map<String, SurveyStatusDto> result = new HashMap<>();
 
-    for (final Survey survey : this.surveyRepository.findAll()) { // FIXME
+    for (final Survey survey : this.surveyRepository
+        .findAllByReleaseStatusOrderByNameIdAscVersionDesc(ReleaseStatusType.RELEASED)) {
+
+      // Collect each survey only once by its top most released version
+      if (result.get(survey.getNameId()) != null)
+        continue;
 
       final SurveyInstance instance = getCurrentInstance(survey);
 
@@ -337,17 +343,21 @@ public class SurveyService {
 
       final SurveyStatusType status = calculateSurveyStatus(user, instance);
 
-      result.add(SurveyStatusDto.builder()
-          .nameId(survey.getNameId())
-          .status(status)
-          .nextQuestionId(nextQuestionId)
-          .token(instance.getToken())
-          .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime().toEpochMilli())
-          .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime().toEpochMilli())
-          .build());
+      result.put(survey.getNameId(),
+          SurveyStatusDto.builder()
+              .nameId(survey.getNameId())
+              .status(status)
+              .title(survey.getTitle())
+              .description(survey.getDescription())
+              .countQuestions(survey.getQuestions().size())
+              .nextQuestionId(nextQuestionId)
+              .token(instance.getToken())
+              .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime().toEpochMilli())
+              .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime().toEpochMilli())
+              .build());
     }
 
-    return result;
+    return result.values();
   }
 
   private SurveyStatusType calculateSurveyStatus(final User user, final SurveyInstance instance) {

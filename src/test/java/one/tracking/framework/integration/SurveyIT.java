@@ -164,6 +164,9 @@ public class SurveyIT {
 
     assertThat(status, is(not(nullValue())));
     assertThat(status.getNameId(), is("TEST"));
+    assertThat(status.getTitle(), is("TITLE"));
+    assertThat(status.getDescription(), is("DESCRIPTION"));
+    assertThat(status.getCountQuestions(), is(10));
 
     if (expectedNextQuestionId == null)
       assertThat(status.getNextQuestionId(), is(nullValue()));
