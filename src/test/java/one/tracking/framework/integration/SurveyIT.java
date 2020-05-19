@@ -23,6 +23,8 @@ import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -66,6 +68,8 @@ import one.tracking.framework.util.JWTHelper;
 @SpringBootTest(classes = SurveyApplication.class)
 public class SurveyIT {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SurveyIT.class);
+
   private static final String ENDPOINT_OVERVIEW = "/survey";
   private static final String ENDPOINT_SURVEY_TEST = ENDPOINT_OVERVIEW + "/TEST";
   private static final String ENDPOINT_SURVEY_TEST_ANSWER = ENDPOINT_SURVEY_TEST + "/answer";
@@ -104,7 +108,7 @@ public class SurveyIT {
      * Test overview
      */
 
-    final String token = testOverview(SurveyStatusType.INCOMPLETE, null, null);
+    final String token = testOverview(SurveyStatusType.INCOMPLETE, null);
 
     /*
      * Test survey meta data
@@ -122,6 +126,8 @@ public class SurveyIT {
         .andExpect(status().isOk())
         .andReturn();
 
+    LOG.info("TEST SURVEY: {}", result.getResponse().getContentAsString());
+
     final SurveyDto survey = this.mapper.readValue(result.getResponse().getContentAsByteArray(), SurveyDto.class);
 
     assertThat(survey.getNameId(), is("TEST"));
@@ -135,7 +141,6 @@ public class SurveyIT {
 
   private String testOverview(
       final SurveyStatusType expectedStatus,
-      final Long expectedLastQuestionId,
       final Long expectedNextQuestionId) throws Exception {
 
     this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT_OVERVIEW)
@@ -159,11 +164,6 @@ public class SurveyIT {
 
     assertThat(status, is(not(nullValue())));
     assertThat(status.getNameId(), is("TEST"));
-
-    if (expectedLastQuestionId == null)
-      assertThat(status.getLastQuestionId(), is(nullValue()));
-    else
-      assertThat(status.getLastQuestionId(), is(expectedLastQuestionId));
 
     if (expectedNextQuestionId == null)
       assertThat(status.getNextQuestionId(), is(nullValue()));
@@ -246,7 +246,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q2"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q2 - boolean - with children
@@ -280,7 +280,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q2C1"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q2C1
@@ -310,7 +310,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q3"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q3 - single choice - no children
@@ -367,7 +367,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q4"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q4 - multiple choice - no children
@@ -412,7 +412,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q5"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q5 - single choice - with children
@@ -464,7 +464,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q5C1"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q5C1
@@ -494,7 +494,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q6"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q6 - multiple choice - with children
@@ -547,7 +547,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q6C1"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q6C1
@@ -577,7 +577,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q7"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q7 - checklist
@@ -623,7 +623,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q8"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     // Replace answer with some entries set to true and some to false
     // -> result should be Q7E1=true, Q7E2=false, Q7E3=false
@@ -642,7 +642,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     // Sending an entry of the checklist as a separated answer must fail
     this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
@@ -656,7 +656,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest());
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q8 - Range - no children
@@ -716,7 +716,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q9"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q9 - TextField - no children
@@ -791,7 +791,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q10"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q10 - TextArea - no children
@@ -862,7 +862,7 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), null);
+    testOverview(SurveyStatusType.COMPLETED, null);
 
     /*
      * Survey completed successfully. Now let us change answers and check the behavior. Special behavior
@@ -895,7 +895,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q3"));
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
 
     // Answer = true -> Child question required -> SurveyStatusType = INCOMPLETE
     this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
@@ -913,7 +913,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q2C1"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q2C1
@@ -937,7 +937,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q3"));
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
 
     /*
      * Q5 - single choice - with children
@@ -969,7 +969,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q6"));
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
 
     // Child question depends on answers Q5A1 OR Q5A2 -> answer Q5A2 -> SurveyStatusType = INCOMPLETE
     answer = choiceQuestion.getAnswers().get(1);
@@ -991,7 +991,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q5C1"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q5C1
@@ -1016,7 +1016,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q6"));
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
 
     /*
      * Q6 - multiple choice - with children
@@ -1048,7 +1048,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q7"));
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
 
     // Child question depends on answers Q6A1 OR Q6A2 -> answer Q6A2 -> SurveyStatusType = INCOMPLETE
     answer = choiceQuestion.getAnswers().get(1);
@@ -1070,7 +1070,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q6C1"));
 
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
 
     /*
      * Q6C1
@@ -1095,7 +1095,7 @@ public class SurveyIT {
     assertThat(nextQuestion, is(not(nullValue())));
     assertThat(nextQuestion.getQuestion(), is("Q7"));
 
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
   }
 
   /**

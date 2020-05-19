@@ -115,7 +115,6 @@ public class SurveyResponseService {
     if (statusOp.isEmpty()) {
 
       this.surveyStatusRepository.save(SurveyStatus.builder()
-          .lastQuestion(question)
           .nextQuestion(nextQuestion)
           .surveyInstance(instance)
           .user(user)
@@ -123,7 +122,6 @@ public class SurveyResponseService {
     } else {
 
       final SurveyStatus status = statusOp.get();
-      status.setLastQuestion(question);
       status.setNextQuestion(nextQuestion);
       this.surveyStatusRepository.save(status);
     }

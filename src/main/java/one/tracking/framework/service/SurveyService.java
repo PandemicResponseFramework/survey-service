@@ -328,12 +328,10 @@ public class SurveyService {
       final Optional<SurveyStatus> surveyStatusOp =
           this.surveyStatusRepository.findByUserAndSurveyInstance(user, instance);
 
-      Long lastQuestionId = null;
       Long nextQuestionId = null;
 
       if (surveyStatusOp.isPresent()) {
         final SurveyStatus surveyStatus = surveyStatusOp.get();
-        lastQuestionId = surveyStatus.getLastQuestion().getId();
         nextQuestionId = surveyStatus.getNextQuestion() == null ? null : surveyStatus.getNextQuestion().getId();
       }
 
@@ -342,7 +340,6 @@ public class SurveyService {
       result.add(SurveyStatusDto.builder()
           .nameId(survey.getNameId())
           .status(status)
-          .lastQuestionId(lastQuestionId)
           .nextQuestionId(nextQuestionId)
           .token(instance.getToken())
           .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime().toEpochMilli())

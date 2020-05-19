@@ -22,8 +22,6 @@ public class SurveyStatusDto {
   @NotNull
   private SurveyStatusType status;
 
-  private Long lastQuestionId;
-
   private Long nextQuestionId;
 
   @NotBlank
