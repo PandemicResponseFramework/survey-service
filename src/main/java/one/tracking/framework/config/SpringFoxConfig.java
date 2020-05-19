@@ -14,6 +14,7 @@ import io.swagger.v3.oas.models.info.License;
 import one.tracking.framework.dto.meta.AnswerDto;
 import one.tracking.framework.dto.meta.container.ContainerDto;
 import one.tracking.framework.web.SurveyController;
+import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
@@ -47,7 +48,13 @@ public class SpringFoxConfig {
         .build()
         .additionalModels(
             typeResolver.resolve(ContainerDto.class),
-            typeResolver.resolve(AnswerDto.class));
+            typeResolver.resolve(AnswerDto.class))
+        .apiInfo(new ApiInfoBuilder()
+            .title(this.name)
+            .version(this.version)
+            .description(this.description)
+            .license("MIT")
+            .build());
   }
 
   @Bean
