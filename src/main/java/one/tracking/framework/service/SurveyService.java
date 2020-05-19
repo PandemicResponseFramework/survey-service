@@ -345,8 +345,8 @@ public class SurveyService {
           .lastQuestionId(lastQuestionId)
           .nextQuestionId(nextQuestionId)
           .token(instance.getToken())
-          .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime())
-          .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime())
+          .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime().toEpochMilli())
+          .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime().toEpochMilli())
           .build());
     }
 
