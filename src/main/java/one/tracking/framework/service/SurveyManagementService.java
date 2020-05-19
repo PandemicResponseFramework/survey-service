@@ -23,7 +23,6 @@ import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
 import one.tracking.framework.entity.meta.container.Container;
 import one.tracking.framework.entity.meta.container.ContainerType;
-import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
@@ -349,23 +348,17 @@ public class SurveyManagementService {
 
   private Question copyQuestion(final RangeQuestion question) {
 
-    final DefaultContainer container = copyContainer(question.getContainer());
-
     return this.questionRepository.save(question.toBuilder()
         .id(null)
         .createdAt(null)
-        .container(container)
         .build());
   }
 
   private TextQuestion copyQuestion(final TextQuestion question) {
 
-    final DefaultContainer container = copyContainer(question.getContainer());
-
     return this.questionRepository.save(question.toBuilder()
         .id(null)
         .createdAt(null)
-        .container(container)
         .build());
   }
 
@@ -436,20 +429,6 @@ public class SurveyManagementService {
         .createdAt(null)
         .questions(questions)
         .dependsOn(dependsOn)
-        .build());
-  }
-
-  private DefaultContainer copyContainer(final DefaultContainer container) {
-
-    if (container == null)
-      return null;
-
-    final List<Question> questions = copyQuestions(container.getQuestions());
-
-    return this.containerRepository.save(container.toBuilder()
-        .id(null)
-        .createdAt(null)
-        .questions(questions)
         .build());
   }
 

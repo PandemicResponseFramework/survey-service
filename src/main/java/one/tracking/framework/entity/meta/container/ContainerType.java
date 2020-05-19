@@ -11,6 +11,5 @@ public enum ContainerType {
 
   BOOL,
   CHOICE,
-  DEFAULT,
   SURVEY;
 }

@@ -96,11 +96,9 @@ public class SurveyResponseService {
         break;
       case RANGE:
         storeRangeResponse(surveyResponse, user, instance, question);
-        nextQuestion = getNextSubQuestion((RangeQuestion) question, surveyResponse);
         break;
       case TEXT:
         storeTextResponse(surveyResponse, user, instance, question);
-        nextQuestion = getNextSubQuestion((TextQuestion) question, surveyResponse);
         break;
       default:
         // nothing got changed -> no need to continue
@@ -182,26 +180,6 @@ public class SurveyResponseService {
         || question.getContainer().getDependsOn() == null
         || question.getContainer().getDependsOn().isEmpty()
         || question.getContainer().getDependsOn().stream().noneMatch(p -> response.getAnswerIds().contains(p.getId())))
-      return null;
-
-    return question.getContainer().getQuestions().get(0);
-  }
-
-  private Question getNextSubQuestion(final RangeQuestion question, final SurveyResponseDto response) {
-
-    if (!question.hasContainer()
-        || question.getContainer().getQuestions() == null
-        || question.getContainer().getQuestions().isEmpty())
-      return null;
-
-    return question.getContainer().getQuestions().get(0);
-  }
-
-  private Question getNextSubQuestion(final TextQuestion question, final SurveyResponseDto response) {
-
-    if (!question.hasContainer()
-        || question.getContainer().getQuestions() == null
-        || question.getContainer().getQuestions().isEmpty())
       return null;
 
     return question.getContainer().getQuestions().get(0);

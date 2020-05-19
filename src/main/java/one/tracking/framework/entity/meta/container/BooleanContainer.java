@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.entity.meta.container;
 
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import lombok.AllArgsConstructor;
@@ -26,5 +27,6 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("BOOL")
 public class BooleanContainer extends Container {
 
+  @Column(nullable = false)
   private Boolean dependsOn;
 }

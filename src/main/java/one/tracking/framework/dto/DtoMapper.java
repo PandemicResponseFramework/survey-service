@@ -9,7 +9,6 @@ import one.tracking.framework.dto.meta.AnswerDto;
 import one.tracking.framework.dto.meta.SurveyDto;
 import one.tracking.framework.dto.meta.container.BooleanContainerDto;
 import one.tracking.framework.dto.meta.container.ChoiceContainerDto;
-import one.tracking.framework.dto.meta.container.DefaultContainerDto;
 import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
 import one.tracking.framework.dto.meta.question.ChecklistEntryDto;
 import one.tracking.framework.dto.meta.question.ChecklistQuestionDto;
@@ -21,7 +20,6 @@ import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
-import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
@@ -141,7 +139,6 @@ public abstract class DtoMapper {
         .maxValue(entity.getMaxValue())
         .minText(entity.getMinText())
         .maxText(entity.getMaxText())
-        .container(map(entity.getContainer()))
         .build();
   }
 
@@ -157,7 +154,6 @@ public abstract class DtoMapper {
         .order(entity.getRanking())
         .question(entity.getQuestion())
         .multiline(entity.isMultiline())
-        .container(map(entity.getContainer()))
         .length(entity.getLength())
         .build();
   }
@@ -193,21 +189,6 @@ public abstract class DtoMapper {
 
     return ChoiceContainerDto.builder()
         .choiceDependsOn(dependsOn)
-        .subQuestions(map(entity.getQuestions()))
-        .build();
-  }
-
-  /**
-   *
-   * @param entity
-   * @return
-   */
-  public static final DefaultContainerDto map(final DefaultContainer entity) {
-
-    if (entity == null || entity.getQuestions() == null || entity.getQuestions().isEmpty())
-      return null;
-
-    return DefaultContainerDto.builder()
         .subQuestions(map(entity.getQuestions()))
         .build();
   }

@@ -128,7 +128,7 @@ public class SurveyIT {
     assertThat(survey.getVersion(), is(0));
     assertThat(survey.getTitle(), is("TITLE"));
     assertThat(survey.getDescription(), is("DESCRIPTION"));
-    assertThat(survey.getQuestions().size(), is(13));
+    assertThat(survey.getQuestions().size(), is(10));
 
     performSurvey(survey, token);
   }
@@ -669,10 +669,9 @@ public class SurveyIT {
     assertThat(question.getQuestion(), is("Q8"));
     assertThat(question.getOrder(), is(7));
 
-    RangeQuestionDto rangeQuestion = (RangeQuestionDto) question;
+    final RangeQuestionDto rangeQuestion = (RangeQuestionDto) question;
 
     assertThat(rangeQuestion.getDefaultValue(), is(5));
-    assertThat(rangeQuestion.getContainer(), is(nullValue()));
     assertThat(rangeQuestion.getMaxText(), is("Q8MAX"));
     assertThat(rangeQuestion.getMinText(), is("Q8MIN"));
     assertThat(rangeQuestion.getMaxValue(), is(10));
@@ -720,114 +719,19 @@ public class SurveyIT {
     testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
-     * Q9 - Range - with children
-     */
-
-    question = iterator.next();
-
-    assertThat(question, is(not(nullValue())));
-    assertThat(question, is(instanceOf(RangeQuestionDto.class)));
-    assertThat(question.getQuestion(), is("Q9"));
-    assertThat(question.getOrder(), is(8));
-
-    rangeQuestion = (RangeQuestionDto) question;
-
-    assertThat(rangeQuestion.getDefaultValue(), is(6));
-    assertThat(rangeQuestion.getMaxText(), is("Q9MAX"));
-    assertThat(rangeQuestion.getMinText(), is("Q9MIN"));
-    assertThat(rangeQuestion.getMaxValue(), is(11));
-    assertThat(rangeQuestion.getMinValue(), is(2));
-
-    assertThat(rangeQuestion.getContainer(), is(not(nullValue())));
-    assertThat(rangeQuestion.getContainer().getSubQuestions(), is(not(nullValue())));
-    assertThat(rangeQuestion.getContainer().getSubQuestions().size(), is(1));
-
-    // Test maxValue violation
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .rangeAnswer(12)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
-
-    // Test minValue violation
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .rangeAnswer(1)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .rangeAnswer(4)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q9C1");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q9C1"));
-
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q9C1
-     */
-
-    question = rangeQuestion.getContainer().getSubQuestions().get(0);
-
-    assertThat(question, is(not(nullValue())));
-    assertThat(question, is(instanceOf(BooleanQuestionDto.class)));
-    assertThat(question.getQuestion(), is("Q9C1"));
-    assertThat(question.getOrder(), is(0));
-    assertThat(((BooleanQuestionDto) question).getDefaultAnswer(), is(nullValue()));
-    assertThat(((BooleanQuestionDto) question).getContainer(), is(nullValue()));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .boolAnswer(true)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q10");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q10"));
-
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q10 - TextField - no children
+     * Q9 - TextField - no children
      */
 
     question = iterator.next();
 
     assertThat(question, is(not(nullValue())));
     assertThat(question, is(instanceOf(TextQuestionDto.class)));
-    assertThat(question.getQuestion(), is("Q10"));
-    assertThat(question.getOrder(), is(9));
+    assertThat(question.getQuestion(), is("Q9"));
+    assertThat(question.getOrder(), is(8));
 
     TextQuestionDto textQuestion = (TextQuestionDto) question;
 
     assertThat(textQuestion.getLength(), is(256));
-    assertThat(textQuestion.getContainer(), is(nullValue()));
 
     // Test empty string violation
     this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
@@ -883,134 +787,26 @@ public class SurveyIT {
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    nextQuestion = getQuestion(survey.getQuestions(), "Q11");
+    nextQuestion = getQuestion(survey.getQuestions(), "Q10");
     assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q11"));
+    assertThat(nextQuestion.getQuestion(), is("Q10"));
 
     testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
 
     /*
-     * Q11 - TextField - with children
+     * Q10 - TextArea - no children
      */
 
     question = iterator.next();
 
     assertThat(question, is(not(nullValue())));
     assertThat(question, is(instanceOf(TextQuestionDto.class)));
-    assertThat(question.getQuestion(), is("Q11"));
-    assertThat(question.getOrder(), is(10));
-
-    textQuestion = (TextQuestionDto) question;
-
-    assertThat(textQuestion.getLength(), is(256));
-    assertThat(textQuestion.getContainer(), is(not(nullValue())));
-    assertThat(textQuestion.getContainer().getSubQuestions(), is(not(nullValue())));
-    assertThat(textQuestion.getContainer().getSubQuestions().size(), is(1));
-
-    // Test empty string violation
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer("")
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
-
-    // Test blank string violation
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer(" ")
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
-
-    // Test max length violation
-    generatedString = generateText(257);
-    assertThat(generatedString.length(), is(257));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer(generatedString)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
-
-    // Test max length
-    generatedString = generateText(256);
-    assertThat(generatedString.length(), is(256));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer(generatedString)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q11C1");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q11C1"));
-
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q11C1
-     */
-    question = textQuestion.getContainer().getSubQuestions().get(0);
-
-    assertThat(question, is(not(nullValue())));
-    assertThat(question, is(instanceOf(BooleanQuestionDto.class)));
-    assertThat(question.getQuestion(), is("Q11C1"));
-    assertThat(question.getOrder(), is(0));
-    assertThat(((BooleanQuestionDto) question).getDefaultAnswer(), is(nullValue()));
-    assertThat(((BooleanQuestionDto) question).getContainer(), is(nullValue()));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .boolAnswer(true)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q12");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q12"));
-
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q12 - TextArea - no children
-     */
-
-    question = iterator.next();
-
-    assertThat(question, is(not(nullValue())));
-    assertThat(question, is(instanceOf(TextQuestionDto.class)));
-    assertThat(question.getQuestion(), is("Q12"));
-    assertThat(question.getOrder(), is(11));
+    assertThat(question.getQuestion(), is("Q10"));
+    assertThat(question.getOrder(), is(9));
 
     textQuestion = (TextQuestionDto) question;
 
     assertThat(textQuestion.getLength(), is(512));
-    assertThat(textQuestion.getContainer(), is(nullValue()));
 
     // Test empty string violation
     this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
@@ -1060,113 +856,6 @@ public class SurveyIT {
         .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
             .questionId(question.getId())
             .textAnswer(generatedString)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q13");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q13"));
-
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q13 - TextArea - with children
-     */
-
-    question = iterator.next();
-
-    assertThat(question, is(not(nullValue())));
-    assertThat(question, is(instanceOf(TextQuestionDto.class)));
-    assertThat(question.getQuestion(), is("Q13"));
-    assertThat(question.getOrder(), is(12));
-
-    textQuestion = (TextQuestionDto) question;
-
-    assertThat(textQuestion.getLength(), is(512));
-    assertThat(textQuestion.getContainer(), is(not(nullValue())));
-    assertThat(textQuestion.getContainer().getSubQuestions(), is(not(nullValue())));
-    assertThat(textQuestion.getContainer().getSubQuestions().size(), is(1));
-
-    // Test empty string violation
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer("")
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
-
-    // Test blank string violation
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer(" ")
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
-
-    // Test max length violation
-    generatedString = generateText(513);
-    assertThat(generatedString.length(), is(513));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer(generatedString)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
-
-    // Test max length
-    generatedString = generateText(512);
-    assertThat(generatedString.length(), is(512));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer(generatedString)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q13C1");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q13C1"));
-
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q13C1
-     */
-    question = textQuestion.getContainer().getSubQuestions().get(0);
-
-    assertThat(question, is(not(nullValue())));
-    assertThat(question, is(instanceOf(BooleanQuestionDto.class)));
-    assertThat(question.getQuestion(), is("Q13C1"));
-    assertThat(question.getOrder(), is(0));
-    assertThat(((BooleanQuestionDto) question).getDefaultAnswer(), is(nullValue()));
-    assertThat(((BooleanQuestionDto) question).getContainer(), is(nullValue()));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .boolAnswer(true)
             .surveyToken(surveyToken)
             .build()))
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
@@ -1407,162 +1096,6 @@ public class SurveyIT {
     assertThat(nextQuestion.getQuestion(), is("Q7"));
 
     testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q9 - Range - with children
-     */
-
-    question = getQuestion(survey.getQuestions(), "Q9");
-    assertThat(question, is(not(nullValue())));
-    assertThat(question.getQuestion(), is("Q9"));
-
-    rangeQuestion = (RangeQuestionDto) question;
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .rangeAnswer(4)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q9C1");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q9C1"));
-
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q9C1
-     */
-
-    question = rangeQuestion.getContainer().getSubQuestions().get(0);
-    assertThat(question, is(not(nullValue())));
-    assertThat(question.getQuestion(), is("Q9C1"));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .boolAnswer(true)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q10");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q10"));
-
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q11 - TextField - with children
-     */
-
-    question = getQuestion(survey.getQuestions(), "Q11");
-    assertThat(question, is(not(nullValue())));
-    assertThat(question.getQuestion(), is("Q11"));
-
-    textQuestion = (TextQuestionDto) question;
-
-    generatedString = generateText(100);
-    assertThat(generatedString.length(), is(100));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer(generatedString)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q11C1");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q11C1"));
-
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q11C1
-     */
-    question = textQuestion.getContainer().getSubQuestions().get(0);
-    assertThat(question, is(not(nullValue())));
-    assertThat(question.getQuestion(), is("Q11C1"));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .boolAnswer(true)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q12");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q12"));
-
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q13 - TextArea - with children
-     */
-
-    question = getQuestion(survey.getQuestions(), "Q13");
-    assertThat(question, is(not(nullValue())));
-    assertThat(question.getQuestion(), is("Q13"));
-
-    textQuestion = (TextQuestionDto) question;
-
-    generatedString = generateText(100);
-    assertThat(generatedString.length(), is(100));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .textAnswer(generatedString)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    nextQuestion = getQuestion(survey.getQuestions(), "Q13C1");
-    assertThat(nextQuestion, is(not(nullValue())));
-    assertThat(nextQuestion.getQuestion(), is("Q13C1"));
-
-    testOverview(SurveyStatusType.INCOMPLETE, question.getId(), nextQuestion.getId());
-
-    /*
-     * Q13C1
-     */
-    question = textQuestion.getContainer().getSubQuestions().get(0);
-    assertThat(question, is(not(nullValue())));
-    assertThat(question.getQuestion(), is("Q13C1"));
-
-    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
-        .with(csrf())
-        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
-            .questionId(question.getId())
-            .boolAnswer(true)
-            .surveyToken(surveyToken)
-            .build()))
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
-
-    testOverview(SurveyStatusType.COMPLETED, question.getId(), null);
   }
 
   /**

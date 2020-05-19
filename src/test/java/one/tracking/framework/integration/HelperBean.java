@@ -15,7 +15,6 @@ import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
-import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
@@ -123,44 +122,19 @@ public class HelperBean {
         5,
         "Q8MIN", "Q8MAX"));
 
-    // Range - with children
-    questions.add(createRangeQuestion(
-        "Q9",
-        order++,
-        2, 11,
-        6,
-        "Q9MIN", "Q9MAX",
-        Collections.singletonList(createBoolQuestion("Q9C1", 0))));
-
     // TextField - no children
     questions.add(createTextQuestion(
-        "Q10",
+        "Q9",
         order++,
         false,
         256));
 
-    // TextField - with children
-    questions.add(createTextQuestion(
-        "Q11",
-        order++,
-        false,
-        256,
-        Collections.singletonList(createBoolQuestion("Q11C1", 0))));
-
     // TextArea - no children
     questions.add(createTextQuestion(
-        "Q12",
+        "Q10",
         order++,
         true,
         512));
-
-    // TextArea - with children
-    questions.add(createTextQuestion(
-        "Q13",
-        order++,
-        true,
-        512,
-        Collections.singletonList(createBoolQuestion("Q13C1", 0))));
 
     this.surveyRepository.save(Survey.builder()
         .questions(questions)
@@ -301,21 +275,6 @@ public class HelperBean {
    *
    * @param question
    * @param order
-   * @return
-   */
-  public Question createTextQuestion(
-      final String question,
-      final int order,
-      final boolean multiline,
-      final int length) {
-
-    return createTextQuestion(question, order, multiline, length, null);
-  }
-
-  /**
-   *
-   * @param question
-   * @param order
    * @param length
    * @param questions
    * @return
@@ -324,26 +283,14 @@ public class HelperBean {
       final String question,
       final int order,
       final boolean multiline,
-      final int length,
-      final List<Question> questions) {
+      final int length) {
 
-    TextQuestion parent = this.questionRepository.save(TextQuestion.builder()
+    final TextQuestion parent = this.questionRepository.save(TextQuestion.builder()
         .question(question)
         .multiline(multiline)
         .ranking(order)
         .length(length)
         .build());
-
-    if (questions != null && !questions.isEmpty()) {
-
-      final DefaultContainer container = this.containerRepository.save(DefaultContainer.builder()
-          .questions(questions)
-          .parent(parent)
-          .build());
-
-      parent.setContainer(container);
-      parent = this.questionRepository.save(parent);
-    }
 
     return parent;
   }
@@ -374,11 +321,7 @@ public class HelperBean {
    *
    * @param question
    * @param order
-   * @param minValue
-   * @param maxValue
-   * @param defaultValue
-   * @param minText
-   * @param maxText
+   * @param questions
    * @return
    */
   public Question createRangeQuestion(
@@ -388,25 +331,7 @@ public class HelperBean {
       final Integer defaultValue,
       final String minText, final String maxText) {
 
-    return createRangeQuestion(question, order, minValue, maxValue, defaultValue, minText, maxText, null);
-  }
-
-  /**
-   *
-   * @param question
-   * @param order
-   * @param questions
-   * @return
-   */
-  public Question createRangeQuestion(
-      final String question,
-      final int order,
-      final int minValue, final int maxValue,
-      final Integer defaultValue,
-      final String minText, final String maxText,
-      final List<Question> questions) {
-
-    RangeQuestion parent = this.questionRepository.save(RangeQuestion.builder()
+    final RangeQuestion parent = this.questionRepository.save(RangeQuestion.builder()
         .question(question)
         .minValue(minValue)
         .maxValue(maxValue)
@@ -415,17 +340,6 @@ public class HelperBean {
         .maxText(maxText)
         .ranking(order)
         .build());
-
-    if (questions != null && !questions.isEmpty()) {
-
-      final DefaultContainer container = this.containerRepository.save(DefaultContainer.builder()
-          .questions(questions)
-          .parent(parent)
-          .build());
-
-      parent.setContainer(container);
-      parent = this.questionRepository.save(parent);
-    }
 
     return parent;
   }

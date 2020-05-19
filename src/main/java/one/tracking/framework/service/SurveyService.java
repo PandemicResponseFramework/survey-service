@@ -49,8 +49,6 @@ import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
-import one.tracking.framework.entity.meta.question.RangeQuestion;
-import one.tracking.framework.entity.meta.question.TextQuestion;
 import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
@@ -398,11 +396,6 @@ public class SurveyService {
         return ((BooleanQuestion) question).getContainer().getQuestions();
       case CHOICE:
         return ((ChoiceQuestion) question).getContainer().getQuestions();
-      case RANGE:
-        return ((RangeQuestion) question).getContainer().getQuestions();
-      case TEXT:
-        return ((TextQuestion) question).getContainer().getQuestions();
-      case CHECKLIST:
       default:
         return null;
 
