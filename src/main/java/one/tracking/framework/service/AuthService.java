@@ -105,7 +105,7 @@ public class AuthService {
     final Optional<User> userOp = this.userRepository.findByUserToken(verificationDto.getConfirmationToken());
     User user = null;
 
-    final String newUserToken = this.utility.generateString(TOKEN_CONFIRM_LENGTH);
+    final String newUserToken = getValidConfirmationToken();
 
     if (userOp.isEmpty()) {
       // Generate new User ID
@@ -177,6 +177,15 @@ public class AuthService {
     context.setVariable("customURI", this.customUriPrefix + "://verify/" + path);
 
     return this.templateEngine.process("verifyTemplate", context);
+  }
+
+  private String getValidConfirmationToken() {
+
+    final String hash = this.utility.generateString(TOKEN_CONFIRM_LENGTH);
+    if (this.userRepository.existsByUserToken(hash))
+      return getValidConfirmationToken(); // repeat
+
+    return hash;
   }
 
   /**
