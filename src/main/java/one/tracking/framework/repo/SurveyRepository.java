@@ -21,8 +21,6 @@ public interface SurveyRepository extends CrudRepository<Survey, Long> {
 
   Optional<Survey> findByNameIdAndQuestionsIn(String nameId, Set<Question> questions);
 
-  Optional<Survey> findTopByNameIdOrderByVersionDesc(String nameId);
-
   Optional<Survey> findTopByNameIdAndReleaseStatusOrderByVersionDesc(String nameId, ReleaseStatusType status);
 
   List<Survey> findAllByReleaseStatusOrderByNameIdAscVersionDesc(ReleaseStatusType status);

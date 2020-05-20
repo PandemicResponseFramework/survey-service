@@ -61,7 +61,7 @@ public class SurveyResponse {
   @Column(nullable = true)
   private Boolean boolAnswer;
 
-  @Column(nullable = true, length = 512)
+  @Column(nullable = true, length = DataConstants.TEXT_ANSWER_MAX_LENGTH)
   private String textAnswer;
 
   @Column(nullable = false, updatable = false)

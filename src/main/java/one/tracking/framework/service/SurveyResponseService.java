@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -18,6 +19,7 @@ import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.SurveyStatus;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.meta.Answer;
+import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.Container;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
@@ -28,6 +30,7 @@ import one.tracking.framework.entity.meta.question.IContainerQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
+import one.tracking.framework.exception.ConflictException;
 import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.QuestionRepository;
@@ -72,13 +75,20 @@ public class SurveyResponseService {
   public void handleSurveyResponse(final String userId, final String nameId, final SurveyResponseDto surveyResponse) {
 
     final User user = this.userRepository.findById(userId).get();
-    final Survey survey = this.surveyRepository.findTopByNameIdOrderByVersionDesc(nameId).get();
+
+    final Survey survey = this.surveyRepository
+        .findTopByNameIdAndReleaseStatusOrderByVersionDesc(nameId, ReleaseStatusType.RELEASED).get();
+
     final SurveyInstance instance = this.surveyInstanceRepository.findBySurveyAndToken(
         survey, surveyResponse.getSurveyToken()).get();
+
+    if (instance.getEndTime().isAfter(Instant.now()))
+      throw new ConflictException("The survey token got expired.");
+
     final Question question = this.questionRepository.findById(surveyResponse.getQuestionId()).get();
 
     if (!validateResponse(question, surveyResponse))
-      throw new IllegalArgumentException("Invalid Survey Response.");
+      throw new IllegalArgumentException("Invalid survey response.");
 
     Question nextQuestion = null;
 

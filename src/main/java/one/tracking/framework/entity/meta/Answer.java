@@ -15,6 +15,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
+ * TODO: ranking
+ *
  * @author Marko Voß
  *
  */

@@ -23,6 +23,7 @@ import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.dto.SurveyStatusDto;
 import one.tracking.framework.dto.VerificationDto;
 import one.tracking.framework.dto.meta.SurveyDto;
+import one.tracking.framework.service.AuthService;
 import one.tracking.framework.service.SurveyManagementService;
 import one.tracking.framework.service.SurveyResponseService;
 import one.tracking.framework.service.SurveyService;
@@ -35,6 +36,9 @@ import springfox.documentation.annotations.ApiIgnore;
 @RestController
 @RequestMapping
 public class SurveyController {
+
+  @Autowired
+  private AuthService authService;
 
   @Autowired
   private SurveyService surveyService;
@@ -87,7 +91,7 @@ public class SurveyController {
       @Valid
       final VerificationDto verification) throws IOException {
 
-    return AuthNTokenResponseDto.builder().token(this.surveyService.verifyEmail(verification)).build();
+    return AuthNTokenResponseDto.builder().token(this.authService.verifyEmail(verification)).build();
   }
 
   @RequestMapping(
@@ -99,7 +103,7 @@ public class SurveyController {
       @RequestParam(name = "userToken", required = false)
       final String userToken) {
 
-    return this.surveyService.handleVerificationRequest(verificationToken, userToken);
+    return this.authService.handleVerificationRequest(verificationToken, userToken);
   }
 
   @RequestMapping(
@@ -109,7 +113,7 @@ public class SurveyController {
       @RequestBody
       final RegistrationDto registration) throws IOException {
 
-    this.surveyService.registerParticipant(registration, true);
+    this.authService.registerParticipant(registration, true);
   }
 
   @RequestMapping(
@@ -118,7 +122,7 @@ public class SurveyController {
       consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
   public void importParticipants(final InputStream inputStream) throws IOException {
 
-    this.surveyService.importParticipants(inputStream);
+    this.authService.importParticipants(inputStream);
   }
 
 }

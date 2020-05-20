@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.dto.meta.container;
 
+import javax.validation.constraints.NotNull;
 import io.swagger.annotations.ApiModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -22,6 +23,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(allOf = {ContainerDto.class})
 public class BooleanContainerDto extends ContainerDto {
 
+  @NotNull
   private Boolean boolDependsOn;
 
 }
