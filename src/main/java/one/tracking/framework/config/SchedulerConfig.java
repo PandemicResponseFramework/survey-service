@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import one.tracking.framework.domain.PushNotificationRequest;
 import one.tracking.framework.entity.DeviceToken;
@@ -36,6 +37,7 @@ import one.tracking.framework.service.SurveyService;
  *
  */
 @Configuration
+@EnableScheduling
 public class SchedulerConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(SchedulerConfig.class);
