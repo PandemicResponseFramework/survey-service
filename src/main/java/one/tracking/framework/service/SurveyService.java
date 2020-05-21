@@ -276,10 +276,10 @@ public class SurveyService {
    * @param survey
    * @return
    */
-  private SurveyInstance getCurrentInstance(final Survey survey) {
+  public SurveyInstance getCurrentInstance(final Survey survey) {
 
     switch (survey.getIntervalType()) {
-      case WEEK:
+      case WEEKLY:
         return getWeeklyInstance(survey);
       case NONE:
       default:
@@ -297,7 +297,9 @@ public class SurveyService {
     final Instant endOfWeek = ZonedDateTime.now(ZoneOffset.UTC)
         .with(TemporalAdjusters.next(DayOfWeek.MONDAY))
         .truncatedTo(ChronoUnit.DAYS)
-        .minusSeconds(1).toInstant();
+        .minusSeconds(1)
+        .plusWeeks(survey.getIntervalValue() - 1)
+        .toInstant();
 
     return getInstance(survey, startOfWeek, endOfWeek);
   }

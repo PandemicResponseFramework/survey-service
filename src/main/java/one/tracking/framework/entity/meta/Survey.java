@@ -56,12 +56,19 @@ public class Survey extends Container {
   @Enumerated(EnumType.STRING)
   private IntervalType intervalType;
 
+  @Column(nullable = true)
+  private Integer intervalValue;
+
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private ReminderType reminderType;
+
+  @Column(nullable = true)
+  private Integer reminderValue;
+
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   private ReleaseStatusType releaseStatus;
-
-  @Column(nullable = true)
-  private Integer intervalLength;
 
   @Column(nullable = false, updatable = false)
   private Instant createdAt;

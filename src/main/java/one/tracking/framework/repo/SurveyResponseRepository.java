@@ -22,5 +22,8 @@ public interface SurveyResponseRepository extends CrudRepository<SurveyResponse,
 
   List<SurveyResponse> findByUserAndSurveyInstance(User user, SurveyInstance surveyInstance);
 
+  boolean existsByUserAndSurveyInstance(User user, SurveyInstance surveyInstance);
+
   void deleteByUserAndSurveyInstanceAndQuestion(User user, SurveyInstance surveyInstance, Question question);
+
 }

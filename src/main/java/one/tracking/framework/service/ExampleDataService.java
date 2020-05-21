@@ -20,6 +20,7 @@ import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.IntervalType;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
+import one.tracking.framework.entity.meta.ReminderType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
@@ -217,6 +218,7 @@ public class ExampleDataService {
         .title(s32)
         .description(s256)
         .intervalType(IntervalType.NONE)
+        .reminderType(ReminderType.NONE)
         .releaseStatus(ReleaseStatusType.RELEASED)
         .build());
   }
@@ -436,9 +438,11 @@ public class ExampleDataService {
         .questions(questions)
         .nameId("REGULAR")
         .title("Regular survey")
-        .intervalType(IntervalType.WEEK)
+        .intervalType(IntervalType.WEEKLY)
         .releaseStatus(ReleaseStatusType.RELEASED)
-        .intervalLength(1)
+        .intervalValue(1)
+        .reminderType(ReminderType.AFTER_DAYS)
+        .reminderValue(2)
         .build());
   }
 

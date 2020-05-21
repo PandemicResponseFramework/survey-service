@@ -48,6 +48,12 @@
 			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>6.13.0</version>
+		</dependency>
+
 		<!-- TODO Dev only! -->
 		<dependency>
 			<groupId>com.h2database</groupId>
