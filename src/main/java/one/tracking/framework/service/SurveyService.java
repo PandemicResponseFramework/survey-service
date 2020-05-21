@@ -76,6 +76,19 @@ public class SurveyService {
         .get();
   }
 
+  public SurveyStatusDto getSurveyOverview(final String nameId, final String userId) {
+
+    final User user = this.userRepository.findById(userId).get();
+
+    final Optional<Survey> surveyOp =
+        this.surveyRepository.findTopByNameIdAndReleaseStatusOrderByVersionDesc(nameId, ReleaseStatusType.RELEASED);
+
+    if (surveyOp.isEmpty())
+      return null;
+
+    return getStatus(surveyOp.get(), user);
+  }
+
   /**
    * TODO: Currently the interval logic is very limited and needs to be implemented as a generic
    * approach later.
@@ -95,35 +108,39 @@ public class SurveyService {
       if (result.get(survey.getNameId()) != null)
         continue;
 
-      final SurveyInstance instance = getCurrentInstance(survey);
-
-      final Optional<SurveyStatus> surveyStatusOp =
-          this.surveyStatusRepository.findByUserAndSurveyInstance(user, instance);
-
-      Long nextQuestionId = null;
-
-      if (surveyStatusOp.isPresent()) {
-        final SurveyStatus surveyStatus = surveyStatusOp.get();
-        nextQuestionId = surveyStatus.getNextQuestion() == null ? null : surveyStatus.getNextQuestion().getId();
-      }
-
-      final SurveyStatusType status = calculateSurveyStatus(user, instance);
-
-      result.put(survey.getNameId(),
-          SurveyStatusDto.builder()
-              .nameId(survey.getNameId())
-              .status(status)
-              .title(survey.getTitle())
-              .description(survey.getDescription())
-              .countQuestions(survey.getQuestions().size())
-              .nextQuestionId(nextQuestionId)
-              .token(instance.getToken())
-              .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime().toEpochMilli())
-              .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime().toEpochMilli())
-              .build());
+      result.put(survey.getNameId(), getStatus(survey, user));
     }
 
     return result.values();
+  }
+
+  private SurveyStatusDto getStatus(final Survey survey, final User user) {
+
+    final SurveyInstance instance = getCurrentInstance(survey);
+
+    final Optional<SurveyStatus> surveyStatusOp =
+        this.surveyStatusRepository.findByUserAndSurveyInstance(user, instance);
+
+    Long nextQuestionId = null;
+
+    if (surveyStatusOp.isPresent()) {
+      final SurveyStatus surveyStatus = surveyStatusOp.get();
+      nextQuestionId = surveyStatus.getNextQuestion() == null ? null : surveyStatus.getNextQuestion().getId();
+    }
+
+    final SurveyStatusType status = calculateSurveyStatus(user, instance);
+
+    return SurveyStatusDto.builder()
+        .nameId(survey.getNameId())
+        .status(status)
+        .title(survey.getTitle())
+        .description(survey.getDescription())
+        .countQuestions(survey.getQuestions().size())
+        .nextQuestionId(nextQuestionId)
+        .token(instance.getToken())
+        .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime().toEpochMilli())
+        .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime().toEpochMilli())
+        .build();
   }
 
   private SurveyStatusType calculateSurveyStatus(final User user, final SurveyInstance instance) {

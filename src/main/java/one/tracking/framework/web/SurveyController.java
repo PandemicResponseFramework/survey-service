@@ -62,12 +62,22 @@ public class SurveyController {
     return DtoMapper.map(this.surveyService.getReleasedSurvey(nameId));
   }
 
-  @RequestMapping(method = RequestMethod.GET, path = "/survey")
+  @RequestMapping(method = RequestMethod.GET, path = "/overview")
   public Collection<SurveyStatusDto> getSurveyOverview(
       @ApiIgnore
       final Authentication authentication) {
 
     return this.surveyService.getSurveyOverview(authentication.getName());
+  }
+
+  @RequestMapping(method = RequestMethod.GET, path = "/overview/{nameId}")
+  public SurveyStatusDto getSurveyOverview(
+      @PathVariable("nameId")
+      final String nameId,
+      @ApiIgnore
+      final Authentication authentication) {
+
+    return this.surveyService.getSurveyOverview(nameId, authentication.getName());
   }
 
   @RequestMapping(method = RequestMethod.POST, path = "/survey/{nameId}/answer")
