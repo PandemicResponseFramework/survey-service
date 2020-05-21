@@ -8,24 +8,22 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import one.tracking.framework.domain.PushNotificationRequest;
 import one.tracking.framework.entity.DeviceToken;
-import one.tracking.framework.entity.SchedulerLock;
 import one.tracking.framework.entity.SurveyInstance;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.ReminderType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.repo.DeviceTokenRepository;
-import one.tracking.framework.repo.SchedulerLockRepository;
 import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
@@ -48,9 +46,6 @@ public class SchedulerConfig {
   private DeviceTokenRepository deviceTokenRepository;
 
   @Autowired
-  private SchedulerLockRepository schedulerLockRepository;
-
-  @Autowired
   private SurveyResponseRepository surveyResponseRepository;
 
   @Autowired
@@ -65,6 +60,9 @@ public class SchedulerConfig {
   @Autowired
   private FirebaseService firebaseService;
 
+  @Autowired
+  private Locker locker;
+
   @Value("${app.timeout.reminder.lock}")
   private Integer timeoutReminderLock;
 
@@ -77,39 +75,34 @@ public class SchedulerConfig {
   @Scheduled(cron = "0 0 12 * * *") // Run job every day @ 12am
   public void sendReminder() {
 
-    LOG.info("Executing scheduled job @ {}", Instant.now());
+    LOG.info("Executing scheduled job '{}' @ {}", TASK_SEND_REMINDER, Instant.now());
 
     try {
-      lockAndSendReminder();
+
+      if (lockAndSendReminder())
+        LOG.info("Executing scheduled job '{}' DONE @ {}", TASK_SEND_REMINDER, Instant.now());
+      else
+        LOG.info("Executing scheduled job '{}' CANCELLED @ {}", TASK_SEND_REMINDER, Instant.now());
+
     } catch (final Exception e) {
       LOG.error(e.getMessage(), e);
     }
   }
 
-  private void lockAndSendReminder() {
+  private boolean lockAndSendReminder() {
 
-    final Optional<SchedulerLock> lockOp = this.schedulerLockRepository.findByTaskName(TASK_SEND_REMINDER);
+    try {
 
-    if (lockOp.isEmpty()) {
+      this.locker.lock(TASK_SEND_REMINDER, this.timeoutReminderLock);
 
-      this.schedulerLockRepository.save(SchedulerLock.builder()
-          .taskName(TASK_SEND_REMINDER)
-          .timeout(this.timeoutReminderLock)
-          .build());
       performSendReminder();
+      return true;
 
-    } else {
-
-      final SchedulerLock lock = lockOp.get();
-      if (lock.getCreatedAt().plusSeconds(lock.getTimeout()).isAfter(Instant.now())) {
-
-        this.schedulerLockRepository.save(lock.toBuilder()
-            .createdAt(Instant.now())
-            .timeout(this.timeoutReminderLock)
-            .build());
-        performSendReminder();
-      }
-
+    } catch (final DataIntegrityViolationException e) {
+      // In case of concurrency by multiple instances, failing to store the same entry is valid
+      // Unique index or primary key violation is to be expected
+      LOG.info("Expected violation: {}", e.getMessage());
+      return false;
     }
   }
 

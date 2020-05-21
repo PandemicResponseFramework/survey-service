@@ -3,16 +3,14 @@
  */
 package one.tracking.framework.service;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
@@ -36,17 +34,25 @@ public class FirebaseService {
 
   private static final Logger LOG = LoggerFactory.getLogger(FirebaseService.class);
 
-  @Value("${app.fcm-config}")
+  @Autowired
+  private ResourceLoader resourceLoader;
+
+  @Value("${app.fcm-config:#{null}}")
   private String firebaseConfigPath;
 
   @PostConstruct
   public void initialize() {
 
+    if (this.firebaseConfigPath == null) {
+      LOG.warn("Firebase config file not set. Skipping FCM setup.");
+      return;
+    }
+
     try {
 
       final FirebaseOptions options = new FirebaseOptions.Builder()
           .setCredentials(
-              GoogleCredentials.fromStream(Files.newInputStream(Paths.get(this.firebaseConfigPath))))
+              GoogleCredentials.fromStream(this.resourceLoader.getResource(this.firebaseConfigPath).getInputStream()))
           .build();
 
       if (FirebaseApp.getApps().isEmpty()) {
@@ -59,20 +65,11 @@ public class FirebaseService {
     }
   }
 
-  // @EventListener
-  private void onStartup(final ApplicationStartedEvent event) throws InterruptedException, ExecutionException {
-
-    sendMessageToUser(PushNotificationRequest.builder()
-        .title("Test")
-        .message("Hello!!!")
-        .data(Collections.singletonMap("Key", "Value"))
-        .token(
-            "et3UBqhyTFOgbgf9HWHVEB:APA91bG4IWZaIYDSjQu4tV0VSAfwDHO9OfLwIInEWy8P0qH4yRiFr_UImnFFnVWkTdNomlGkD4xK-xu8LoowPzMFa2n0KBncr5G2wVhPsGDoDufp8TBvKJw6l85Y4_J7SHOK4ybuSqTU")
-        .build());
-  }
-
   public void sendMessageToUser(final PushNotificationRequest request)
       throws InterruptedException, ExecutionException {
+
+    if (this.firebaseConfigPath == null)
+      return;
 
     final Message message = prepareMessage(request);
     final String response = sendMessage(message);
