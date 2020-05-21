@@ -70,8 +70,11 @@ public class SurveyIT {
 
   private static final Logger LOG = LoggerFactory.getLogger(SurveyIT.class);
 
-  private static final String ENDPOINT_OVERVIEW = "/survey";
-  private static final String ENDPOINT_SURVEY_TEST = ENDPOINT_OVERVIEW + "/TEST";
+  private static final String ENDPOINT_OVERVIEW = "/overview";
+  private static final String ENDPOINT_OVERVIEW_TEST = ENDPOINT_OVERVIEW + "/TEST";
+
+  private static final String ENDPOINT_SURVEY = "/survey";
+  private static final String ENDPOINT_SURVEY_TEST = ENDPOINT_SURVEY + "/TEST";
   private static final String ENDPOINT_SURVEY_TEST_ANSWER = ENDPOINT_SURVEY_TEST + "/answer";
 
   @Autowired
