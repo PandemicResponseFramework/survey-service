@@ -1,11 +1,12 @@
 /**
  *
  */
-package one.tracking.framework.dto.meta.container;
+package one.tracking.framework.dto.meta.question;
 
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -15,7 +16,9 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-@ApiModel(parent = ContainerDto.class)
-public class DefaultContainerDto extends ContainerDto {
+@NoArgsConstructor
+@ApiModel(parent = QuestionDto.class)
+public class ChecklistEntryDto extends QuestionDto {
 
+  private Boolean defaultAnswer;
 }

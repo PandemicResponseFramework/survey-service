@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import one.tracking.framework.exception.ConflictException;
 
 /**
  * This is the default {@link ResponseEntityExceptionHandler} used to map {@link Exception}s to HTTP
@@ -70,14 +71,25 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(value = {IllegalArgumentException.class, NoSuchElementException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ResponseEntity<String> badRequest(final Exception e) {
-    LOG.debug(e.getMessage(), e);
-    return ResponseEntity.badRequest().build();
+
+    if (!LOG.isTraceEnabled())
+      LOG.debug(e.getMessage());
+    else
+      LOG.trace(e.getMessage(), e);
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
   }
 
-  @ExceptionHandler(value = {IllegalStateException.class})
-  @ResponseStatus(HttpStatus.FORBIDDEN)
-  public ResponseEntity<String> forbidden(final Exception e) {
-    LOG.debug(e.getMessage(), e);
-    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+  @ExceptionHandler(value = {ConflictException.class})
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public ResponseEntity<String> conflictRequest(final Exception e) {
+
+    if (!LOG.isTraceEnabled())
+      LOG.debug(e.getMessage());
+    else
+      LOG.trace(e.getMessage(), e);
+
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
   }
+
 }

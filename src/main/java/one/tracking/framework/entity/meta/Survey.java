@@ -4,42 +4,43 @@
 package one.tracking.framework.entity.meta;
 
 import java.time.Instant;
-import java.util.List;
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import javax.persistence.Version;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import one.tracking.framework.entity.meta.question.Question;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+import one.tracking.framework.entity.meta.container.Container;
 
 /**
  * @author Marko Voß
  *
  */
 @Data
-@Builder
+@SuperBuilder(toBuilder = true)
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(uniqueConstraints = {
     @UniqueConstraint(columnNames = {"nameId", "version"})
 })
-public class Survey {
+@DiscriminatorValue("SURVEY")
+public class Survey extends Container {
 
-  @Id
-  @GeneratedValue
-  private Long id;
-
-  @Version
+  /*
+   * Not using @Version here as for each version a new entry must exist.
+   */
+  @Column(nullable = false, updatable = false)
   private Integer version;
 
   @Column(length = 32, nullable = false, updatable = false)
@@ -51,16 +52,30 @@ public class Survey {
   @Column(length = 256, nullable = true)
   private String description;
 
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private IntervalType intervalType;
+
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private ReleaseStatusType releaseStatus;
+
+  @Column(nullable = true)
+  private Integer intervalLength;
+
   @Column(nullable = false, updatable = false)
   private Instant createdAt;
 
-  @OneToMany(fetch = FetchType.LAZY)
-  private List<Question> questions;
-
+  @Override
   @PrePersist
-  void onPrePersist() {
-    if (this.id == null) {
+  protected void onPrePersist() {
+
+    if (getId() == null) {
       setCreatedAt(Instant.now());
+
+      if (this.version == null) {
+        setVersion(0);
+      }
     }
   }
 

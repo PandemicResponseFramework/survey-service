@@ -4,10 +4,12 @@
 package one.tracking.framework.dto.meta.container;
 
 import java.util.List;
-import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -17,9 +19,10 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@NoArgsConstructor
 @ApiModel(parent = ContainerDto.class)
+@Schema(allOf = {ContainerDto.class})
 public class ChoiceContainerDto extends ContainerDto {
 
-  @Valid
-  private List<Long> choiceDependsOn;
+  private List<@NotNull Long> choiceDependsOn;
 }

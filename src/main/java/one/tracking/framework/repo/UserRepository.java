@@ -14,4 +14,6 @@ import one.tracking.framework.entity.User;
 public interface UserRepository extends CrudRepository<User, String> {
 
   Optional<User> findByUserToken(String token);
+
+  boolean existsByUserToken(String hash);
 }

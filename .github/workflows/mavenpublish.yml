@@ -1,7 +1,7 @@
-# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
+# This workflow will build a package using Maven and perform Integration Tests.
 # For more information see: https://github.com/actions/setup-java#apache-maven-with-a-settings-path
 
-name: Maven Package
+name: Maven Package & Integration Tests
 
 on: push
 
@@ -19,10 +19,10 @@ jobs:
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: $SETTINGS_PATH # location for the settings.xml file
 
-    - name: Deploy to Github Package Registry
+    - name: Build package and perform integration tests
       env:
         GITHUB_USERNAME: x-access-token
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SETTINGS_PATH: ${{ github.workspace }}/.github/workflows/settings.xml
       run:
-        mvn compile -B -s $SETTINGS_PATH
+        mvn integration-test -B -s $SETTINGS_PATH

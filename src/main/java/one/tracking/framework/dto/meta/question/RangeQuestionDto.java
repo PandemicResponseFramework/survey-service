@@ -3,14 +3,13 @@
  */
 package one.tracking.framework.dto.meta.question;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import one.tracking.framework.dto.meta.container.DefaultContainerDto;
 
 /**
  * @author Marko Voß
@@ -19,6 +18,7 @@ import one.tracking.framework.dto.meta.container.DefaultContainerDto;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@NoArgsConstructor
 @ApiModel(parent = QuestionDto.class)
 public class RangeQuestionDto extends QuestionDto {
 
@@ -35,8 +35,5 @@ public class RangeQuestionDto extends QuestionDto {
   private String maxText;
 
   private Integer defaultValue;
-
-  @Valid
-  private DefaultContainerDto container;
 
 }

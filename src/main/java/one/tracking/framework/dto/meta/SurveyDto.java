@@ -5,6 +5,7 @@ package one.tracking.framework.dto.meta;
 
 import java.util.List;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -27,12 +28,12 @@ public class SurveyDto {
   private Long id;
 
   @NotEmpty
-  @Valid
-  private List<QuestionDto> questions;
+  private List<@Valid QuestionDto> questions;
 
   @NotBlank
   private String nameId;
 
+  @NotNull
   @Size(max = 64)
   private String title;
 
@@ -40,6 +41,7 @@ public class SurveyDto {
   private String description;
 
   @NotNull
+  @Min(0)
   private Integer version;
 
 }

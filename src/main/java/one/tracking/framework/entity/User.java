@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Entity
 @Table(indexes = {
-    @Index(name = "IDX_TOKEN", columnList = "userToken"),
+    @Index(name = "IDX_USER_TOKEN", columnList = "userToken"),
 })
 public class User {
 

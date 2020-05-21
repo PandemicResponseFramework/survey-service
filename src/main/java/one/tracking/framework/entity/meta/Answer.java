@@ -15,13 +15,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
+ * TODO: ranking
+ *
  * @author Marko Voß
  *
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 @Entity
 public class Answer {
 

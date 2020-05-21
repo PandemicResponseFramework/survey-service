@@ -7,13 +7,12 @@ import java.util.List;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
-import javax.persistence.PrePersist;
-import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -23,26 +22,14 @@ import lombok.experimental.SuperBuilder;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @DiscriminatorValue("CHECKLIST")
 public class ChecklistQuestion extends Question {
 
   @NotEmpty
   @OneToMany
-  private List<BooleanQuestion> entries;
-
-  @Override
-  @PrePersist
-  void onPrePersist() {
-    super.onPrePersist();
-
-    // Validate that entries do not support sub questions
-    if (this.entries.stream().anyMatch(p -> p.getContainer() != null)) {
-      throw new ConstraintViolationException("Entries of the ChecklistQuestion type must not contain sub questions.",
-          null);
-    }
-  }
+  private List<ChecklistEntry> entries;
 }
-

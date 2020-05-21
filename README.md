@@ -1,4 +1,4 @@
-![Maven Package](https://github.com/OneTrackingFramework/survey-service/workflows/Maven%20Package/badge.svg)
+![Maven Package & Integration Tests](https://github.com/OneTrackingFramework/survey-service/workflows/Maven%20Package%20&%20Integration%20Tests/badge.svg)
 
 # Survey Service
 Survey management and evaluation service
@@ -114,7 +114,11 @@ You can also view the current API documentation on [SwaggerHub](https://app.swag
 
 ## Running the tests
 
-The tests will be performed on the maven package build automatically.
+The unit tests will be performed on the maven package build automatically. In order to perform the integration tests, execute the following command.
+
+```
+mvn clean integration-test
+```
 
 ## Deployment
 

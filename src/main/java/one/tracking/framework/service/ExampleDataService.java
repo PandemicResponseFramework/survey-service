@@ -12,16 +12,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
+import one.tracking.framework.entity.meta.IntervalType;
+import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
-import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
+import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
@@ -42,6 +45,7 @@ import one.tracking.framework.util.JWTHelper;
  *
  */
 @Service
+@Profile("example")
 public class ExampleDataService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ExampleDataService.class);
@@ -67,22 +71,18 @@ public class ExampleDataService {
   @Autowired
   private JWTHelper jwtHelper;
 
-  /**
-   * FIXME DEV only
-   *
-   * @param event
-   */
   @EventListener
   void handleEvent(final ApplicationStartedEvent event) {
+
+    LOG.info("Creating example data...");
 
     createAccount();
     createBasicSurvey();
     createRegularSurvey();
+
+    LOG.info("Creation of example data finished.");
   }
 
-  /**
-   * FIXME DEV only
-   */
   private void createAccount() {
 
     this.verificationRepository.save(Verification.builder()
@@ -99,12 +99,9 @@ public class ExampleDataService {
     LOG.info("Token for example user: {}", token);
   }
 
-  /**
-   * FIXME DEV only
-   */
   private void createBasicSurvey() {
 
-    int order = 1;
+    int order = 0;
     final List<Question> questions = new ArrayList<>(12);
 
     final String s256 =
@@ -170,7 +167,7 @@ public class ExampleDataService {
         Arrays.asList(
             "Full time employment",
             "Part time employment"),
-        Collections.singletonList(createTextQuestion("Type of employment:", 1, false))));
+        Collections.singletonList(createTextQuestion("Type of employment:", 0, false, 256))));
 
     // 5
     questions.add(createChoiceQuestion(
@@ -192,7 +189,7 @@ public class ExampleDataService {
         "In general, do you have any health problems that require you to limit your activities?", order++,
         true,
         Collections
-            .singletonList(createTextQuestion("If yes, what health problem limits your activities?", 1, false))));
+            .singletonList(createTextQuestion("If yes, what health problem limits your activities?", 0, false, 256))));
 
     // 8
     questions.add(createBoolQuestion(
@@ -219,15 +216,14 @@ public class ExampleDataService {
         .nameId("BASIC")
         .title(s32)
         .description(s256)
+        .intervalType(IntervalType.NONE)
+        .releaseStatus(ReleaseStatusType.RELEASED)
         .build());
   }
 
-  /**
-   * FIXME DEV only
-   */
   private void createRegularSurvey() {
 
-    int order = 1;
+    int order = 0;
     final List<Question> questions = new ArrayList<>(12);
 
     // 13
@@ -312,22 +308,22 @@ public class ExampleDataService {
         "Have you been hospitalised for a COVID-19 infection?",
         order++,
         true,
-        Collections.singletonList(createTextQuestion("How many days were you sick?", 1, false))));
+        Collections.singletonList(createTextQuestion("How many days were you sick?", 0, false, 256))));
 
     // 23
     questions.add(createChecklistQuestion(
         "To what degree have you experienced the following symptoms in the last 7 days:",
         order++,
         Arrays.asList(
-            createBoolQuestion("Headache", 1),
-            createBoolQuestion("Muscle pain/aches", 2),
-            createBoolQuestion("Difficulty breathing", 3),
-            createBoolQuestion("Fever/ high temperature", 4),
-            createBoolQuestion("Sore throat", 5),
-            createBoolQuestion("Dry cough", 6),
-            createBoolQuestion("Wet cough", 7),
-            createBoolQuestion("I felt physically exhausted", 8),
-            createBoolQuestion("loss of smell and taste", 9))));
+            createChecklistEntry("Headache", 0),
+            createChecklistEntry("Muscle pain/aches", 1),
+            createChecklistEntry("Difficulty breathing", 2),
+            createChecklistEntry("Fever/ high temperature", 3),
+            createChecklistEntry("Sore throat", 4),
+            createChecklistEntry("Dry cough", 5),
+            createChecklistEntry("Wet cough", 6),
+            createChecklistEntry("I felt physically exhausted", 7),
+            createChecklistEntry("loss of smell and taste", 8))));
 
     // 24
     questions.add(createRangeQuestion(
@@ -429,17 +425,20 @@ public class ExampleDataService {
         "Has the COVID-19 crisis affected your ability to exercise?",
         order++,
         true,
-        Collections.singletonList(createTextQuestion("If yes, how?", 1, false))));
+        Collections.singletonList(createTextQuestion("If yes, how?", 0, false, 256))));
 
     // 36
     questions.add(createTextQuestion(
         "Has the COVID-19 crisis changed the way that you use social media?",
-        order++, true));
+        order++, true, 256));
 
     this.surveyRepository.save(Survey.builder()
         .questions(questions)
         .nameId("REGULAR")
         .title("Regular survey")
+        .intervalType(IntervalType.WEEK)
+        .releaseStatus(ReleaseStatusType.RELEASED)
+        .intervalLength(1)
         .build());
   }
 
@@ -448,13 +447,13 @@ public class ExampleDataService {
    * @param answer
    * @return
    */
-  private Answer createAnswer(final String answer) {
+  public Answer createAnswer(final String answer) {
     return this.answerRepository.save(Answer.builder()
         .value(answer)
         .build());
   }
 
-  private Question createChoiceQuestion(
+  public Question createChoiceQuestion(
       final String question,
       final int order,
       final boolean multiple,
@@ -470,42 +469,45 @@ public class ExampleDataService {
    * @param multiple
    * @param answers
    * @param dependsOn
-   * @param subQuestions
+   * @param questions
    * @return
    */
-  private Question createChoiceQuestion(
+  public Question createChoiceQuestion(
       final String question,
       final int order,
       final boolean multiple,
       final List<String> answers,
       final List<String> dependsOn,
-      final List<Question> subQuestions) {
+      final List<Question> questions) {
 
     if (answers == null || answers.isEmpty())
       throw new IllegalArgumentException("Answers must not be null or empty.");
 
     final List<Answer> answerEntities = answers.stream().map(f -> createAnswer(f)).collect(Collectors.toList());
 
-    ChoiceContainer container = null;
+    ChoiceQuestion parent = this.questionRepository.save(ChoiceQuestion.builder()
+        .question(question)
+        .ranking(order)
+        .answers(answerEntities)
+        .multiple(multiple)
+        .build());
 
-    if (subQuestions != null && !subQuestions.isEmpty()) {
+    if (questions != null && !questions.isEmpty()) {
 
       final List<Answer> dependsOnAnswers = dependsOn == null || dependsOn.isEmpty() ? null
           : answerEntities.stream().filter(p -> dependsOn.contains(p.getValue())).collect(Collectors.toList());
 
-      container = this.containerRepository.save(ChoiceContainer.builder()
+      final ChoiceContainer container = this.containerRepository.save(ChoiceContainer.builder()
           .dependsOn(dependsOnAnswers)
-          .subQuestions(subQuestions)
+          .questions(questions)
+          .parent(parent)
           .build());
+
+      parent.setContainer(container);
+      parent = this.questionRepository.save(parent);
     }
 
-    return this.questionRepository.save(ChoiceQuestion.builder()
-        .question(question)
-        .ranking(order)
-        .container(container)
-        .answers(answerEntities)
-        .multiple(multiple)
-        .build());
+    return parent;
   }
 
   /**
@@ -514,7 +516,7 @@ public class ExampleDataService {
    * @param order
    * @return
    */
-  private BooleanQuestion createBoolQuestion(
+  public BooleanQuestion createBoolQuestion(
       final String question,
       final int order) {
 
@@ -526,28 +528,41 @@ public class ExampleDataService {
    * @param question
    * @param order
    * @param dependsOn
-   * @param subQuestions
+   * @param questions
    * @return
    */
-  private BooleanQuestion createBoolQuestion(
+  public BooleanQuestion createBoolQuestion(
       final String question,
       final int order,
       final Boolean dependsOn,
-      final List<Question> subQuestions) {
+      final List<Question> questions) {
 
-    BooleanContainer container = null;
+    BooleanQuestion parent = this.questionRepository.save(BooleanQuestion.builder()
+        .question(question)
+        .ranking(order)
+        .build());
 
-    if (subQuestions != null && !subQuestions.isEmpty()) {
+    if (questions != null && !questions.isEmpty()) {
 
-      container = this.containerRepository.save(BooleanContainer.builder()
-          .subQuestions(subQuestions)
+      final BooleanContainer container = this.containerRepository.save(BooleanContainer.builder()
+          .questions(questions)
           .dependsOn(dependsOn)
+          .parent(parent)
           .build());
+
+      parent.setContainer(container);
+      parent = this.questionRepository.save(parent);
     }
 
-    return this.questionRepository.save(BooleanQuestion.builder()
+    return parent;
+  }
+
+  public ChecklistEntry createChecklistEntry(
+      final String question,
+      final int order) {
+
+    return this.questionRepository.save(ChecklistEntry.builder()
         .question(question)
-        .container(container)
         .ranking(order)
         .build());
   }
@@ -556,45 +571,24 @@ public class ExampleDataService {
    *
    * @param question
    * @param order
+   * @param length
+   * @param questions
    * @return
    */
-  private Question createTextQuestion(
-      final String question,
-      final int order,
-      final boolean multiline) {
-
-    return createTextQuestion(question, order, multiline, null);
-  }
-
-  /**
-   *
-   * @param question
-   * @param order
-   * @param subQuestions
-   * @return
-   */
-  private Question createTextQuestion(
+  public Question createTextQuestion(
       final String question,
       final int order,
       final boolean multiline,
-      final List<Question> subQuestions) {
+      final int length) {
 
-    DefaultContainer container = null;
-
-    if (subQuestions != null && !subQuestions.isEmpty()) {
-
-      container = this.containerRepository.save(DefaultContainer.builder()
-          .subQuestions(subQuestions)
-          .build());
-    }
-
-    return this.questionRepository.save(TextQuestion.builder()
+    final TextQuestion parent = this.questionRepository.save(TextQuestion.builder()
         .question(question)
         .multiline(multiline)
-        .container(container)
         .ranking(order)
-        .length(256)
+        .length(length)
         .build());
+
+    return parent;
   }
 
   /**
@@ -604,10 +598,10 @@ public class ExampleDataService {
    * @param entries
    * @return
    */
-  private Question createChecklistQuestion(
+  public Question createChecklistQuestion(
       final String question,
       final int order,
-      final List<BooleanQuestion> entries) {
+      final List<ChecklistEntry> entries) {
 
     if (entries == null || entries.isEmpty())
       throw new IllegalArgumentException("Entries must not be null or empty.");
@@ -623,56 +617,26 @@ public class ExampleDataService {
    *
    * @param question
    * @param order
-   * @param minValue
-   * @param maxValue
-   * @param defaultValue
-   * @param minText
-   * @param maxText
+   * @param questions
    * @return
    */
-  private Question createRangeQuestion(
+  public Question createRangeQuestion(
       final String question,
       final int order,
       final int minValue, final int maxValue,
       final Integer defaultValue,
       final String minText, final String maxText) {
 
-    return createRangeQuestion(question, order, minValue, maxValue, defaultValue, minText, maxText, null);
-  }
-
-  /**
-   *
-   * @param question
-   * @param order
-   * @param subQuestions
-   * @return
-   */
-  private Question createRangeQuestion(
-      final String question,
-      final int order,
-      final int minValue, final int maxValue,
-      final Integer defaultValue,
-      final String minText, final String maxText,
-      final List<Question> subQuestions) {
-
-    DefaultContainer container = null;
-
-    if (subQuestions != null && !subQuestions.isEmpty()) {
-
-      container = this.containerRepository.save(DefaultContainer.builder()
-          .subQuestions(subQuestions)
-          .build());
-    }
-
-    return this.questionRepository.save(RangeQuestion.builder()
+    final RangeQuestion parent = this.questionRepository.save(RangeQuestion.builder()
         .question(question)
         .minValue(minValue)
         .maxValue(maxValue)
-        .defaultValue(defaultValue)
+        .defaultAnswer(defaultValue)
         .minText(minText)
         .maxText(maxText)
-        .container(container)
         .ranking(order)
         .build());
+
+    return parent;
   }
 }

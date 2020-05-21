@@ -9,20 +9,19 @@ import one.tracking.framework.dto.meta.AnswerDto;
 import one.tracking.framework.dto.meta.SurveyDto;
 import one.tracking.framework.dto.meta.container.BooleanContainerDto;
 import one.tracking.framework.dto.meta.container.ChoiceContainerDto;
-import one.tracking.framework.dto.meta.container.DefaultContainerDto;
 import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
+import one.tracking.framework.dto.meta.question.ChecklistEntryDto;
 import one.tracking.framework.dto.meta.question.ChecklistQuestionDto;
 import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
-import one.tracking.framework.dto.meta.question.QuestionType;
 import one.tracking.framework.dto.meta.question.RangeQuestionDto;
 import one.tracking.framework.dto.meta.question.TextQuestionDto;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
-import one.tracking.framework.entity.meta.container.DefaultContainer;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
+import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
@@ -84,9 +83,8 @@ public abstract class DtoMapper {
         .id(entity.getId())
         .order(entity.getRanking())
         .question(entity.getQuestion())
-        .defaultAnswer(entity.getDefaultValue())
+        .defaultAnswer(entity.getDefaultAnswer())
         .container(map(entity.getContainer()))
-        .type(QuestionType.valueOf(entity.getType()))
         .build();
   }
 
@@ -101,11 +99,10 @@ public abstract class DtoMapper {
         .id(entity.getId())
         .order(entity.getRanking())
         .question(entity.getQuestion())
-        .defaultAnswer(entity.getDefaultValue() == null ? null : entity.getDefaultValue().getId())
+        .defaultAnswer(entity.getDefaultAnswer() == null ? null : entity.getDefaultAnswer().getId())
         .answers(entity.getAnswers().stream().map(DtoMapper::map).collect(Collectors.toList()))
         .multiple(entity.getMultiple())
         .container(map(entity.getContainer()))
-        .type(QuestionType.valueOf(entity.getType()))
         .build();
   }
 
@@ -114,8 +111,15 @@ public abstract class DtoMapper {
         .id(entity.getId())
         .order(entity.getRanking())
         .question(entity.getQuestion())
-        .type(QuestionType.valueOf(entity.getType()))
         .entries(entity.getEntries().stream().map(DtoMapper::map).collect(Collectors.toList()))
+        .build();
+  }
+
+  public static final ChecklistEntryDto map(final ChecklistEntry entity) {
+    return ChecklistEntryDto.builder()
+        .id(entity.getId())
+        .order(entity.getRanking())
+        .question(entity.getQuestion())
         .build();
   }
 
@@ -130,13 +134,11 @@ public abstract class DtoMapper {
         .id(entity.getId())
         .order(entity.getRanking())
         .question(entity.getQuestion())
-        .defaultValue(entity.getDefaultValue())
+        .defaultValue(entity.getDefaultAnswer())
         .minValue(entity.getMinValue())
         .maxValue(entity.getMaxValue())
         .minText(entity.getMinText())
         .maxText(entity.getMaxText())
-        .container(map(entity.getContainer()))
-        .type(QuestionType.valueOf(entity.getType()))
         .build();
   }
 
@@ -152,8 +154,6 @@ public abstract class DtoMapper {
         .order(entity.getRanking())
         .question(entity.getQuestion())
         .multiline(entity.isMultiline())
-        .container(map(entity.getContainer()))
-        .type(QuestionType.valueOf(entity.getType()))
         .length(entity.getLength())
         .build();
   }
@@ -165,12 +165,12 @@ public abstract class DtoMapper {
    */
   public static final BooleanContainerDto map(final BooleanContainer entity) {
 
-    if (entity == null || entity.getSubQuestions() == null || entity.getSubQuestions().isEmpty())
+    if (entity == null || entity.getQuestions() == null || entity.getQuestions().isEmpty())
       return null;
 
     return BooleanContainerDto.builder()
         .boolDependsOn(entity.getDependsOn())
-        .subQuestions(map(entity.getSubQuestions()))
+        .subQuestions(map(entity.getQuestions()))
         .build();
   }
 
@@ -181,7 +181,7 @@ public abstract class DtoMapper {
    */
   public static final ChoiceContainerDto map(final ChoiceContainer entity) {
 
-    if (entity == null || entity.getSubQuestions() == null || entity.getSubQuestions().isEmpty())
+    if (entity == null || entity.getQuestions() == null || entity.getQuestions().isEmpty())
       return null;
 
     final List<Long> dependsOn = entity.getDependsOn() == null || entity.getDependsOn().isEmpty() ? null
@@ -189,22 +189,7 @@ public abstract class DtoMapper {
 
     return ChoiceContainerDto.builder()
         .choiceDependsOn(dependsOn)
-        .subQuestions(map(entity.getSubQuestions()))
-        .build();
-  }
-
-  /**
-   *
-   * @param entity
-   * @return
-   */
-  public static final DefaultContainerDto map(final DefaultContainer entity) {
-
-    if (entity == null || entity.getSubQuestions() == null || entity.getSubQuestions().isEmpty())
-      return null;
-
-    return DefaultContainerDto.builder()
-        .subQuestions(map(entity.getSubQuestions()))
+        .subQuestions(map(entity.getQuestions()))
         .build();
   }
 
