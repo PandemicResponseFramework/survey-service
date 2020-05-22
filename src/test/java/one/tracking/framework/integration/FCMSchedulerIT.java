@@ -63,5 +63,16 @@ public class FCMSchedulerIT {
 
     // Only one execution must return true
     assertThat(future1.get(), is(not(future2.get())));
+
+    final Future<Boolean> futureA = this.executorService.submit(() -> s1.sendReminder("TESTA"));
+    final Future<Boolean> futureB = this.executorService.submit(() -> s2.sendReminder("TESTB"));
+
+    await().until(() -> {
+      return futureA.isDone() && futureB.isDone();
+    });
+
+    // Different topics -> both must be true
+    assertThat(futureA.get(), is(true));
+    assertThat(futureB.get(), is(true));
   }
 }
