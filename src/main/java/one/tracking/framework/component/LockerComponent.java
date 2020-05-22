@@ -1,7 +1,7 @@
 /**
  *
  */
-package one.tracking.framework.config;
+package one.tracking.framework.component;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -9,6 +9,7 @@ import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import one.tracking.framework.entity.SchedulerLock;
 import one.tracking.framework.repo.SchedulerLockRepository;
@@ -18,15 +19,18 @@ import one.tracking.framework.repo.SchedulerLockRepository;
  *
  */
 @Component
-public class Locker {
+public class LockerComponent {
 
-  private static final Logger LOG = LoggerFactory.getLogger(Locker.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LockerComponent.class);
 
   @Autowired
   private SchedulerLockRepository schedulerLockRepository;
 
+  @Value("${app.timeout.task.lock}")
+  private Integer timeoutLock;
+
   @Transactional
-  public boolean lock(final String task, final int lockTimeout) {
+  public boolean lock(final String task) {
 
     final Optional<SchedulerLock> lockOp = this.schedulerLockRepository.findByTaskName(task);
 
@@ -36,7 +40,7 @@ public class Locker {
 
       this.schedulerLockRepository.save(SchedulerLock.builder()
           .taskName(task)
-          .timeout(lockTimeout)
+          .timeout(this.timeoutLock)
           .build());
       return true;
 
@@ -51,7 +55,7 @@ public class Locker {
 
         this.schedulerLockRepository.save(lock.toBuilder()
             .createdAt(Instant.now())
-            .timeout(lockTimeout)
+            .timeout(this.timeoutLock)
             .build());
         return true;
 
@@ -64,6 +68,7 @@ public class Locker {
   @Transactional
   public void free(final String task) {
 
+    LOG.debug("Deleting lock for task: {}", task);
     this.schedulerLockRepository.deleteByTaskName(task);
   }
 }

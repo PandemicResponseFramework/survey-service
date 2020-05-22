@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.data.repository.CrudRepository;
+import one.tracking.framework.entity.meta.IntervalType;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.ReminderType;
 import one.tracking.framework.entity.meta.Survey;
@@ -28,6 +29,8 @@ public interface SurveyRepository extends CrudRepository<Survey, Long> {
 
   List<Survey> findByNameIdOrderByVersionDesc(String nameId);
 
-  List<Survey> findAllByReleaseStatusAndReminderTypeNotOrderByNameIdAscVersionDesc(ReleaseStatusType status,
-      ReminderType reminderType);
+  List<Survey> findAllByReleaseStatusAndReminderTypeNotAndIntervalTypeNotOrderByNameIdAscVersionDesc(
+      ReleaseStatusType status,
+      ReminderType reminderType,
+      IntervalType intervalType);
 }

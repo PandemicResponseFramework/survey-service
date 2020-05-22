@@ -15,6 +15,7 @@ import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import one.tracking.framework.config.SchedulerConfig;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
@@ -72,6 +73,9 @@ public class ExampleDataService {
   @Autowired
   private JWTHelper jwtHelper;
 
+  @Autowired
+  private SchedulerConfig schedulerConfig;
+
   @EventListener
   void handleEvent(final ApplicationStartedEvent event) {
 
@@ -80,6 +84,8 @@ public class ExampleDataService {
     createAccount();
     createBasicSurvey();
     createRegularSurvey();
+
+    this.schedulerConfig.updateSchedule();
 
     LOG.info("Creation of example data finished.");
   }

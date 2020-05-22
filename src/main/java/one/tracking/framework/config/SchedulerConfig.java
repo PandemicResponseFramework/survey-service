@@ -3,32 +3,34 @@
  */
 package one.tracking.framework.config;
 
-import java.time.Instant;
+import java.time.DayOfWeek;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import one.tracking.framework.domain.PushNotificationRequest;
-import one.tracking.framework.entity.DeviceToken;
-import one.tracking.framework.entity.SurveyInstance;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import one.tracking.framework.component.ReminderComponent;
+import one.tracking.framework.entity.meta.IntervalType;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.ReminderType;
 import one.tracking.framework.entity.meta.Survey;
-import one.tracking.framework.repo.DeviceTokenRepository;
-import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
-import one.tracking.framework.repo.SurveyResponseRepository;
-import one.tracking.framework.service.FirebaseService;
-import one.tracking.framework.service.SurveyService;
 
 /**
  * @author Marko Voß
@@ -36,138 +38,128 @@ import one.tracking.framework.service.SurveyService;
  */
 @Configuration
 @EnableScheduling
-public class SchedulerConfig {
+public class SchedulerConfig implements SchedulingConfigurer {
 
   private static final Logger LOG = LoggerFactory.getLogger(SchedulerConfig.class);
 
-  private static final String TASK_SEND_REMINDER = "REMINDER";
-
   @Autowired
-  private DeviceTokenRepository deviceTokenRepository;
-
-  @Autowired
-  private SurveyResponseRepository surveyResponseRepository;
-
-  @Autowired
-  private SurveyInstanceRepository surveyInstanceRepository;
-
-  @Autowired
-  private SurveyService surveyService;
+  private ReminderComponent reminderComponent;
 
   @Autowired
   private SurveyRepository surveyRepository;
 
-  @Autowired
-  private FirebaseService firebaseService;
+  private final Map<String, ScheduledFuture<?>> futures = new HashMap<>();
 
-  @Autowired
-  private Locker locker;
-
-  @Value("${app.timeout.reminder.lock}")
-  private Integer timeoutReminderLock;
-
-  @Value("${app.reminder.title}")
-  private String reminderTitle;
-
-  @Value("${app.reminder.message}")
-  private String reminderMessage;
-
-  @Scheduled(cron = "0 0 12 * * *") // Run job every day @ 12am
-  public void sendReminder() {
-
-    LOG.info("Executing scheduled job '{}' @ {}", TASK_SEND_REMINDER, Instant.now());
-
-    try {
-
-      if (lockAndSendReminder())
-        LOG.info("Executing scheduled job '{}' DONE @ {}", TASK_SEND_REMINDER, Instant.now());
-      else
-        LOG.info("Executing scheduled job '{}' CANCELLED @ {}", TASK_SEND_REMINDER, Instant.now());
-
-    } catch (final Exception e) {
-      LOG.error(e.getMessage(), e);
-    }
+  @Bean
+  public TaskScheduler taskScheduler() {
+    final ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+    threadPoolTaskScheduler.setPoolSize(10);
+    threadPoolTaskScheduler.setThreadNamePrefix(
+        "ReminderTaskScheduler");
+    return threadPoolTaskScheduler;
   }
 
-  private boolean lockAndSendReminder() {
-
-    try {
-
-      if (this.locker.lock(TASK_SEND_REMINDER, this.timeoutReminderLock)) {
-        performSendReminder();
-        this.locker.free(TASK_SEND_REMINDER);
-        return true;
-      }
-
-    } catch (final DataIntegrityViolationException e) {
-      // In case of concurrency by multiple instances, failing to store the same entry is valid
-      // Unique index or primary key violation is to be expected
-      LOG.info("Expected violation: {}", e.getMessage());
-    }
-
-    return false;
+  /*
+   * This method is called on application startup
+   */
+  @Override
+  public void configureTasks(final ScheduledTaskRegistrar taskRegistrar) {
+    updateSchedule();
   }
 
-  private void performSendReminder() {
-
-    LOG.info("Sending reminders...");
-
-    final Instant now = Instant.now();
-
-    final List<String> handledNameIds = new ArrayList<>();
+  public void updateSchedule() {
 
     final List<Survey> surveys =
-        this.surveyRepository.findAllByReleaseStatusAndReminderTypeNotOrderByNameIdAscVersionDesc(
-            ReleaseStatusType.RELEASED,
-            ReminderType.NONE);
+        this.surveyRepository.findAllByReleaseStatusAndReminderTypeNotAndIntervalTypeNotOrderByNameIdAscVersionDesc(
+            ReleaseStatusType.RELEASED, ReminderType.NONE, IntervalType.NONE);
+
+    final List<String> nameIds = new ArrayList<>();
 
     for (final Survey survey : surveys) {
 
-      // Handle the current version only
-      if (handledNameIds.contains(survey.getNameId()))
+      final String nameId = survey.getNameId();
+
+      if (nameIds.contains(nameId))
         continue;
 
-      handledNameIds.add(survey.getNameId());
+      nameIds.add(nameId);
 
-      final ChronoUnit unit = survey.getReminderType().toChronoUnit();
+      final ScheduledFuture<?> future = this.futures.get(survey.getNameId());
+      if (future != null)
+        future.cancel(false);
 
-      if (unit == null) {
-        LOG.error("No mapping defined for reminder type: {}! Skipping sending reminders for survey: {}.",
-            survey.getReminderType(), survey.getNameId());
-        continue;
-      }
+      // Avoid survey object to keep existing in TriggerContext scope
+      final IntervalType intervalType = survey.getIntervalType();
+      final Integer intervalValue = survey.getIntervalValue();
+      final ReminderType reminderType = survey.getReminderType();
+      final Integer reminderValue = survey.getReminderValue();
 
-      final SurveyInstance instance = this.surveyService.getCurrentInstance(survey);
+      this.futures.put(nameId,
+          taskScheduler().schedule(
+              (Runnable) () -> this.reminderComponent.sendReminder(nameId),
+              triggerContext -> {
 
-      if (now.isAfter(instance.getStartTime().plus(survey.getReminderValue(), unit))) {
+                final Date nextExecution = getNextExecutionTime(
+                    intervalType, intervalValue,
+                    reminderType, reminderValue,
+                    triggerContext.lastActualExecutionTime());
 
-        performSendReminder(survey, instance);
-      }
+                LOG.debug("Scheduling reminder task for survey {} to {}", nameId, nextExecution);
+
+                return nextExecution;
+              }));
     }
   }
 
   /**
-   * @param survey
-   * @param instance
+   *
+   *
+   * @param intervalType
+   * @param intervalValue
+   * @param reminderType
+   * @param reminderValue
+   * @param lastExecutionTime
+   * @return
    */
-  private void performSendReminder(final Survey survey, final SurveyInstance instance) {
+  private Date getNextExecutionTime(
+      final IntervalType intervalType,
+      final Integer intervalValue,
+      final ReminderType reminderType,
+      final Integer reminderValue,
+      final Date lastExecutionTime) {
 
-    for (final DeviceToken deviceToken : this.deviceTokenRepository.findAll()) {
+    OffsetDateTime startTime = null;
 
-      if (this.surveyResponseRepository.existsByUserAndSurveyInstance(deviceToken.getUser(), instance))
-        continue;
+    switch (intervalType) {
+      case WEEKLY:
+        startTime = ZonedDateTime.now(ZoneOffset.UTC)
+            .with(TemporalAdjusters.previous(DayOfWeek.MONDAY))
+            .truncatedTo(ChronoUnit.DAYS)
+            .plusHours(12)
+            .toOffsetDateTime();
+        break;
+      default:
+        break;
+    }
 
-      try {
+    if (startTime == null)
+      return null;
 
-        this.firebaseService.sendMessageToUser(PushNotificationRequest.builder()
-            .title(this.reminderTitle)
-            .message(this.reminderMessage)
-            .data(Collections.singletonMap("surveyNameId", survey.getNameId()))
-            .build());
+    final OffsetDateTime reminderTime = startTime.plus(
+        reminderValue,
+        reminderType.toChronoUnit());
 
-      } catch (InterruptedException | ExecutionException e) {
-        LOG.error(e.getMessage(), e);
-      }
+    if (lastExecutionTime == null && OffsetDateTime.now(ZoneOffset.UTC).isBefore(reminderTime) ||
+        lastExecutionTime != null && lastExecutionTime.toInstant().isBefore(reminderTime.toInstant())) {
+
+      return new Date(reminderTime.toInstant().toEpochMilli());
+
+    } else {
+
+      return new Date(reminderTime.plus(
+          intervalValue,
+          intervalType.toChronoUnit())
+          .toInstant().toEpochMilli());
     }
   }
 }
