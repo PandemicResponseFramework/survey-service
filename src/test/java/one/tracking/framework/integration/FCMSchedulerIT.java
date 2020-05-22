@@ -4,6 +4,7 @@
 package one.tracking.framework.integration;
 
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
@@ -62,7 +63,7 @@ public class FCMSchedulerIT {
     });
 
     // Only one execution must return true
-    assertThat(future1.get(), is(not(future2.get())));
+    assertThat(future1.get(), is(not(equalTo(future2.get()))));
 
     final Future<Boolean> futureA = this.executorService.submit(() -> s1.sendReminder("TESTA"));
     final Future<Boolean> futureB = this.executorService.submit(() -> s2.sendReminder("TESTB"));
