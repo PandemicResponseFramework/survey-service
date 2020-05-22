@@ -18,4 +18,5 @@ public interface SchedulerLockRepository extends CrudRepository<SchedulerLock, L
   @Lock(LockModeType.PESSIMISTIC_READ)
   Optional<SchedulerLock> findByTaskName(String name);
 
+  void deleteByTaskName(String name);
 }

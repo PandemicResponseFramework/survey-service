@@ -93,17 +93,19 @@ public class SchedulerConfig {
 
     try {
 
-      this.locker.lock(TASK_SEND_REMINDER, this.timeoutReminderLock);
-
-      performSendReminder();
-      return true;
+      if (this.locker.lock(TASK_SEND_REMINDER, this.timeoutReminderLock)) {
+        performSendReminder();
+        this.locker.free(TASK_SEND_REMINDER);
+        return true;
+      }
 
     } catch (final DataIntegrityViolationException e) {
       // In case of concurrency by multiple instances, failing to store the same entry is valid
       // Unique index or primary key violation is to be expected
       LOG.info("Expected violation: {}", e.getMessage());
-      return false;
     }
+
+    return false;
   }
 
   private void performSendReminder() {
@@ -127,7 +129,7 @@ public class SchedulerConfig {
 
       handledNameIds.add(survey.getNameId());
 
-      final ChronoUnit unit = getChronoUnit(survey.getReminderType());
+      final ChronoUnit unit = survey.getReminderType().toChronoUnit();
 
       if (unit == null) {
         LOG.error("No mapping defined for reminder type: {}! Skipping sending reminders for survey: {}.",
@@ -168,15 +170,4 @@ public class SchedulerConfig {
       }
     }
   }
-
-  private ChronoUnit getChronoUnit(final ReminderType type) {
-
-    switch (type) {
-      case AFTER_DAYS:
-        return ChronoUnit.DAYS;
-      default:
-        return null;
-    }
-  }
-
 }
