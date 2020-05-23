@@ -149,4 +149,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
+* Many thanks to [foerster technologies](https://foerster-technologies.com) for hosting the server during the development
 * Many thanks to [PurpleBooth](https://github.com/PurpleBooth) for creating the [README Template](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2)
