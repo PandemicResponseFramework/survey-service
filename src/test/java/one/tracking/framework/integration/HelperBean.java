@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import one.tracking.framework.entity.DeviceToken;
+import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.IntervalType;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
@@ -25,8 +27,10 @@ import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
 import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
+import one.tracking.framework.repo.DeviceTokenRepository;
 import one.tracking.framework.repo.QuestionRepository;
 import one.tracking.framework.repo.SurveyRepository;
+import one.tracking.framework.repo.UserRepository;
 
 /**
  * @author Marko Voß
@@ -46,7 +50,25 @@ public class HelperBean {
   @Autowired
   private SurveyRepository surveyRepository;
 
-  public void createTestSurvey() {
+  @Autowired
+  private UserRepository userRepository;
+
+  @Autowired
+  private DeviceTokenRepository deviceTokenRepository;
+
+  public User createUser(final String userToken) {
+    return this.userRepository.save(User.builder().userToken(userToken).build());
+  }
+
+  public void addDeviceToken(final User user, final String... deviceTokens) {
+
+    for (final String token : deviceTokens) {
+      this.deviceTokenRepository.save(DeviceToken.builder().user(user).token(token).build());
+    }
+
+  }
+
+  public void createTestSurvey(final String nameId) {
 
     int order = 0;
     final List<Question> questions = new ArrayList<>(12);
@@ -139,11 +161,13 @@ public class HelperBean {
 
     this.surveyRepository.save(Survey.builder()
         .questions(questions)
-        .nameId("TEST")
+        .nameId(nameId)
         .title("TITLE")
         .description("DESCRIPTION")
-        .intervalType(IntervalType.NONE)
-        .reminderType(ReminderType.NONE)
+        .intervalType(IntervalType.WEEKLY)
+        .intervalValue(1)
+        .reminderType(ReminderType.AFTER_DAYS)
+        .reminderValue(0)
         .releaseStatus(ReleaseStatusType.RELEASED)
         .build());
   }

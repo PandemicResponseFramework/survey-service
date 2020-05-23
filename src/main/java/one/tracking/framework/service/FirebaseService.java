@@ -65,15 +65,16 @@ public class FirebaseService {
     }
   }
 
-  public void sendMessageToUser(final PushNotificationRequest request)
+  public boolean sendMessageToUser(final PushNotificationRequest request)
       throws InterruptedException, ExecutionException {
 
     if (this.firebaseConfigPath == null)
-      return;
+      return false;
 
     final Message message = prepareMessage(request);
     final String response = sendMessage(message);
     LOG.info("Push notification response: {}", response);
+    return true;
   }
 
   private Message prepareMessage(final PushNotificationRequest request) {

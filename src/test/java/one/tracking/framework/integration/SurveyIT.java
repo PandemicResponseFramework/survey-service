@@ -102,7 +102,7 @@ public class SurveyIT {
   @Test
   public void test() throws Exception {
 
-    this.helper.createTestSurvey();
+    this.helper.createTestSurvey("TEST");
 
     /*
      * Test overview

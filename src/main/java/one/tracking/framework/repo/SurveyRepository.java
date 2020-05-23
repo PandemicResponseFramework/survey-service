@@ -33,4 +33,10 @@ public interface SurveyRepository extends CrudRepository<Survey, Long> {
       ReleaseStatusType status,
       ReminderType reminderType,
       IntervalType intervalType);
+
+  List<Survey> findAllByNameIdAndReleaseStatusAndReminderTypeNotAndIntervalTypeNotOrderByNameIdAscVersionDesc(
+      String nameId,
+      ReleaseStatusType status,
+      ReminderType reminderType,
+      IntervalType intervalType);
 }

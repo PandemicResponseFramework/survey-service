@@ -5,7 +5,6 @@ package one.tracking.framework.component;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -16,6 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import one.tracking.framework.domain.PushNotificationRequest;
+import one.tracking.framework.domain.ReminderTaskResult;
+import one.tracking.framework.domain.ReminderTaskResult.StateType;
 import one.tracking.framework.entity.DeviceToken;
 import one.tracking.framework.entity.Reminder;
 import one.tracking.framework.entity.SurveyInstance;
@@ -68,35 +69,34 @@ public class ReminderComponent {
   @Value("${app.reminder.message}")
   private String reminderMessage;
 
-  public boolean sendReminder(final String topic) {
+  public ReminderTaskResult sendReminder(final String nameId) {
 
-    LOG.debug("Executing scheduled job '{}{}' @ {}", TASK_REMINDER_PREFIX, topic, Instant.now());
+    LOG.debug("Executing scheduled job '{}{}'", TASK_REMINDER_PREFIX, nameId);
 
     try {
 
-      if (lockAndSendReminder(topic)) {
-        LOG.debug("Executing scheduled job '{}{}' DONE @ {}", TASK_REMINDER_PREFIX, topic, Instant.now());
-        return true;
+      final ReminderTaskResult result = lockAndSendReminder(nameId);
+      if (result == ReminderTaskResult.NOOP)
+        LOG.debug("Executing scheduled job '{}{}' CANCELLED", TASK_REMINDER_PREFIX, nameId);
+      else
+        LOG.debug("Executing scheduled job '{}{}' DONE", TASK_REMINDER_PREFIX, nameId);
 
-      } else {
-        LOG.debug("Executing scheduled job '{}{}' CANCELLED @ {}", TASK_REMINDER_PREFIX, topic, Instant.now());
-      }
+      return result;
 
     } catch (final Exception e) {
       LOG.error(e.getMessage(), e);
+      return ReminderTaskResult.NOOP;
     }
-
-    return false;
   }
 
-  private boolean lockAndSendReminder(final String topic) {
+  private ReminderTaskResult lockAndSendReminder(final String nameId) {
 
     try {
 
-      if (this.locker.lock(TASK_REMINDER_PREFIX + topic)) {
-        performSendReminder();
-        this.locker.free(TASK_REMINDER_PREFIX + topic);
-        return true;
+      if (this.locker.lock(TASK_REMINDER_PREFIX + nameId)) {
+        final ReminderTaskResult result = performSendReminder(nameId);
+        this.locker.free(TASK_REMINDER_PREFIX + nameId);
+        return result;
       }
 
     } catch (final DataIntegrityViolationException e) {
@@ -105,53 +105,57 @@ public class ReminderComponent {
       LOG.debug("Expected violation: {}", e.getMessage());
     }
 
-    return false;
+    return ReminderTaskResult.NOOP;
   }
 
-  private void performSendReminder() {
+  private ReminderTaskResult performSendReminder(final String nameId) {
 
-    LOG.debug("Sending reminders...");
+    LOG.debug("Sending reminders for survey '{}'...", nameId);
 
     final Instant now = Instant.now();
 
-    final List<String> handledNameIds = new ArrayList<>();
-
     final List<Survey> surveys =
-        this.surveyRepository.findAllByReleaseStatusAndReminderTypeNotAndIntervalTypeNotOrderByNameIdAscVersionDesc(
-            ReleaseStatusType.RELEASED,
-            ReminderType.NONE,
-            IntervalType.NONE);
+        this.surveyRepository
+            .findAllByNameIdAndReleaseStatusAndReminderTypeNotAndIntervalTypeNotOrderByNameIdAscVersionDesc(
+                nameId,
+                ReleaseStatusType.RELEASED,
+                ReminderType.NONE,
+                IntervalType.NONE);
 
-    for (final Survey survey : surveys) {
+    if (surveys.isEmpty())
+      return ReminderTaskResult.NOOP;
 
-      // Handle the current version only
-      if (handledNameIds.contains(survey.getNameId()))
-        continue;
+    final Survey currentRelease = surveys.get(0);
 
-      handledNameIds.add(survey.getNameId());
+    final ChronoUnit unit = currentRelease.getReminderType().toChronoUnit();
 
-      final ChronoUnit unit = survey.getReminderType().toChronoUnit();
-
-      if (unit == null) {
-        LOG.error("No mapping defined for reminder type: {}! Skipping sending reminders for survey: {}.",
-            survey.getReminderType(), survey.getNameId());
-        continue;
-      }
-
-      final SurveyInstance instance = this.surveyService.getCurrentInstance(survey);
-
-      if (now.isAfter(instance.getStartTime().plus(survey.getReminderValue(), unit))) {
-
-        performSendReminder(survey, instance);
-      }
+    if (unit == null) {
+      throw new RuntimeException(
+          "No mapping defined for reminder type: " + currentRelease.getReminderType()
+              + "! Skipping sending reminders for survey: " + nameId);
     }
+
+    final SurveyInstance instance = this.surveyService.getCurrentInstance(currentRelease);
+
+    if (now.isAfter(instance.getStartTime().plus(currentRelease.getReminderValue(), unit))) {
+
+      return performSendReminder(currentRelease, instance);
+    }
+
+    return ReminderTaskResult.builder()
+        .surveyNameId(nameId)
+        .state(StateType.EXECUTED).build();
   }
 
   /**
    * @param survey
    * @param instance
+   * @return
    */
-  private void performSendReminder(final Survey survey, final SurveyInstance instance) {
+  private ReminderTaskResult performSendReminder(final Survey survey, final SurveyInstance instance) {
+
+    int countNotifications = 0;
+    int countDeviceTokens = 0;
 
     for (final DeviceToken deviceToken : this.deviceTokenRepository.findAll()) {
 
@@ -165,11 +169,15 @@ public class ReminderComponent {
 
       try {
 
-        this.firebaseService.sendMessageToUser(PushNotificationRequest.builder()
+        final boolean result = this.firebaseService.sendMessageToUser(PushNotificationRequest.builder()
             .title(this.reminderTitle)
             .message(this.reminderMessage)
             .data(Collections.singletonMap("surveyNameId", survey.getNameId()))
             .build());
+
+        if (result)
+          countNotifications++;
+        countDeviceTokens++;
 
         this.reminderRepository.save(Reminder.builder()
             .deviceToken(deviceToken)
@@ -180,5 +188,12 @@ public class ReminderComponent {
         LOG.error(e.getMessage(), e);
       }
     }
+
+    return ReminderTaskResult.builder()
+        .surveyNameId(survey.getNameId())
+        .state(StateType.EXECUTED)
+        .countDeviceTokens(countDeviceTokens)
+        .countNotifications(countNotifications)
+        .build();
   }
 }
