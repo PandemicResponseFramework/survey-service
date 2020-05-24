@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import org.springframework.util.Assert;
 import one.tracking.framework.component.ReminderComponent;
 import one.tracking.framework.entity.meta.IntervalType;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
@@ -65,6 +68,15 @@ public class SchedulerConfig implements SchedulingConfigurer {
   @Override
   public void configureTasks(final ScheduledTaskRegistrar taskRegistrar) {
     updateSchedule();
+  }
+
+  public Map<String, Long> getSchedule(final TimeUnit timeUnit) {
+
+    Assert.notNull(timeUnit, "TimeUnit must not be null");
+
+    return this.futures.entrySet().stream().collect(Collectors.toMap(
+        e -> e.getKey(),
+        e -> e.getValue().getDelay(timeUnit)));
   }
 
   public void updateSchedule() {
