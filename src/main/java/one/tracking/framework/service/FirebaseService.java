@@ -51,8 +51,8 @@ public class FirebaseService {
     try {
 
       final FirebaseOptions options = new FirebaseOptions.Builder()
-          .setCredentials(
-              GoogleCredentials.fromStream(this.resourceLoader.getResource(this.firebaseConfigPath).getInputStream()))
+          .setCredentials(GoogleCredentials.fromStream(
+              this.resourceLoader.getResource(this.firebaseConfigPath).getInputStream()))
           .build();
 
       if (FirebaseApp.getApps().isEmpty()) {
@@ -68,7 +68,7 @@ public class FirebaseService {
   public boolean sendMessageToUser(final PushNotificationRequest request)
       throws InterruptedException, ExecutionException {
 
-    if (this.firebaseConfigPath == null)
+    if (FirebaseApp.getApps().isEmpty())
       return false;
 
     final Message message = prepareMessage(request);
