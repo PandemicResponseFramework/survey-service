@@ -43,11 +43,9 @@ public class FCMSchedulerIT {
   private ResourceLoader resourceLoader;
 
   @Test
-  public void runTest() throws Exception {
+  public void testReminderComponent() throws Exception {
 
-    final MockBeanInitializer beanInitializer = MockBeanInitializer.builder()
-        .mockedBeans(FirebaseService.class)
-        .build();
+    final MockBeanInitializer beanInitializer = new MockBeanInitializer(FirebaseService.class);
 
     final Resource resource = this.resourceLoader.getResource("classpath:application-it.properties");
     final Properties properties = new Properties();

@@ -10,7 +10,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -18,10 +17,13 @@ import lombok.Data;
  *
  */
 @Data
-@Builder
 public class MockBeanInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
   private List<Class<?>> mockedBeans;
+
+  public MockBeanInitializer(final Class<?>... beans) {
+    this.mockedBeans = Arrays.asList(beans);
+  }
 
   @Override
   public void initialize(final ConfigurableApplicationContext applicationContext) {
@@ -39,15 +41,5 @@ public class MockBeanInitializer implements ApplicationContextInitializer<Config
           }
 
         }));
-  }
-
-  public static class MockBeanInitializerBuilder {
-
-    private List<Class<?>> mockedBeans;
-
-    public MockBeanInitializerBuilder mockedBeans(final Class<?>... beans) {
-      this.mockedBeans = Arrays.asList(beans);
-      return this;
-    }
   }
 }
