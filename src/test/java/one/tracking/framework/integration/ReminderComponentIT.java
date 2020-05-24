@@ -35,7 +35,7 @@ import one.tracking.framework.service.FirebaseService;
  *
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-public class FCMSchedulerIT {
+public class ReminderComponentIT {
 
   private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
