@@ -6,7 +6,6 @@ package one.tracking.framework.config;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -144,11 +143,10 @@ public class SchedulerConfig implements SchedulingConfigurer {
 
     switch (intervalType) {
       case WEEKLY:
-        startTime = ZonedDateTime.now(ZoneOffset.UTC)
+        startTime = OffsetDateTime.now(ZoneOffset.UTC)
             .with(TemporalAdjusters.previous(DayOfWeek.MONDAY))
             .truncatedTo(ChronoUnit.DAYS)
-            .plusHours(12)
-            .toOffsetDateTime();
+            .plusHours(12);
         break;
       default:
         break;
