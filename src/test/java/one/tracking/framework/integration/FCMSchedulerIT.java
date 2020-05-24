@@ -67,7 +67,7 @@ public class FCMSchedulerIT {
     final HelperBean helper = ctx1.getBean(HelperBean.class);
 
     // Execute TEST survey creation
-    helper.createTestSurvey("TEST");
+    helper.createSurvey("TEST");
 
     // Register user and device tokens
     for (int i = 0; i < 10000; i++) {
@@ -152,8 +152,8 @@ public class FCMSchedulerIT {
     assertThat(result.getCountDeviceTokens(), is(0));
     assertThat(result.getCountNotifications(), is(0));
 
-    helper.createTestSurvey("TEST_A");
-    helper.createTestSurvey("TEST_B");
+    helper.createSurvey("TEST_A");
+    helper.createSurvey("TEST_B");
 
     /*
      * Test locking is not interfering for different surveys

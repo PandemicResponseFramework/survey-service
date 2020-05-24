@@ -3,7 +3,6 @@
  */
 package one.tracking.framework.component;
 
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
@@ -112,8 +111,6 @@ public class ReminderComponent {
 
     LOG.debug("Sending reminders for survey '{}'...", nameId);
 
-    final Instant now = Instant.now();
-
     final List<Survey> surveys =
         this.surveyRepository
             .findAllByNameIdAndReleaseStatusAndReminderTypeNotAndIntervalTypeNotOrderByNameIdAscVersionDesc(
@@ -136,15 +133,7 @@ public class ReminderComponent {
     }
 
     final SurveyInstance instance = this.surveyService.getCurrentInstance(currentRelease);
-
-    if (now.isAfter(instance.getStartTime().plus(currentRelease.getReminderValue(), unit))) {
-
-      return performSendReminder(currentRelease, instance);
-    }
-
-    return ReminderTaskResult.builder()
-        .surveyNameId(nameId)
-        .state(StateType.EXECUTED).build();
+    return performSendReminder(currentRelease, instance);
   }
 
   /**

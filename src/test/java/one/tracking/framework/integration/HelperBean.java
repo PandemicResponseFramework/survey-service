@@ -68,7 +68,7 @@ public class HelperBean {
 
   }
 
-  public void createTestSurvey(final String nameId) {
+  public void createSurvey(final String nameId) {
 
     int order = 0;
     final List<Question> questions = new ArrayList<>(12);
