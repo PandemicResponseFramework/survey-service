@@ -3,7 +3,6 @@
  */
 package one.tracking.framework.component;
 
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -123,16 +122,11 @@ public class ReminderComponent {
       return ReminderTaskResult.NOOP;
 
     final Survey currentRelease = surveys.get(0);
-
-    final ChronoUnit unit = currentRelease.getReminderType().toChronoUnit();
-
-    if (unit == null) {
-      throw new RuntimeException(
-          "No mapping defined for reminder type: " + currentRelease.getReminderType()
-              + "! Skipping sending reminders for survey: " + nameId);
-    }
-
     final SurveyInstance instance = this.surveyService.getCurrentInstance(currentRelease);
+
+    if (instance == null)
+      return ReminderTaskResult.NOOP;
+
     return performSendReminder(currentRelease, instance);
   }
 

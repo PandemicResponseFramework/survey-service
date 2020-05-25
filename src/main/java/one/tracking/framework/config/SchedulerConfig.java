@@ -3,11 +3,12 @@
  */
 package one.tracking.framework.config;
 
-import java.time.DayOfWeek;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -100,6 +101,7 @@ public class SchedulerConfig implements SchedulingConfigurer {
         future.cancel(false);
 
       // Avoid survey object to keep existing in TriggerContext scope
+      final Instant intervalStart = survey.getIntervalStart();
       final IntervalType intervalType = survey.getIntervalType();
       final Integer intervalValue = survey.getIntervalValue();
       final ReminderType reminderType = survey.getReminderType();
@@ -111,9 +113,8 @@ public class SchedulerConfig implements SchedulingConfigurer {
               triggerContext -> {
 
                 final Date nextExecution = getNextExecutionTime(
-                    intervalType, intervalValue,
-                    reminderType, reminderValue,
-                    triggerContext.lastActualExecutionTime());
+                    intervalStart, intervalType, intervalValue,
+                    reminderType, reminderValue);
 
                 LOG.debug("Scheduling reminder task for survey {} to {}", nameId, nextExecution);
 
@@ -122,54 +123,27 @@ public class SchedulerConfig implements SchedulingConfigurer {
     }
   }
 
-  /**
-   *
-   *
-   * @param intervalType
-   * @param intervalValue
-   * @param reminderType
-   * @param reminderValue
-   * @param lastExecutionTime
-   * @return
-   */
   private Date getNextExecutionTime(
-      final IntervalType intervalType,
-      final Integer intervalValue,
-      final ReminderType reminderType,
-      final Integer reminderValue,
-      final Date lastExecutionTime) {
+      final Instant intervalStart, final IntervalType intervalType, final Integer intervalValue,
+      final ReminderType reminderType, final Integer reminderValue) {
 
-    OffsetDateTime startTime = null;
+    final ZonedDateTime start = intervalStart.atZone(ZoneOffset.UTC);
+    final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
-    switch (intervalType) {
-      case WEEKLY:
-        startTime = OffsetDateTime.now(ZoneOffset.UTC)
-            .with(TemporalAdjusters.previous(DayOfWeek.MONDAY))
-            .truncatedTo(ChronoUnit.DAYS)
-            .plusHours(12);
-        break;
-      default:
-        break;
-    }
+    final int weekStart = start.get(WeekFields.ISO.weekOfWeekBasedYear());
+    final int weekNow = now.get(WeekFields.ISO.weekOfWeekBasedYear());
 
-    if (startTime == null)
-      return null;
+    final int weekDelta = (weekNow - weekStart) % intervalValue;
 
-    final OffsetDateTime reminderTime = startTime.plus(
-        reminderValue,
-        reminderType.toChronoUnit());
+    ZonedDateTime startTime = now.with(TemporalAdjusters.previousOrSame(start.getDayOfWeek()))
+        .truncatedTo(ChronoUnit.DAYS)
+        .plusHours(12)
+        .plus(reminderValue, reminderType.toChronoUnit())
+        .minusWeeks(weekDelta);
 
-    if (lastExecutionTime == null && OffsetDateTime.now(ZoneOffset.UTC).isBefore(reminderTime) ||
-        lastExecutionTime != null && lastExecutionTime.toInstant().isBefore(reminderTime.toInstant())) {
+    if (startTime.isBefore(now))
+      startTime = startTime.plus(intervalValue, intervalType.toChronoUnit());
 
-      return new Date(reminderTime.toInstant().toEpochMilli());
-
-    } else {
-
-      return new Date(reminderTime.plus(
-          intervalValue,
-          intervalType.toChronoUnit())
-          .toInstant().toEpochMilli());
-    }
+    return new Date(startTime.toInstant().toEpochMilli());
   }
 }

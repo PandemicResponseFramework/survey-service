@@ -19,7 +19,7 @@ public enum ReminderType {
       case AFTER_DAYS:
         return ChronoUnit.DAYS;
       default:
-        return null;
+        throw new RuntimeException("No mapping defined for reminder type: " + this);
     }
   }
 

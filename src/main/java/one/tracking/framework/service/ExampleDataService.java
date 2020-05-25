@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -444,8 +445,9 @@ public class ExampleDataService {
         .questions(questions)
         .nameId("REGULAR")
         .title("Regular survey")
-        .intervalType(IntervalType.WEEKLY)
         .releaseStatus(ReleaseStatusType.RELEASED)
+        .intervalStart(Instant.parse("2020-05-18T00:00:00Z"))
+        .intervalType(IntervalType.WEEKLY)
         .intervalValue(1)
         .reminderType(ReminderType.AFTER_DAYS)
         .reminderValue(2)

@@ -57,6 +57,9 @@ public class Survey extends Container {
   private IntervalType intervalType;
 
   @Column(nullable = true)
+  private Instant intervalStart;
+
+  @Column(nullable = true)
   private Integer intervalValue;
 
   @Column(nullable = false)

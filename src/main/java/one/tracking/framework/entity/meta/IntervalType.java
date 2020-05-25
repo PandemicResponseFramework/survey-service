@@ -21,7 +21,7 @@ public enum IntervalType {
       case WEEKLY:
         return ChronoUnit.WEEKS;
       default:
-        return null;
+        throw new RuntimeException("No mapping defined for reminder type: " + this);
     }
   }
 }

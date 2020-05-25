@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.integration;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -164,10 +165,11 @@ public class HelperBean {
         .nameId(nameId)
         .title("TITLE")
         .description("DESCRIPTION")
+        .intervalStart(Instant.parse("2020-05-11T12:00:00Z"))
         .intervalType(IntervalType.WEEKLY)
         .intervalValue(1)
         .reminderType(ReminderType.AFTER_DAYS)
-        .reminderValue(0)
+        .reminderValue(2)
         .releaseStatus(ReleaseStatusType.RELEASED)
         .build());
   }
