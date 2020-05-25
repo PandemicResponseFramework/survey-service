@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Date;
@@ -127,22 +126,23 @@ public class SchedulerConfig implements SchedulingConfigurer {
       final Instant intervalStart, final IntervalType intervalType, final Integer intervalValue,
       final ReminderType reminderType, final Integer reminderValue) {
 
-    final ZonedDateTime start = intervalStart.atZone(ZoneOffset.UTC);
+    final ZonedDateTime start = intervalStart.atZone(ZoneOffset.UTC).plus(reminderValue, reminderType.toChronoUnit())
+        .truncatedTo(ChronoUnit.DAYS)
+        .plusHours(12);
+
     final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+
+    if (start.isAfter(now)) {
+      return new Date(start.toInstant().toEpochMilli());
+    }
 
     final int weekStart = start.get(WeekFields.ISO.weekOfWeekBasedYear());
     final int weekNow = now.get(WeekFields.ISO.weekOfWeekBasedYear());
 
-    final int weekDelta = (weekNow - weekStart) % intervalValue;
+    final int weekDelta = (int) (Math.floor((weekNow - weekStart) / (double) intervalValue));
 
-    ZonedDateTime startTime = now.with(TemporalAdjusters.previousOrSame(start.getDayOfWeek()))
-        .truncatedTo(ChronoUnit.DAYS)
-        .plusHours(12)
-        .plus(reminderValue, reminderType.toChronoUnit())
-        .minusWeeks(weekDelta);
-
-    if (startTime.isBefore(now))
-      startTime = startTime.plus(intervalValue, intervalType.toChronoUnit());
+    final ZonedDateTime startTime =
+        start.plusWeeks(weekDelta * intervalValue).plus(intervalValue, intervalType.toChronoUnit());
 
     return new Date(startTime.toInstant().toEpochMilli());
   }

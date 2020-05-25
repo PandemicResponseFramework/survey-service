@@ -7,8 +7,6 @@ import static one.tracking.framework.entity.DataConstants.TOKEN_SURVEY_LENGTH;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.Collection;
 import java.util.List;
@@ -315,24 +313,15 @@ public class SurveyService {
     final ZonedDateTime start = survey.getIntervalStart().atZone(ZoneOffset.UTC);
     final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
+    if (start.isAfter(now))
+      return null;
+
     final int weekStart = start.get(WeekFields.ISO.weekOfWeekBasedYear());
     final int weekNow = now.get(WeekFields.ISO.weekOfWeekBasedYear());
 
-    // Survey did not yet start
-    if (weekStart > weekNow)
-      return null;
+    final int weekDelta = (int) (Math.floor((weekNow - weekStart) / (double) survey.getIntervalValue()));
 
-    final int weekDelta = (weekNow - weekStart) % survey.getIntervalValue();
-
-    final ZonedDateTime startTime = now.with(TemporalAdjusters.previousOrSame(start.getDayOfWeek()))
-        .truncatedTo(ChronoUnit.DAYS)
-        .plusHours(start.getHour())
-        .plusMinutes(start.getMinute())
-        .minusWeeks(weekDelta);
-
-    if (startTime.isAfter(now))
-      return null;
-
+    final ZonedDateTime startTime = start.plusWeeks(weekDelta * survey.getIntervalValue());
     final ZonedDateTime endTime = startTime.plus(survey.getIntervalValue(), survey.getIntervalType().toChronoUnit())
         .minusSeconds(1);
 
