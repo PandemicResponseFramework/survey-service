@@ -24,7 +24,6 @@ import one.tracking.framework.dto.SurveyStatusDto;
 import one.tracking.framework.dto.VerificationDto;
 import one.tracking.framework.dto.meta.SurveyDto;
 import one.tracking.framework.service.AuthService;
-import one.tracking.framework.service.SurveyManagementService;
 import one.tracking.framework.service.SurveyResponseService;
 import one.tracking.framework.service.SurveyService;
 import springfox.documentation.annotations.ApiIgnore;
@@ -45,9 +44,6 @@ public class SurveyController {
 
   @Autowired
   private SurveyResponseService surveyResponseService;
-
-  @Autowired
-  private SurveyManagementService surveyManagementService;
 
   @RequestMapping(method = RequestMethod.GET, path = "/check")
   public void checkAuthN() {

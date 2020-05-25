@@ -35,6 +35,7 @@ import lombok.experimental.SuperBuilder;
     @Type(name = "CHOICE", value = ChoiceQuestionDto.class),
     @Type(name = "RANGE", value = RangeQuestionDto.class),
     @Type(name = "TEXT", value = TextQuestionDto.class),
+    @Type(name = "NUMBER", value = NumberQuestionDto.class),
     @Type(name = "CHECKLIST", value = ChecklistQuestionDto.class),
     @Type(name = "CHECKLIST_ENTRY", value = ChecklistEntryDto.class)
 })
@@ -43,6 +44,7 @@ import lombok.experimental.SuperBuilder;
     ChoiceQuestionDto.class,
     RangeQuestionDto.class,
     TextQuestionDto.class,
+    NumberQuestionDto.class,
     ChecklistQuestionDto.class,
     ChecklistEntryDto.class})
 @Schema(discriminatorProperty = "type", discriminatorMapping = {
@@ -50,6 +52,7 @@ import lombok.experimental.SuperBuilder;
     @DiscriminatorMapping(value = "CHOICE", schema = ChoiceQuestionDto.class),
     @DiscriminatorMapping(value = "RANGE", schema = RangeQuestionDto.class),
     @DiscriminatorMapping(value = "TEXT", schema = TextQuestionDto.class),
+    @DiscriminatorMapping(value = "NUMBER", schema = NumberQuestionDto.class),
     @DiscriminatorMapping(value = "CHECKLIST", schema = ChecklistQuestionDto.class),
     @DiscriminatorMapping(value = "CHECKLIST_ENTRY", schema = ChecklistEntryDto.class)
 })

@@ -56,13 +56,14 @@ public class SurveyResponse {
   @ManyToMany(cascade = CascadeType.ALL)
   private List<Answer> answers;
 
-  private Integer rangeAnswer;
-
   @Column(nullable = true)
   private Boolean boolAnswer;
 
   @Column(nullable = true, length = DataConstants.TEXT_ANSWER_MAX_LENGTH)
   private String textAnswer;
+
+  @Column(nullable = true)
+  private Integer numberAnswer;
 
   @Column(nullable = false, updatable = false)
   private Instant createdAt;

@@ -19,6 +19,7 @@ import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
+import one.tracking.framework.entity.meta.question.NumberQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
@@ -136,6 +137,12 @@ public class HelperBean {
         true,
         512));
 
+    // Number - no children
+    questions.add(createNumberQuestion(
+        "Q11",
+        order++,
+        0, 10, 5));
+
     this.surveyRepository.save(Survey.builder()
         .questions(questions)
         .nameId("TEST")
@@ -146,11 +153,6 @@ public class HelperBean {
         .build());
   }
 
-  /**
-   *
-   * @param answer
-   * @return
-   */
   public Answer createAnswer(final String answer) {
     return this.answerRepository.save(Answer.builder()
         .value(answer)
@@ -166,16 +168,6 @@ public class HelperBean {
     return createChoiceQuestion(question, order, multiple, answers, null, null);
   }
 
-  /**
-   *
-   * @param question
-   * @param order
-   * @param multiple
-   * @param answers
-   * @param dependsOn
-   * @param questions
-   * @return
-   */
   public Question createChoiceQuestion(
       final String question,
       final int order,
@@ -214,12 +206,6 @@ public class HelperBean {
     return parent;
   }
 
-  /**
-   *
-   * @param question
-   * @param order
-   * @return
-   */
   public BooleanQuestion createBoolQuestion(
       final String question,
       final int order) {
@@ -227,14 +213,6 @@ public class HelperBean {
     return createBoolQuestion(question, order, null, null);
   }
 
-  /**
-   *
-   * @param question
-   * @param order
-   * @param dependsOn
-   * @param questions
-   * @return
-   */
   public BooleanQuestion createBoolQuestion(
       final String question,
       final int order,
@@ -271,14 +249,6 @@ public class HelperBean {
         .build());
   }
 
-  /**
-   *
-   * @param question
-   * @param order
-   * @param length
-   * @param questions
-   * @return
-   */
   public Question createTextQuestion(
       final String question,
       final int order,
@@ -295,13 +265,6 @@ public class HelperBean {
     return parent;
   }
 
-  /**
-   *
-   * @param question
-   * @param order
-   * @param entries
-   * @return
-   */
   public Question createChecklistQuestion(
       final String question,
       final int order,
@@ -317,13 +280,6 @@ public class HelperBean {
         .build());
   }
 
-  /**
-   *
-   * @param question
-   * @param order
-   * @param questions
-   * @return
-   */
   public Question createRangeQuestion(
       final String question,
       final int order,
@@ -338,6 +294,23 @@ public class HelperBean {
         .defaultAnswer(defaultValue)
         .minText(minText)
         .maxText(maxText)
+        .ranking(order)
+        .build());
+
+    return parent;
+  }
+
+  public Question createNumberQuestion(
+      final String question,
+      final int order,
+      final Integer minValue, final Integer maxValue,
+      final Integer defaultValue) {
+
+    final NumberQuestion parent = this.questionRepository.save(NumberQuestion.builder()
+        .question(question)
+        .minValue(minValue)
+        .maxValue(maxValue)
+        .defaultAnswer(defaultValue)
         .ranking(order)
         .build());
 

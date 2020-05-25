@@ -47,8 +47,8 @@ import one.tracking.framework.repo.UserRepository;
 @Service
 public class SurveyService {
 
-  public static final Instant INSTANT_MIN = Instant.ofEpochMilli(Long.MIN_VALUE);
-  public static final Instant INSTANT_MAX = Instant.ofEpochMilli(Long.MAX_VALUE);
+  public static final Instant INSTANT_MIN = Instant.ofEpochMilli(0);
+  public static final Instant INSTANT_MAX = Instant.parse("9999-12-24T00:00:00Z");
 
   private static final Logger LOG = LoggerFactory.getLogger(SurveyService.class);
 
@@ -269,10 +269,11 @@ public class SurveyService {
         return false;
 
       }
+      case NUMBER:
       case RANGE: {
 
         final SurveyResponse response = responses.get(question.getId());
-        return response != null && response.getRangeAnswer() != null;
+        return response != null && response.getNumberAnswer() != null;
 
       }
       case TEXT: {
