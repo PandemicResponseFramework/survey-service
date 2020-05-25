@@ -33,7 +33,7 @@ public class SurveyResponseDto {
 
   private String textAnswer;
 
-  private Integer rangeAnswer;
+  private Integer numberAnswer;
 
   private Map<@NotNull Long, @NotNull Boolean> checklistAnswer;
 

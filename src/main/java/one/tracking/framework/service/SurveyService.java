@@ -273,10 +273,11 @@ public class SurveyService {
         return false;
 
       }
+      case NUMBER:
       case RANGE: {
 
         final SurveyResponse response = responses.get(question.getId());
-        return response != null && response.getRangeAnswer() != null;
+        return response != null && response.getNumberAnswer() != null;
 
       }
       case TEXT: {

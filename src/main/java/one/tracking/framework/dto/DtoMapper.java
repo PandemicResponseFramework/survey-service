@@ -13,6 +13,7 @@ import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
 import one.tracking.framework.dto.meta.question.ChecklistEntryDto;
 import one.tracking.framework.dto.meta.question.ChecklistQuestionDto;
 import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
+import one.tracking.framework.dto.meta.question.NumberQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
 import one.tracking.framework.dto.meta.question.RangeQuestionDto;
 import one.tracking.framework.dto.meta.question.TextQuestionDto;
@@ -24,6 +25,7 @@ import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
+import one.tracking.framework.entity.meta.question.NumberQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
@@ -66,6 +68,8 @@ public abstract class DtoMapper {
       return map((RangeQuestion) entity);
     if (entity instanceof TextQuestion)
       return map((TextQuestion) entity);
+    if (entity instanceof NumberQuestion)
+      return map((NumberQuestion) entity);
     if (entity instanceof ChecklistQuestion)
       return map((ChecklistQuestion) entity);
 
@@ -139,6 +143,23 @@ public abstract class DtoMapper {
         .maxValue(entity.getMaxValue())
         .minText(entity.getMinText())
         .maxText(entity.getMaxText())
+        .build();
+  }
+
+  /**
+   *
+   * @param entity
+   * @return
+   */
+  public static final NumberQuestionDto map(final NumberQuestion entity) {
+
+    return NumberQuestionDto.builder()
+        .id(entity.getId())
+        .order(entity.getRanking())
+        .question(entity.getQuestion())
+        .defaultValue(entity.getDefaultAnswer())
+        .minValue(entity.getMinValue())
+        .maxValue(entity.getMaxValue())
         .build();
   }
 

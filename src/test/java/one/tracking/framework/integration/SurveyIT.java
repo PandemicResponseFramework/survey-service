@@ -47,6 +47,7 @@ import one.tracking.framework.dto.meta.question.BooleanQuestionDto;
 import one.tracking.framework.dto.meta.question.ChecklistEntryDto;
 import one.tracking.framework.dto.meta.question.ChecklistQuestionDto;
 import one.tracking.framework.dto.meta.question.ChoiceQuestionDto;
+import one.tracking.framework.dto.meta.question.NumberQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
 import one.tracking.framework.dto.meta.question.RangeQuestionDto;
 import one.tracking.framework.dto.meta.question.TextQuestionDto;
@@ -137,7 +138,7 @@ public class SurveyIT {
     assertThat(survey.getVersion(), is(0));
     assertThat(survey.getTitle(), is("TITLE"));
     assertThat(survey.getDescription(), is("DESCRIPTION"));
-    assertThat(survey.getQuestions().size(), is(10));
+    assertThat(survey.getQuestions().size(), is(11));
 
     performSurvey(survey, token);
   }
@@ -169,7 +170,7 @@ public class SurveyIT {
     assertThat(status.getNameId(), is("TEST"));
     assertThat(status.getTitle(), is("TITLE"));
     assertThat(status.getDescription(), is("DESCRIPTION"));
-    assertThat(status.getCountQuestions(), is(10));
+    assertThat(status.getCountQuestions(), is(11));
 
     if (expectedNextQuestionId == null)
       assertThat(status.getNextQuestionId(), is(nullValue()));
@@ -231,7 +232,7 @@ public class SurveyIT {
         .with(csrf())
         .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
             .questionId(question.getId())
-            .rangeAnswer(1)
+            .numberAnswer(1)
             .build()))
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
         .contentType(MediaType.APPLICATION_JSON))
@@ -688,7 +689,7 @@ public class SurveyIT {
         .with(csrf())
         .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
             .questionId(question.getId())
-            .rangeAnswer(11)
+            .numberAnswer(11)
             .surveyToken(surveyToken)
             .build()))
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
@@ -700,7 +701,7 @@ public class SurveyIT {
         .with(csrf())
         .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
             .questionId(question.getId())
-            .rangeAnswer(0)
+            .numberAnswer(0)
             .surveyToken(surveyToken)
             .build()))
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
@@ -711,7 +712,7 @@ public class SurveyIT {
         .with(csrf())
         .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
             .questionId(question.getId())
-            .rangeAnswer(4)
+            .numberAnswer(4)
             .surveyToken(surveyToken)
             .build()))
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
@@ -862,6 +863,75 @@ public class SurveyIT {
         .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
             .questionId(question.getId())
             .textAnswer(generatedString)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q11");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q11"));
+
+    testOverview(SurveyStatusType.INCOMPLETE, nextQuestion.getId());
+
+    /*
+     * Q11 - Number - no children
+     */
+
+    question = iterator.next();
+
+    assertThat(question, is(not(nullValue())));
+    assertThat(question, is(instanceOf(NumberQuestionDto.class)));
+    assertThat(question.getQuestion(), is("Q11"));
+    assertThat(question.getOrder(), is(10));
+
+    final NumberQuestionDto numberQuestion = (NumberQuestionDto) question;
+
+    assertThat(numberQuestion.getMinValue(), is(0));
+    assertThat(numberQuestion.getMaxValue(), is(10));
+    assertThat(numberQuestion.getDefaultValue(), is(5));
+
+    // Test violation of minimum value
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .numberAnswer(-1)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    // Test violation of maximum value
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .numberAnswer(11)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    // Test violation of null value
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .numberAnswer(4)
             .surveyToken(surveyToken)
             .build()))
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)

@@ -27,6 +27,7 @@ import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.IContainerQuestion;
+import one.tracking.framework.entity.meta.question.NumberQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
@@ -82,6 +83,8 @@ public class SurveyResponseService {
     final SurveyInstance instance = this.surveyInstanceRepository.findBySurveyAndToken(
         survey, surveyResponse.getSurveyToken()).get();
 
+    System.out.println(instance.getEndTime());
+
     if (Instant.now().isAfter(instance.getEndTime()))
       throw new ConflictException("The survey token got expired.");
 
@@ -105,7 +108,8 @@ public class SurveyResponseService {
         nextQuestion = getNextSubQuestion((ChoiceQuestion) question, surveyResponse);
         break;
       case RANGE:
-        storeRangeResponse(surveyResponse, user, instance, question);
+      case NUMBER:
+        storeNumberResponse(surveyResponse, user, instance, question);
         break;
       case TEXT:
         storeTextResponse(surveyResponse, user, instance, question);
@@ -294,7 +298,7 @@ public class SurveyResponseService {
     }
   }
 
-  private final void storeRangeResponse(
+  private final void storeNumberResponse(
       final SurveyResponseDto surveyResponse,
       final User user,
       final SurveyInstance instance,
@@ -309,13 +313,13 @@ public class SurveyResponseService {
           .question(question)
           .surveyInstance(instance)
           .user(user)
-          .rangeAnswer(surveyResponse.getRangeAnswer())
+          .numberAnswer(surveyResponse.getNumberAnswer())
           .build());
 
     } else {
 
       final SurveyResponse entity = entityOp.get();
-      entity.setRangeAnswer(surveyResponse.getRangeAnswer());
+      entity.setNumberAnswer(surveyResponse.getNumberAnswer());
       this.surveyResponseRepository.save(entity);
     }
   }
@@ -401,9 +405,17 @@ public class SurveyResponseService {
 
     // TODO: introduce step
     final RangeQuestion rangeQuestion = (RangeQuestion) question;
-    return response.getRangeAnswer() != null
-        && response.getRangeAnswer() >= rangeQuestion.getMinValue()
-        && response.getRangeAnswer() <= rangeQuestion.getMaxValue();
+    return response.getNumberAnswer() != null
+        && response.getNumberAnswer() >= rangeQuestion.getMinValue()
+        && response.getNumberAnswer() <= rangeQuestion.getMaxValue();
+  }
+
+  private final boolean validateNumberResponse(final Question question, final SurveyResponseDto response) {
+
+    final NumberQuestion numberQuestion = (NumberQuestion) question;
+    return response.getNumberAnswer() != null
+        && (numberQuestion.getMinValue() == null || response.getNumberAnswer() >= numberQuestion.getMinValue())
+        && (numberQuestion.getMaxValue() == null || response.getNumberAnswer() <= numberQuestion.getMaxValue());
   }
 
   private boolean validateChecklistResponse(final Question question, final SurveyResponseDto response) {
@@ -430,6 +442,8 @@ public class SurveyResponseService {
         return validateRangeResponse(question, response);
       case TEXT:
         return validateTextResponse(question, response);
+      case NUMBER:
+        return validateNumberResponse(question, response);
       case CHECKLIST:
         return validateChecklistResponse(question, response);
       case CHECKLIST_ENTRY:
