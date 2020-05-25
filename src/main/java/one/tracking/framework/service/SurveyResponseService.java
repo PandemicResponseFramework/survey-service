@@ -83,8 +83,6 @@ public class SurveyResponseService {
     final SurveyInstance instance = this.surveyInstanceRepository.findBySurveyAndToken(
         survey, surveyResponse.getSurveyToken()).get();
 
-    System.out.println(instance.getEndTime());
-
     if (Instant.now().isAfter(instance.getEndTime()))
       throw new ConflictException("The survey token got expired.");
 
