@@ -6,7 +6,6 @@ package one.tracking.framework.service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.PostConstruct;
@@ -61,10 +60,11 @@ public class FirebaseService {
       try {
         stream = this.resourceLoader.getResource(this.firebaseConfigFile).getInputStream();
       } catch (final IOException e) {
-        LOG.error(e.getMessage());
+        LOG.error(e.getMessage(), e);
+        return;
       }
     } else if (this.firebaseConfigJson != null) {
-      stream = new ByteArrayInputStream(this.firebaseConfigJson.getBytes(StandardCharsets.UTF_8));
+      stream = new ByteArrayInputStream(this.firebaseConfigJson.getBytes());
     }
 
     try {
