@@ -37,7 +37,7 @@ public class FirebaseService {
   @Autowired
   private ResourceLoader resourceLoader;
 
-  @Value("${app.fcm-config:#{null}}")
+  @Value("${app.fcm.config:#{null}}")
   private String firebaseConfigPath;
 
   @PostConstruct
@@ -56,8 +56,8 @@ public class FirebaseService {
           .build();
 
       if (FirebaseApp.getApps().isEmpty()) {
-        FirebaseApp.initializeApp(options);
-        LOG.info("Firebase application has been initialized.");
+        final FirebaseApp app = FirebaseApp.initializeApp(options);
+        LOG.info("Firebase application has been initialized: " + app.getName());
       }
 
     } catch (final Exception e) {
