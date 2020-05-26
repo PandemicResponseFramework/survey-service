@@ -3,6 +3,10 @@
  */
 package one.tracking.framework.service;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.PostConstruct;
@@ -37,22 +41,36 @@ public class FirebaseService {
   @Autowired
   private ResourceLoader resourceLoader;
 
-  @Value("${app.fcm.config:#{null}}")
-  private String firebaseConfigPath;
+  @Value("${app.fcm.config.file:#{null}}")
+  private String firebaseConfigFile;
+
+  @Value("${app.fcm.config.json:#{null}}")
+  private String firebaseConfigJson;
 
   @PostConstruct
   public void initialize() {
 
-    if (this.firebaseConfigPath == null) {
-      LOG.warn("Firebase config file not set. Skipping FCM setup.");
+    if (this.firebaseConfigFile == null && this.firebaseConfigJson == null) {
+      LOG.warn("Firebase config file or json not set. Skipping FCM setup.");
       return;
+    }
+
+    InputStream stream = null;
+
+    if (this.firebaseConfigFile != null) {
+      try {
+        stream = this.resourceLoader.getResource(this.firebaseConfigFile).getInputStream();
+      } catch (final IOException e) {
+        LOG.error(e.getMessage());
+      }
+    } else if (this.firebaseConfigJson != null) {
+      stream = new ByteArrayInputStream(this.firebaseConfigJson.getBytes(StandardCharsets.UTF_8));
     }
 
     try {
 
       final FirebaseOptions options = new FirebaseOptions.Builder()
-          .setCredentials(GoogleCredentials.fromStream(
-              this.resourceLoader.getResource(this.firebaseConfigPath).getInputStream()))
+          .setCredentials(GoogleCredentials.fromStream(stream))
           .build();
 
       if (FirebaseApp.getApps().isEmpty()) {
