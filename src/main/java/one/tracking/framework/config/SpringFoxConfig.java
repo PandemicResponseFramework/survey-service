@@ -29,13 +29,13 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableSwagger2
 public class SpringFoxConfig {
 
-  @Value("${app.name:null}")
+  @Value("${app.name:#{null}}")
   private String name;
 
-  @Value("${app.description:null}")
+  @Value("${app.description:#{null}}")
   private String description;
 
-  @Value("${app.version:null}")
+  @Value("${app.version:#{null}}")
   private String version;
 
   @Bean

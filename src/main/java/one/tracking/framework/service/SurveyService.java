@@ -4,12 +4,10 @@
 package one.tracking.framework.service;
 
 import static one.tracking.framework.entity.DataConstants.TOKEN_SURVEY_LENGTH;
-import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.WeekFields;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +45,11 @@ import one.tracking.framework.repo.UserRepository;
 @Service
 public class SurveyService {
 
-  public static final Instant INSTANT_MIN = Instant.ofEpochMilli(0);
-  public static final Instant INSTANT_MAX = Instant.parse("9999-12-24T00:00:00Z");
-
   private static final Logger LOG = LoggerFactory.getLogger(SurveyService.class);
+
+  public static final Instant INSTANT_MIN = Instant.ofEpochMilli(0);
+  // FIXME: Long.MAX_VALUE causes overflow on DB -> beware Christmas in 9999!
+  public static final Instant INSTANT_MAX = Instant.parse("9999-12-24T00:00:00Z");
 
   @Autowired
   private ServiceUtility utility;
@@ -108,7 +107,9 @@ public class SurveyService {
       if (result.get(survey.getNameId()) != null)
         continue;
 
-      result.put(survey.getNameId(), getStatus(survey, user));
+      final SurveyStatusDto status = getStatus(survey, user);
+      if (status != null)
+        result.put(survey.getNameId(), status);
     }
 
     return result.values();
@@ -117,6 +118,9 @@ public class SurveyService {
   private SurveyStatusDto getStatus(final Survey survey, final User user) {
 
     final SurveyInstance instance = getCurrentInstance(survey);
+
+    if (instance == null)
+      return null;
 
     final Optional<SurveyStatus> surveyStatusOp =
         this.surveyStatusRepository.findByUserAndSurveyInstance(user, instance);
@@ -294,30 +298,35 @@ public class SurveyService {
    * @param survey
    * @return
    */
-  private SurveyInstance getCurrentInstance(final Survey survey) {
+  public SurveyInstance getCurrentInstance(final Survey survey) {
 
     switch (survey.getIntervalType()) {
-      case WEEK:
-        return getWeeklyInstance(survey);
+      case WEEKLY:
+        return getInstanceByWeek(survey);
       case NONE:
       default:
         return getPermanentInstance(survey);
     }
   }
 
-  private SurveyInstance getWeeklyInstance(final Survey survey) {
+  private SurveyInstance getInstanceByWeek(final Survey survey) {
 
-    final Instant startOfWeek = ZonedDateTime.now(ZoneOffset.UTC)
-        .with(TemporalAdjusters.previous(DayOfWeek.MONDAY))
-        .truncatedTo(ChronoUnit.DAYS)
-        .toInstant();
+    final ZonedDateTime start = survey.getIntervalStart().atZone(ZoneOffset.UTC);
+    final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
-    final Instant endOfWeek = ZonedDateTime.now(ZoneOffset.UTC)
-        .with(TemporalAdjusters.next(DayOfWeek.MONDAY))
-        .truncatedTo(ChronoUnit.DAYS)
-        .minusSeconds(1).toInstant();
+    if (start.isAfter(now))
+      return null;
 
-    return getInstance(survey, startOfWeek, endOfWeek);
+    final int weekStart = start.get(WeekFields.ISO.weekOfWeekBasedYear());
+    final int weekNow = now.get(WeekFields.ISO.weekOfWeekBasedYear());
+
+    final int weekDelta = (int) (Math.floor((weekNow - weekStart) / (double) survey.getIntervalValue()));
+
+    final ZonedDateTime startTime = start.plusWeeks(weekDelta * survey.getIntervalValue());
+    final ZonedDateTime endTime = startTime.plus(survey.getIntervalValue(), survey.getIntervalType().toChronoUnit())
+        .minusSeconds(1);
+
+    return getInstance(survey, startTime.toInstant(), endTime.toInstant());
   }
 
   private SurveyInstance getPermanentInstance(final Survey survey) {

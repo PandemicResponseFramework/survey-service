@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,11 +16,13 @@ import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import one.tracking.framework.config.SchedulerConfig;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.Verification;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.IntervalType;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
+import one.tracking.framework.entity.meta.ReminderType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.BooleanContainer;
 import one.tracking.framework.entity.meta.container.ChoiceContainer;
@@ -72,6 +75,9 @@ public class ExampleDataService {
   @Autowired
   private JWTHelper jwtHelper;
 
+  @Autowired
+  private SchedulerConfig schedulerConfig;
+
   @EventListener
   void handleEvent(final ApplicationStartedEvent event) {
 
@@ -80,6 +86,8 @@ public class ExampleDataService {
     createAccount();
     createBasicSurvey();
     createRegularSurvey();
+
+    this.schedulerConfig.updateSchedule();
 
     LOG.info("Creation of example data finished.");
   }
@@ -218,6 +226,7 @@ public class ExampleDataService {
         .title(s32)
         .description(s256)
         .intervalType(IntervalType.NONE)
+        .reminderType(ReminderType.NONE)
         .releaseStatus(ReleaseStatusType.RELEASED)
         .build());
   }
@@ -437,9 +446,12 @@ public class ExampleDataService {
         .questions(questions)
         .nameId("REGULAR")
         .title("Regular survey")
-        .intervalType(IntervalType.WEEK)
         .releaseStatus(ReleaseStatusType.RELEASED)
-        .intervalLength(1)
+        .intervalStart(Instant.parse("2020-05-18T00:00:00Z"))
+        .intervalType(IntervalType.WEEKLY)
+        .intervalValue(1)
+        .reminderType(ReminderType.AFTER_DAYS)
+        .reminderValue(2)
         .build());
   }
 

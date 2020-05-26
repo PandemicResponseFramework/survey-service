@@ -6,22 +6,21 @@ package one.tracking.framework.entity.meta;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Very simple interval definition.
- *
  * @author Marko Voß
  *
  */
-public enum IntervalType {
+public enum ReminderType {
 
   NONE,
-  WEEKLY;
+  AFTER_DAYS;
 
   public ChronoUnit toChronoUnit() {
     switch (this) {
-      case WEEKLY:
-        return ChronoUnit.WEEKS;
+      case AFTER_DAYS:
+        return ChronoUnit.DAYS;
       default:
         throw new RuntimeException("No mapping defined for reminder type: " + this);
     }
   }
+
 }

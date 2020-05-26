@@ -106,7 +106,7 @@ public class SurveyIT {
   @Test
   public void test() throws Exception {
 
-    this.helper.createTestSurvey();
+    this.helper.createSurvey("TEST");
 
     /*
      * Test overview
