@@ -141,10 +141,10 @@ public class SchedulerConfig implements SchedulingConfigurer {
 
     final int weekDelta = (int) (Math.floor((weekNow - weekStart) / (double) intervalValue));
 
-    final ZonedDateTime startTime = start.plusWeeks(weekDelta * intervalValue);
+    ZonedDateTime startTime = start.plusWeeks(weekDelta * intervalValue);
 
     if (startTime.isBefore(now))
-      startTime.plus(intervalValue, intervalType.toChronoUnit());
+      startTime = startTime.plus(intervalValue, intervalType.toChronoUnit());
 
     return new Date(startTime.toInstant().toEpochMilli());
   }
