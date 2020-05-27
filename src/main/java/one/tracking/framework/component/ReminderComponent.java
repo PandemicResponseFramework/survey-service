@@ -82,6 +82,7 @@ public class ReminderComponent {
       return result;
 
     } catch (final Exception e) {
+      LOG.debug("Executing scheduled job '{}{}' ERROR", TASK_REMINDER_PREFIX, nameId);
       LOG.error(e.getMessage(), e);
       return ReminderTaskResult.NOOP;
     }
