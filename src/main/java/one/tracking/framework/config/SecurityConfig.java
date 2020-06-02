@@ -42,7 +42,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             "/h2-console/**",
             "/v3/api-docs/**")
         .permitAll()
-        .antMatchers("/verify", "/register/**").permitAll()
+        .antMatchers("/auth/verify", "/auth/register/**").permitAll()
         .anyRequest().authenticated()
         .and()
         .addFilter(bearerAuthenticationFilter())
