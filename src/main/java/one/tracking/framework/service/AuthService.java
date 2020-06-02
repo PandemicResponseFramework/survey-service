@@ -11,7 +11,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -122,34 +121,9 @@ public class AuthService {
       user = this.userRepository.save(existingUser);
     }
 
-    createDeviceToken(user, verificationDto);
-
     sendConfirmationEmail(verification.getEmail(), user.getUserToken());
 
     return this.jwtHelper.createJWT(user.getId(), this.timeoutAccessSeconds);
-  }
-
-  private void createDeviceToken(final User user, final VerificationDto verificationDto) {
-
-    if (verificationDto.getDeviceToken() == null || verificationDto.getDeviceToken().isBlank())
-      return;
-
-    final List<DeviceToken> deviceTokens = this.deviceTokenRepository.findByUser(user);
-
-    final Optional<DeviceToken> deviceTokenOp =
-        deviceTokens.stream()
-            .filter(f -> f.getToken().equals(verificationDto.getDeviceToken()))
-            .reduce((a, b) -> {
-              throw new IllegalStateException("Multiple elements: " + a + ", " + b);
-            });
-
-    if (deviceTokenOp.isPresent())
-      return;
-
-    this.deviceTokenRepository.save(DeviceToken.builder()
-        .user(user)
-        .token(verificationDto.getDeviceToken())
-        .build());
   }
 
   public void registerParticipant(final RegistrationDto registration, final boolean autoUpdateInvitation)
@@ -280,5 +254,24 @@ public class AuthService {
 
     if (!success)
       throw new IOException("Sending email to recipient '" + email + "' was not successful.");
+  }
+
+  /**
+   * @param name
+   * @param deviceToken
+   */
+  public void registerDeviceToken(final String userId, final String deviceToken) {
+
+    final User user = this.userRepository.findById(userId).get();
+
+    final Optional<DeviceToken> deviceTokenOp = this.deviceTokenRepository.findByUserAndToken(user, deviceToken);
+
+    if (deviceTokenOp.isPresent())
+      return;
+
+    this.deviceTokenRepository.save(DeviceToken.builder()
+        .user(user)
+        .token(deviceToken)
+        .build());
   }
 }
