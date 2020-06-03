@@ -7,6 +7,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -15,15 +17,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.Lists;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.AndroidConfig;
 import com.google.firebase.messaging.AndroidNotification;
 import com.google.firebase.messaging.ApnsConfig;
 import com.google.firebase.messaging.Aps;
+import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
 import one.tracking.framework.domain.NotificationParameter;
 import one.tracking.framework.domain.PushNotificationRequest;
@@ -83,30 +90,79 @@ public class FirebaseService {
     }
   }
 
-  public boolean sendMessageToUser(final PushNotificationRequest request)
+  public List<BatchResponse> sendMessages(final PushNotificationRequest request, final List<String> tokens)
       throws InterruptedException, ExecutionException {
 
     if (FirebaseApp.getApps().isEmpty())
-      return false;
+      return null;
 
-    final Message message = prepareMessage(request);
-    final String response = sendMessage(message);
-    LOG.info("Push notification response: {}", response);
-    return true;
+    return sendMessagesAsync(request, tokens).get();
   }
 
-  private Message prepareMessage(final PushNotificationRequest request) {
+  /**
+   *
+   * @param request
+   * @param tokens
+   * @see <a href=
+   *      "https://firebase.google.com/docs/cloud-messaging/send-message#send-a-batch-of-messages">https://firebase.google.com/docs/cloud-messaging/send-message#send-a-batch-of-messages</a>
+   * @return
+   */
+  public ApiFuture<List<BatchResponse>> sendMessagesAsync(final PushNotificationRequest request,
+      final List<String> tokens) {
 
-    return getMessageBuilder(request)
-        // .setTopic(request.getTopic())
-        .setToken(request.getToken())
+    if (FirebaseApp.getApps().isEmpty())
+      return null;
+
+    // Maximum allowed tokens per request is 500
+    final List<List<String>> partitions = Lists.partition(tokens, 500);
+
+    final List<ApiFuture<BatchResponse>> futures = new ArrayList<>();
+
+    for (final List<String> currentPartition : partitions) {
+
+      final MulticastMessage message = MulticastMessage.builder()
+          .setAndroidConfig(getAndroidConfig(request.getGroup()))
+          .setApnsConfig(getApnsConfig(request.getGroup()))
+          .setNotification(Notification.builder()
+              .setTitle(request.getTitle())
+              .setBody(request.getMessage())
+              .build())
+          .addAllTokens(currentPartition)
+          .putAllData(request.getData())
+          .build();
+
+      futures.add(FirebaseMessaging.getInstance().sendMulticastAsync(message));
+    }
+
+    return ApiFutures.allAsList(futures);
+  }
+
+  public String sendMessageToUser(final PushNotificationRequest request, final String token)
+      throws InterruptedException, ExecutionException {
+
+    if (FirebaseApp.getApps().isEmpty())
+      return null;
+
+    return sendMessageToUserAsync(request, token).get();
+  }
+
+  public ApiFuture<String> sendMessageToUserAsync(final PushNotificationRequest request, final String token) {
+
+    if (FirebaseApp.getApps().isEmpty())
+      return null;
+
+    final Message message = Message.builder()
+        .setApnsConfig(getApnsConfig(request.getGroup()))
+        .setAndroidConfig(getAndroidConfig(request.getGroup()))
+        .setNotification(Notification.builder()
+            .setTitle(request.getTitle())
+            .setBody(request.getMessage())
+            .build())
+        .setToken(token)
         .putAllData(request.getData())
         .build();
-  }
 
-  private String sendMessage(final Message message) throws InterruptedException, ExecutionException {
-
-    return FirebaseMessaging.getInstance().sendAsync(message).get();
+    return FirebaseMessaging.getInstance().sendAsync(message);
   }
 
   private AndroidConfig getAndroidConfig(final String topic) {
@@ -133,17 +189,4 @@ public class FirebaseService {
         .build();
   }
 
-  private Message.Builder getMessageBuilder(final PushNotificationRequest request) {
-
-    final AndroidConfig androidConfig = getAndroidConfig(request.getTopic());
-    final ApnsConfig apnsConfig = getApnsConfig(request.getTopic());
-
-    return Message.builder()
-        .setApnsConfig(apnsConfig)
-        .setAndroidConfig(androidConfig)
-        .setNotification(Notification.builder()
-            .setTitle(request.getTitle())
-            .setBody(request.getMessage())
-            .build());
-  }
 }
