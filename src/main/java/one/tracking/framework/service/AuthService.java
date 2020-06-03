@@ -215,7 +215,7 @@ public class AuthService {
       throws IOException {
 
     final UriComponentsBuilder builder = this.publicUrlBuilder.cloneBuilder()
-        .path("/verify")
+        .path("/auth/verify")
         .queryParam("token", verificationToken);
 
     if (userToken != null && !userToken.isBlank())
