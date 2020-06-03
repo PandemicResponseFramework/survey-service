@@ -5,12 +5,14 @@ package one.tracking.framework.component;
 
 import java.time.Instant;
 import java.util.Optional;
-import javax.transaction.Transactional;
+import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import one.tracking.framework.entity.SchedulerLock;
 import one.tracking.framework.repo.SchedulerLockRepository;
 
@@ -29,8 +31,8 @@ public class LockerComponent {
   @Value("${app.timeout.task.lock}")
   private Integer timeoutLock;
 
-  @Transactional
-  public boolean lock(final String task) {
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public boolean lock(final String task) throws InterruptedException {
 
     final Optional<SchedulerLock> lockOp = this.schedulerLockRepository.findByTaskName(task);
 
@@ -49,7 +51,7 @@ public class LockerComponent {
       final SchedulerLock lock = lockOp.get();
       // If lock exists but timed out, create a new lock
       // This will happen, if the task has been executed previously
-      if (lock.getCreatedAt().plusSeconds(lock.getTimeout()).isAfter(Instant.now())) {
+      if (Instant.now().isAfter(lock.getCreatedAt().plusSeconds(lock.getTimeout()))) {
 
         LOG.debug("Updating lock for task: {}", task);
 
