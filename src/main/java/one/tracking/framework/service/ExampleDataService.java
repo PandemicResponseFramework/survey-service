@@ -122,7 +122,7 @@ public class ExampleDataService {
     // TEST MAX TEXT
     questions.add(createChoiceQuestion(
         s256,
-        order++, false,
+        order++, false, false,
         Arrays.asList(
             s64,
             s64,
@@ -132,6 +132,7 @@ public class ExampleDataService {
     questions.add(createRangeQuestion(
         s256,
         order++,
+        false,
         0,
         10,
         0,
@@ -141,7 +142,7 @@ public class ExampleDataService {
     // 1
     questions.add(createChoiceQuestion(
         "What is your age?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "18 - 24",
             "25 - 44",
@@ -151,7 +152,7 @@ public class ExampleDataService {
     // 2
     questions.add(createChoiceQuestion(
         "Gender?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Male",
             "Female")));
@@ -159,7 +160,7 @@ public class ExampleDataService {
     // 3
     questions.add(createChoiceQuestion(
         "What is your marital status?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Married or civil partnership",
             "Living with partner",
@@ -168,7 +169,7 @@ public class ExampleDataService {
     // 4
     questions.add(createChoiceQuestion(
         "Are you in employment?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Full time employment",
             "Part time employment",
@@ -182,7 +183,7 @@ public class ExampleDataService {
     // 5
     questions.add(createChoiceQuestion(
         "In general, how do you find your job?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Not at all stressful",
             "Mildly stressful",
@@ -240,7 +241,7 @@ public class ExampleDataService {
     // 13
     questions.add(createChoiceQuestion(
         "Under each heading, please tick the ONE box that best describes your health TODAY:",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "I have no problems walking about",
             "I have some problems walking about",
@@ -249,7 +250,7 @@ public class ExampleDataService {
     // 14
     questions.add(createChoiceQuestion(
         "Looking after myself, please tick the ONE box that best describes your health TODAY:",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "I have no problems washing or dressing myself",
             "I have some problems washing or dressing myself",
@@ -258,7 +259,7 @@ public class ExampleDataService {
     // 15
     questions.add(createChoiceQuestion(
         "Doing usual activities please tick the ONE box that best describes your health TODAY (for example, work, study, housework, family or leisure activities):",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "I have no problems doing my usual activities",
             "I have some problems doing my usual activities",
@@ -267,7 +268,7 @@ public class ExampleDataService {
     // 16
     questions.add(createChoiceQuestion(
         "Having pain/ discomfort:",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "I have no pain or discomfort",
             "I have some pain or discomfort",
@@ -276,7 +277,7 @@ public class ExampleDataService {
     // 17
     questions.add(createChoiceQuestion(
         "Feeling worried, sad or unhappy:",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "I am not worried, sad or unhappy",
             "I am a bit worried, sad or unhappy",
@@ -285,7 +286,7 @@ public class ExampleDataService {
     // 18
     questions.add(createChoiceQuestion(
         "How often do you feel lonely?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Often / always",
             "Some of the time",
@@ -296,7 +297,7 @@ public class ExampleDataService {
     // 19
     questions.add(createChoiceQuestion(
         "How would you rate your general health TODAY:",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Excellent",
             "Very good",
@@ -340,6 +341,7 @@ public class ExampleDataService {
     questions.add(createRangeQuestion(
         "How much have you been concerned about the corona crisis in the past 7 days?",
         order++,
+        true,
         1, 10,
         null,
         "Not concerned", "Extremely concerned"));
@@ -348,6 +350,7 @@ public class ExampleDataService {
     questions.add(createRangeQuestion(
         "How would you rate your quality of life over the last 7 days?",
         order++,
+        true,
         1, 10,
         null,
         "Terrible", "Outstanding"));
@@ -356,6 +359,7 @@ public class ExampleDataService {
     questions.add(createRangeQuestion(
         "How socially isolated have you felt in the last 7 days?",
         order++,
+        true,
         1, 10,
         null,
         "Not socially isolated", "Extremely socially isolated"));
@@ -364,6 +368,7 @@ public class ExampleDataService {
     questions.add(createRangeQuestion(
         "If you suffer from depression, how much has this condition been affected by the COVID-19 crisis in the last 7 days?",
         order++,
+        true,
         1, 10,
         null,
         "Not at all", "Extremely depressed"));
@@ -372,6 +377,7 @@ public class ExampleDataService {
     questions.add(createRangeQuestion(
         "If you suffer from anxiety, how much has this condition been affected by the COVID-19 crisis in the last 7 days?",
         order++,
+        true,
         1, 10,
         null,
         "Not at all", "Extremely anxious"));
@@ -379,7 +385,7 @@ public class ExampleDataService {
     // 29
     questions.add(createChoiceQuestion(
         "How would you rate your overall mental health?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Excellent",
             "Very good",
@@ -395,7 +401,7 @@ public class ExampleDataService {
     // 31
     questions.add(createChoiceQuestion(
         "Where do you currently shop for your groceries?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Local supermarket",
             "Online shopping",
@@ -405,7 +411,7 @@ public class ExampleDataService {
     // 32
     questions.add(createChoiceQuestion(
         "How healthy is your eating pattern compared to the period before the COVID-19 crisis?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Much less healthy",
             "Just as healthy",
@@ -414,7 +420,7 @@ public class ExampleDataService {
     // 33
     questions.add(createChoiceQuestion(
         "How would you rate your overall diet?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Excellent",
             "Very good",
@@ -425,7 +431,7 @@ public class ExampleDataService {
     // 34
     questions.add(createChoiceQuestion(
         "How many hours of moderately intense exercise did you do before the Covid-19 crisis?",
-        order++, false,
+        order++, true, false,
         Arrays.asList(
             "Less than 1 hour",
             "1-2 hours",
@@ -465,15 +471,17 @@ public class ExampleDataService {
   public Question createChoiceQuestion(
       final String question,
       final int order,
+      final boolean optional,
       final boolean multiple,
       final List<String> answers) {
 
-    return createChoiceQuestion(question, order, multiple, answers, null, null);
+    return createChoiceQuestion(question, order, optional, multiple, answers, null, null);
   }
 
   public Question createChoiceQuestion(
       final String question,
       final int order,
+      final boolean optional,
       final boolean multiple,
       final List<String> answers,
       final List<String> dependsOn,
@@ -488,7 +496,7 @@ public class ExampleDataService {
         .ranking(order)
         .answers(answerEntities)
         .multiple(multiple)
-        .optional(true)
+        .optional(optional)
         .build());
 
     if (questions != null && !questions.isEmpty()) {
@@ -590,6 +598,7 @@ public class ExampleDataService {
   public Question createRangeQuestion(
       final String question,
       final int order,
+      final boolean optional,
       final int minValue, final int maxValue,
       final Integer defaultValue,
       final String minText, final String maxText) {
@@ -602,7 +611,7 @@ public class ExampleDataService {
         .minText(minText)
         .maxText(maxText)
         .ranking(order)
-        .optional(true)
+        .optional(optional)
         .build());
 
     return parent;
