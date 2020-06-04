@@ -4,12 +4,14 @@
 package one.tracking.framework.entity;
 
 import static one.tracking.framework.entity.DataConstants.TOKEN_DEVICE_MAX_LENGTH;
+import java.time.Instant;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -22,7 +24,7 @@ import lombok.NoArgsConstructor;
  *
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -44,4 +46,14 @@ public class DeviceToken {
 
   @ManyToOne(optional = false)
   private User user;
+
+  @Column(nullable = false)
+  private Instant createdAt;
+
+  @PrePersist
+  void onPrePersist() {
+    if (this.id == null) {
+      setCreatedAt(Instant.now());
+    }
+  }
 }

@@ -9,20 +9,30 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.AnswersWithDelay;
+import org.mockito.internal.stubbing.answers.Returns;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import com.google.firebase.messaging.BatchResponse;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.SendResponse;
 import one.tracking.framework.SurveyApplication;
 import one.tracking.framework.component.ReminderComponent;
 import one.tracking.framework.domain.PushNotificationRequest;
@@ -72,16 +82,76 @@ public class ReminderComponentIT {
       helper.addDeviceToken(helper.createUser(null), i + "");
     }
 
-    final int countDeviceTokens = 10000;
+    final int fcmBatchSize = 500;
+    // final int fcmDelay = 5 * 1000;
+    final int fcmDelay = 0;
 
     // Mock FirebaseService
     final FirebaseService firebaseService1 = ctx1.getBean(FirebaseService.class);
     final FirebaseService firebaseService2 = ctx2.getBean(FirebaseService.class);
 
-    Mockito.when(firebaseService1.sendMessageToUser(ArgumentMatchers.any(PushNotificationRequest.class)))
-        .thenReturn(true);
-    Mockito.when(firebaseService2.sendMessageToUser(ArgumentMatchers.any(PushNotificationRequest.class)))
-        .thenReturn(true);
+    final SendResponse sendResponseSuccess = Mockito.mock(SendResponse.class);
+    Mockito.when(sendResponseSuccess.isSuccessful()).thenReturn(true);
+    Mockito.when(sendResponseSuccess.getMessageId()).thenReturn("Ok");
+
+    final FirebaseMessagingException exNotRegistered = Mockito.mock(FirebaseMessagingException.class);
+    Mockito.when(exNotRegistered.getErrorCode())
+        .thenReturn(ReminderComponent.ERROR_CODE_REGISTRATION_TOKEN_NOT_REGISTERED);
+
+    final FirebaseMessagingException exInvalidToken = Mockito.mock(FirebaseMessagingException.class);
+    Mockito.when(exInvalidToken.getErrorCode())
+        .thenReturn(ReminderComponent.ERROR_CODE_INVALID_REGISTRATION_TOKEN);
+
+    final FirebaseMessagingException exOther = Mockito.mock(FirebaseMessagingException.class);
+    Mockito.when(exOther.getErrorCode())
+        .thenReturn("messaging/server-unavailable");
+
+    final SendResponse sendResponseNotRegistered = Mockito.mock(SendResponse.class);
+    Mockito.when(sendResponseNotRegistered.isSuccessful()).thenReturn(false);
+    Mockito.when(sendResponseNotRegistered.getException()).thenReturn(exNotRegistered);
+
+    final SendResponse sendResponseInvalidToken = Mockito.mock(SendResponse.class);
+    Mockito.when(sendResponseInvalidToken.isSuccessful()).thenReturn(false);
+    Mockito.when(sendResponseInvalidToken.getException()).thenReturn(exInvalidToken);
+
+    final SendResponse sendResponseOtherError = Mockito.mock(SendResponse.class);
+    Mockito.when(sendResponseOtherError.isSuccessful()).thenReturn(false);
+    Mockito.when(sendResponseOtherError.getException()).thenReturn(exOther);
+
+    final List<SendResponse> sendResponses = new ArrayList<>(fcmBatchSize);
+
+    int countSuccessPerFcmBatch = 0;
+    int countFailPerFcmBatch = 0;
+
+    for (int i = 0; i < fcmBatchSize; i++) {
+
+      if (i % 4 == 0) {
+        sendResponses.add(sendResponseSuccess);
+        countSuccessPerFcmBatch++;
+      } else if (i % 4 == 1) {
+        sendResponses.add(sendResponseNotRegistered); // invalid DeviceToken -> do no longer use this token
+        countFailPerFcmBatch++;
+      } else if (i % 4 == 2) {
+        sendResponses.add(sendResponseInvalidToken); // invalid DeviceToken -> do no longer use this token
+        countFailPerFcmBatch++;
+      } else {
+        sendResponses.add(sendResponseOtherError); // failed to send -> keep using the DeviceToken
+        countFailPerFcmBatch++;
+      }
+    }
+
+    final BatchResponse batchResponse = Mockito.mock(BatchResponse.class);
+    Mockito.when(batchResponse.getSuccessCount()).thenReturn(countSuccessPerFcmBatch);
+    Mockito.when(batchResponse.getFailureCount()).thenReturn(countFailPerFcmBatch);
+    Mockito.when(batchResponse.getResponses()).thenReturn(sendResponses);
+
+    // Batch size = 1000 & FCM batch size = 500 -> return 2 BatchResponses
+    Mockito.when(firebaseService1.sendMessages(any(PushNotificationRequest.class), anyList()))
+        .then(new AnswersWithDelay(fcmDelay, new Returns(Arrays.asList(batchResponse, batchResponse))));
+
+    // Batch size = 1000 & FCM batch size = 500 -> return 2 BatchResponses
+    Mockito.when(firebaseService2.sendMessages(any(PushNotificationRequest.class), anyList()))
+        .then(new AnswersWithDelay(fcmDelay, new Returns(Arrays.asList(batchResponse, batchResponse))));
 
     final ReminderComponent s1 = ctx1.getBean(ReminderComponent.class);
     final ReminderComponent s2 = ctx2.getBean(ReminderComponent.class);
@@ -103,9 +173,12 @@ public class ReminderComponentIT {
     final Future<ReminderTaskResult> future1 = this.executorService.submit(() -> s1.sendReminder("TEST"));
     final Future<ReminderTaskResult> future2 = this.executorService.submit(() -> s2.sendReminder("TEST"));
 
-    await().until(() -> {
+    await().atMost(Duration.ofMinutes(5)).until(() -> {
       return future1.isDone() && future2.isDone();
     });
+
+    assertThat(future1.isCancelled(), is(false));
+    assertThat(future2.isCancelled(), is(false));
 
     assertThat(future1.get(), is(not(nullValue())));
     assertThat(future2.get(), is(not(nullValue())));
@@ -116,16 +189,16 @@ public class ReminderComponentIT {
     if (future1.get().getState() == StateType.EXECUTED) {
 
       assertThat(future1.get().getSurveyNameId(), is("TEST"));
-      assertThat(future1.get().getCountDeviceTokens(), is(countDeviceTokens));
-      assertThat(future1.get().getCountNotifications(), is(countDeviceTokens));
+      assertThat(future1.get().getCountDeviceTokens(), is(10000));
+      assertThat(future1.get().getCountNotifications(), is(2500));
 
       assertThat(future2.get(), is(equalTo(ReminderTaskResult.NOOP)));
 
     } else {
 
       assertThat(future2.get().getSurveyNameId(), is("TEST"));
-      assertThat(future2.get().getCountDeviceTokens(), is(countDeviceTokens));
-      assertThat(future2.get().getCountNotifications(), is(countDeviceTokens));
+      assertThat(future2.get().getCountDeviceTokens(), is(10000));
+      assertThat(future2.get().getCountNotifications(), is(2500));
 
       assertThat(future1.get(), is(equalTo(ReminderTaskResult.NOOP)));
     }
@@ -160,25 +233,30 @@ public class ReminderComponentIT {
     final Future<ReminderTaskResult> futureA = this.executorService.submit(() -> s1.sendReminder("TEST_A"));
     final Future<ReminderTaskResult> futureB = this.executorService.submit(() -> s2.sendReminder("TEST_B"));
 
-    await().until(() -> {
+    await().atMost(Duration.ofMinutes(5)).until(() -> {
       return futureA.isDone() && futureB.isDone();
     });
 
-    // Different topics -> both must be true
+    assertThat(futureA.isCancelled(), is(false));
+    assertThat(futureB.isCancelled(), is(false));
+
     assertThat(futureA.get(), is(not(nullValue())));
     assertThat(futureB.get(), is(not(nullValue())));
 
+    // Different topics -> both must be executed
     assertThat(futureA.get().getState(), is(equalTo(StateType.EXECUTED)));
     assertThat(futureB.get().getState(), is(equalTo(StateType.EXECUTED)));
 
     assertThat(futureA.get().getSurveyNameId(), is("TEST_A"));
     assertThat(futureB.get().getSurveyNameId(), is("TEST_B"));
 
-    assertThat(futureA.get().getCountDeviceTokens(), is(countDeviceTokens));
-    assertThat(futureA.get().getCountNotifications(), is(countDeviceTokens));
+    // FIXME: Implement dynamic SendResponses depending on DeviceTokens size: 5000/1250 is not correct
 
-    assertThat(futureB.get().getCountDeviceTokens(), is(countDeviceTokens));
-    assertThat(futureB.get().getCountNotifications(), is(countDeviceTokens));
+    assertThat(futureA.get().getCountDeviceTokens(), is(5000));
+    assertThat(futureA.get().getCountNotifications(), is(1250));
+
+    assertThat(futureB.get().getCountDeviceTokens(), is(5000));
+    assertThat(futureB.get().getCountNotifications(), is(1250));
 
   }
 }

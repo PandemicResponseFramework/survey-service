@@ -4,15 +4,21 @@
 package one.tracking.framework.entity.meta;
 
 import java.time.Instant;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import one.tracking.framework.entity.SurveyResponse;
 
 /**
  * TODO: ranking
@@ -36,6 +42,12 @@ public class Answer {
 
   @Column(nullable = false, updatable = false)
   private Instant createdAt;
+
+  @ManyToMany(fetch = FetchType.LAZY)
+  @JoinTable(name = "survey_response_answers",
+      joinColumns = @JoinColumn(name = "answer_id", referencedColumnName = "id"),
+      inverseJoinColumns = @JoinColumn(name = "survey_response_id", referencedColumnName = "id"))
+  private List<SurveyResponse> surveyResponses;
 
   @PrePersist
   void onPrePersist() {

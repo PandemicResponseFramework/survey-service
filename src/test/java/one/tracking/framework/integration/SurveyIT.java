@@ -31,6 +31,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -62,17 +63,19 @@ import one.tracking.framework.util.JWTHelper;
  *
  */
 @AutoConfigureMockMvc
-@TestPropertySource(
-    locations = "classpath:application-it.properties")
+@TestPropertySource(locations = "classpath:application-it.properties")
 @Import(ITConfiguration.class)
 @RunWith(SpringRunner.class)
+// @SpringBootTest(classes = SurveyApplication.class, webEnvironment =
+// SpringBootTest.WebEnvironment.DEFINED_PORT)
 @SpringBootTest(classes = SurveyApplication.class)
+@DirtiesContext
 public class SurveyIT {
 
   private static final Logger LOG = LoggerFactory.getLogger(SurveyIT.class);
 
   private static final String ENDPOINT_OVERVIEW = "/overview";
-  private static final String ENDPOINT_OVERVIEW_TEST = ENDPOINT_OVERVIEW + "/TEST";
+  // private static final String ENDPOINT_OVERVIEW_TEST = ENDPOINT_OVERVIEW + "/TEST";
 
   private static final String ENDPOINT_SURVEY = "/survey";
   private static final String ENDPOINT_SURVEY_TEST = ENDPOINT_SURVEY + "/TEST";
@@ -1172,6 +1175,219 @@ public class SurveyIT {
     assertThat(nextQuestion.getQuestion(), is("Q7"));
 
     testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    /*
+     * Now test setting all questions to SKIPPED and check if overview stays valid
+     */
+
+    question = getQuestion(survey.getQuestions(), "Q1");
+    assertThat(question, is(not(nullValue())));
+    assertThat(question.getQuestion(), is("Q1"));
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q2");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q2"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q3");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q3"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q4");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q4"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q5");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q5"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q6");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q6"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q7");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q7"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q8");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q8"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q9");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q9"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q10");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q10"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = getQuestion(survey.getQuestions(), "Q11");
+    assertThat(nextQuestion, is(not(nullValue())));
+    assertThat(nextQuestion.getQuestion(), is("Q11"));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, nextQuestion.getId());
+
+    question = nextQuestion;
+
+    nextQuestion = null;
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY_TEST_ANSWER)
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(question.getId())
+            .skipped(true)
+            .surveyToken(surveyToken)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    testOverview(SurveyStatusType.COMPLETED, null);
   }
 
   /**

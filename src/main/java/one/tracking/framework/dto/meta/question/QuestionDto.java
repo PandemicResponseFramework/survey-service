@@ -69,6 +69,9 @@ public abstract class QuestionDto {
   @Min(0)
   private Integer order;
 
+  @NotNull
+  private Boolean optional;
+
   @JsonIgnore
   public List<QuestionDto> getSubQuestions() {
     return null;

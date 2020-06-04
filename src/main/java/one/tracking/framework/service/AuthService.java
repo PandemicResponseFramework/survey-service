@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import one.tracking.framework.config.TimeoutConfig;
 import one.tracking.framework.dto.RegistrationDto;
 import one.tracking.framework.dto.VerificationDto;
 import one.tracking.framework.entity.DeviceToken;
@@ -61,14 +62,11 @@ public class AuthService {
   @Autowired
   private JWTHelper jwtHelper;
 
+  @Autowired
+  private TimeoutConfig timeoutConfig;
+
   @Value("${app.public.url}")
   private String publicUrl;
-
-  @Value("${app.timeout.verification}")
-  private int timeoutVerificationSeconds;
-
-  @Value("${app.timeout.access}")
-  private int timeoutAccessSeconds;
 
   @Value("${app.custom.uri.prefix}")
   private String customUriPrefix;
@@ -96,7 +94,7 @@ public class AuthService {
 
     final Instant instant =
         verification.getUpdatedAt() == null ? verification.getCreatedAt() : verification.getUpdatedAt();
-    if (instant.plusSeconds(this.timeoutVerificationSeconds).isBefore(Instant.now())) {
+    if (instant.plusSeconds(this.timeoutConfig.getVerification().toSeconds()).isBefore(Instant.now())) {
 
       LOG.info("Expired email verification requested.");
       throw new IllegalArgumentException(); // keep silent about it
@@ -123,7 +121,7 @@ public class AuthService {
 
     sendConfirmationEmail(verification.getEmail(), user.getUserToken());
 
-    return this.jwtHelper.createJWT(user.getId(), this.timeoutAccessSeconds);
+    return this.jwtHelper.createJWT(user.getId(), this.timeoutConfig.getAccess().toSeconds());
   }
 
   public void registerParticipant(final RegistrationDto registration, final boolean autoUpdateInvitation)

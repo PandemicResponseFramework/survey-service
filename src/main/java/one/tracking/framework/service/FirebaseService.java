@@ -14,7 +14,6 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import com.google.api.core.ApiFuture;
@@ -32,6 +31,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
+import one.tracking.framework.config.FirebaseConfig;
 import one.tracking.framework.domain.NotificationParameter;
 import one.tracking.framework.domain.PushNotificationRequest;
 
@@ -47,31 +47,28 @@ public class FirebaseService {
   @Autowired
   private ResourceLoader resourceLoader;
 
-  @Value("${app.fcm.config.file:#{null}}")
-  private String firebaseConfigFile;
-
-  @Value("${app.fcm.config.json:#{null}}")
-  private String firebaseConfigJson;
+  @Autowired
+  private FirebaseConfig config;
 
   @PostConstruct
   public void initialize() {
 
-    if (this.firebaseConfigFile == null && this.firebaseConfigJson == null) {
+    if (this.config.getConfigFile() == null && this.config.getConfigJson() == null) {
       LOG.warn("Firebase config file or json not set. Skipping FCM setup.");
       return;
     }
 
     InputStream stream = null;
 
-    if (this.firebaseConfigFile != null) {
+    if (this.config.getConfigFile() != null) {
       try {
-        stream = this.resourceLoader.getResource(this.firebaseConfigFile).getInputStream();
+        stream = this.resourceLoader.getResource(this.config.getConfigFile()).getInputStream();
       } catch (final IOException e) {
         LOG.error(e.getMessage(), e);
         return;
       }
-    } else if (this.firebaseConfigJson != null) {
-      stream = new ByteArrayInputStream(this.firebaseConfigJson.getBytes());
+    } else if (this.config.getConfigJson() != null) {
+      stream = new ByteArrayInputStream(this.config.getConfigJson().getBytes());
     }
 
     try {
@@ -82,7 +79,8 @@ public class FirebaseService {
 
       if (FirebaseApp.getApps().isEmpty()) {
         final FirebaseApp app = FirebaseApp.initializeApp(options);
-        LOG.info("Firebase application has been initialized: " + app.getName());
+        LOG.info("Firebase application has been initialized: {} [batch size: {}]", app.getName(),
+            this.config.getBatchSize());
       }
 
     } catch (final Exception e) {
@@ -113,25 +111,23 @@ public class FirebaseService {
     if (FirebaseApp.getApps().isEmpty())
       return null;
 
-    // Maximum allowed tokens per request is 500
-    final List<List<String>> partitions = Lists.partition(tokens, 500);
+    final List<List<String>> partitions = Lists.partition(tokens, this.config.getBatchSize());
 
     final List<ApiFuture<BatchResponse>> futures = new ArrayList<>();
 
+    final MulticastMessage.Builder messageBuilder = MulticastMessage.builder()
+        .setAndroidConfig(getAndroidConfig(request.getGroup()))
+        .setApnsConfig(getApnsConfig(request.getGroup()))
+        .setNotification(Notification.builder()
+            .setTitle(request.getTitle())
+            .setBody(request.getMessage())
+            .build())
+        .putAllData(request.getData());
+
     for (final List<String> currentPartition : partitions) {
 
-      final MulticastMessage message = MulticastMessage.builder()
-          .setAndroidConfig(getAndroidConfig(request.getGroup()))
-          .setApnsConfig(getApnsConfig(request.getGroup()))
-          .setNotification(Notification.builder()
-              .setTitle(request.getTitle())
-              .setBody(request.getMessage())
-              .build())
-          .addAllTokens(currentPartition)
-          .putAllData(request.getData())
-          .build();
-
-      futures.add(FirebaseMessaging.getInstance().sendMulticastAsync(message));
+      futures.add(FirebaseMessaging.getInstance().sendMulticastAsync(
+          messageBuilder.addAllTokens(currentPartition).build()));
     }
 
     return ApiFutures.allAsList(futures);

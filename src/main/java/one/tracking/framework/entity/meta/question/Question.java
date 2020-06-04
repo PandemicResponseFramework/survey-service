@@ -59,6 +59,9 @@ public class Question {
   @Setter(AccessLevel.NONE)
   private QuestionType type;
 
+  @Column(nullable = false)
+  private boolean optional;
+
   public boolean hasContainer() {
     return false;
   }

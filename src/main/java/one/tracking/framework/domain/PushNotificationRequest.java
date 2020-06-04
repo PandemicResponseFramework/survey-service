@@ -17,7 +17,6 @@ public class PushNotificationRequest {
 
   private String title;
   private String message;
-  private String topic;
+  private String group;
   private Map<String, String> data;
-  private String token;
 }

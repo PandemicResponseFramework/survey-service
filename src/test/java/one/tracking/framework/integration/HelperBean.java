@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import one.tracking.framework.entity.DeviceToken;
 import one.tracking.framework.entity.User;
@@ -57,6 +58,24 @@ public class HelperBean {
 
   @Autowired
   private DeviceTokenRepository deviceTokenRepository;
+
+  @Autowired
+  private EntityManager entityManager;
+
+  public void reset() {
+
+    this.userRepository.deleteAll();
+    this.entityManager.flush();
+
+    this.deviceTokenRepository.deleteAll();
+    this.entityManager.flush();
+
+    this.surveyRepository.deleteAll();
+    this.entityManager.flush();
+
+    this.questionRepository.deleteAll();
+    this.entityManager.flush();
+  }
 
   public User createUser(final String userToken) {
     return this.userRepository.save(User.builder().userToken(userToken).build());
@@ -214,6 +233,7 @@ public class HelperBean {
         .ranking(order)
         .answers(answerEntities)
         .multiple(multiple)
+        .optional(true)
         .build());
 
     if (questions != null && !questions.isEmpty()) {
@@ -250,6 +270,7 @@ public class HelperBean {
     BooleanQuestion parent = this.questionRepository.save(BooleanQuestion.builder()
         .question(question)
         .ranking(order)
+        .optional(true)
         .build());
 
     if (questions != null && !questions.isEmpty()) {
@@ -274,6 +295,7 @@ public class HelperBean {
     return this.questionRepository.save(ChecklistEntry.builder()
         .question(question)
         .ranking(order)
+        .optional(true)
         .build());
   }
 
@@ -288,6 +310,7 @@ public class HelperBean {
         .multiline(multiline)
         .ranking(order)
         .length(length)
+        .optional(true)
         .build());
 
     return parent;
@@ -305,6 +328,7 @@ public class HelperBean {
         .question(question)
         .entries(entries)
         .ranking(order)
+        .optional(true)
         .build());
   }
 
@@ -323,6 +347,7 @@ public class HelperBean {
         .minText(minText)
         .maxText(maxText)
         .ranking(order)
+        .optional(true)
         .build());
 
     return parent;
@@ -340,6 +365,7 @@ public class HelperBean {
         .maxValue(maxValue)
         .defaultAnswer(defaultValue)
         .ranking(order)
+        .optional(true)
         .build());
 
     return parent;

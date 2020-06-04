@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import one.tracking.framework.dto.SurveyStatusDto;
@@ -45,7 +43,7 @@ import one.tracking.framework.repo.UserRepository;
 @Service
 public class SurveyService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SurveyService.class);
+  // private static final Logger LOG = LoggerFactory.getLogger(SurveyService.class);
 
   public static final Instant INSTANT_MIN = Instant.ofEpochMilli(0);
   // FIXME: Long.MAX_VALUE causes overflow on DB -> beware Christmas in 9999!
@@ -150,7 +148,7 @@ public class SurveyService {
   private SurveyStatusType calculateSurveyStatus(final User user, final SurveyInstance instance) {
 
     final Map<Long, SurveyResponse> responses =
-        this.surveyResponseRepository.findByUserAndSurveyInstance(user, instance)
+        this.surveyResponseRepository.findByUserAndSurveyInstanceAndMaxVersion(user, instance)
             .stream().collect(Collectors.toMap(
                 e -> e.getQuestion().getId(),
                 e -> e));
@@ -204,7 +202,8 @@ public class SurveyService {
    */
   private boolean isSubQuestionRequired(final Question question, final SurveyResponse response) {
 
-    if (question == null || response == null || !question.hasContainer())
+    if (question == null || !question.hasContainer() || response == null || !response.isValid()
+        || (question.isOptional() && response.isSkipped()))
       return false;
 
     switch (question.getType()) {
@@ -241,7 +240,8 @@ public class SurveyService {
       case BOOL: {
 
         final SurveyResponse response = responses.get(question.getId());
-        return response != null && response.getBoolAnswer() != null;
+        return response != null && response.isValid()
+            && (response.getBoolAnswer() != null || question.isOptional() && response.isSkipped());
 
       }
       case CHECKLIST: {
@@ -250,7 +250,9 @@ public class SurveyService {
         for (final ChecklistEntry entry : checklistQuestion.getEntries()) {
 
           final SurveyResponse response = responses.get(entry.getId());
-          if (response == null || response.getBoolAnswer() == null)
+          if (response == null || !response.isValid()
+              || (!question.isOptional() && response.getBoolAnswer() == null)
+              || (question.isOptional() && response.getBoolAnswer() == null && !response.isSkipped()))
             return false;
         }
 
@@ -262,9 +264,16 @@ public class SurveyService {
         final ChoiceQuestion choiceQuestion = (ChoiceQuestion) question;
         final SurveyResponse response = responses.get(question.getId());
 
-        if (response == null || response.getAnswers() == null || response.getAnswers().isEmpty())
+        if (response == null || !response.isValid()
+            || (!question.isOptional() && (response.getAnswers() == null || response.getAnswers().isEmpty()))
+            || (question.isOptional() && (response.getAnswers() == null || response.getAnswers().isEmpty())
+                && !response.isSkipped()))
           return false;
 
+        if (question.isOptional() && response.isSkipped())
+          return true;
+
+        // Is the given answer part of the possible answers (data integrity validation)
         for (final Answer answer : choiceQuestion.getAnswers()) {
           if (response.getAnswers().stream().anyMatch(p -> p.getId().equals(answer.getId())))
             return true;
@@ -277,13 +286,16 @@ public class SurveyService {
       case RANGE: {
 
         final SurveyResponse response = responses.get(question.getId());
-        return response != null && response.getNumberAnswer() != null;
+        return response != null && response.isValid()
+            && (response.getNumberAnswer() != null || question.isOptional() && response.isSkipped());
 
       }
       case TEXT: {
 
         final SurveyResponse response = responses.get(question.getId());
-        return response != null && response.getTextAnswer() != null && !response.getTextAnswer().isBlank();
+        return response != null && response.isValid()
+            && ((response.getTextAnswer() != null && !response.getTextAnswer().isBlank())
+                || question.isOptional() && response.isSkipped());
 
       }
       default:

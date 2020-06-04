@@ -16,6 +16,7 @@ import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import one.tracking.framework.config.SchedulerConfig;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.Verification;
@@ -478,8 +479,7 @@ public class ExampleDataService {
       final List<String> dependsOn,
       final List<Question> questions) {
 
-    if (answers == null || answers.isEmpty())
-      throw new IllegalArgumentException("Answers must not be null or empty.");
+    Assert.notEmpty(answers, "Answers must not be null or empty.");
 
     final List<Answer> answerEntities = answers.stream().map(f -> createAnswer(f)).collect(Collectors.toList());
 
@@ -488,6 +488,7 @@ public class ExampleDataService {
         .ranking(order)
         .answers(answerEntities)
         .multiple(multiple)
+        .optional(true)
         .build());
 
     if (questions != null && !questions.isEmpty()) {
@@ -524,6 +525,7 @@ public class ExampleDataService {
     BooleanQuestion parent = this.questionRepository.save(BooleanQuestion.builder()
         .question(question)
         .ranking(order)
+        .optional(true)
         .build());
 
     if (questions != null && !questions.isEmpty()) {
@@ -548,6 +550,7 @@ public class ExampleDataService {
     return this.questionRepository.save(ChecklistEntry.builder()
         .question(question)
         .ranking(order)
+        .optional(true)
         .build());
   }
 
@@ -562,6 +565,7 @@ public class ExampleDataService {
         .multiline(multiline)
         .ranking(order)
         .length(length)
+        .optional(true)
         .build());
 
     return parent;
@@ -579,6 +583,7 @@ public class ExampleDataService {
         .question(question)
         .entries(entries)
         .ranking(order)
+        .optional(true)
         .build());
   }
 
@@ -597,6 +602,7 @@ public class ExampleDataService {
         .minText(minText)
         .maxText(maxText)
         .ranking(order)
+        .optional(true)
         .build());
 
     return parent;
@@ -614,6 +620,7 @@ public class ExampleDataService {
         .maxValue(maxValue)
         .defaultAnswer(defaultValue)
         .ranking(order)
+        .optional(true)
         .build());
 
     return parent;

@@ -27,6 +27,8 @@ public class SurveyResponseDto {
   @NotNull
   private Long questionId;
 
+  private Boolean skipped;
+
   private List<@NotNull Long> answerIds;
 
   private Boolean boolAnswer;
