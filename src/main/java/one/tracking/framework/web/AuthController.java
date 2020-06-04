@@ -8,6 +8,7 @@ import java.io.InputStream;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,6 +64,7 @@ public class AuthController {
   @RequestMapping(
       method = RequestMethod.POST,
       path = "/register")
+  @Secured("ROLE_ADMIN")
   public void registerParticipant(
       @RequestBody
       @Valid
@@ -88,6 +90,7 @@ public class AuthController {
       method = RequestMethod.POST,
       path = "/register/import",
       consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+  @Secured("ROLE_ADMIN")
   public void importParticipants(final InputStream inputStream) throws IOException {
 
     this.authService.importParticipants(inputStream);
