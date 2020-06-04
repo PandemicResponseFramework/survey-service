@@ -206,6 +206,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(BooleanQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q1"));
     assertThat(question.getOrder(), is(0));
+    assertThat(question.getOptional(), is(true));
     assertThat(((BooleanQuestionDto) question).getDefaultAnswer(), is(nullValue()));
     assertThat(((BooleanQuestionDto) question).getContainer(), is(nullValue()));
 
@@ -268,6 +269,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(BooleanQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q2"));
     assertThat(question.getOrder(), is(1));
+    assertThat(question.getOptional(), is(true));
     assertThat(((BooleanQuestionDto) question).getDefaultAnswer(), is(nullValue()));
 
     assertThat(((BooleanQuestionDto) question).getContainer(), is(not(nullValue())));
@@ -302,6 +304,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(BooleanQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q2C1"));
     assertThat(question.getOrder(), is(0));
+    assertThat(question.getOptional(), is(true));
     assertThat(((BooleanQuestionDto) question).getDefaultAnswer(), is(nullValue()));
     assertThat(((BooleanQuestionDto) question).getContainer(), is(nullValue()));
 
@@ -332,6 +335,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(ChoiceQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q3"));
     assertThat(question.getOrder(), is(2));
+    assertThat(question.getOptional(), is(true));
 
     ChoiceQuestionDto choiceQuestion = (ChoiceQuestionDto) question;
 
@@ -389,6 +393,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(ChoiceQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q4"));
     assertThat(question.getOrder(), is(3));
+    assertThat(question.getOptional(), is(true));
 
     choiceQuestion = (ChoiceQuestionDto) question;
 
@@ -434,6 +439,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(ChoiceQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q5"));
     assertThat(question.getOrder(), is(4));
+    assertThat(question.getOptional(), is(true));
 
     choiceQuestion = (ChoiceQuestionDto) question;
 
@@ -486,6 +492,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(BooleanQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q5C1"));
     assertThat(question.getOrder(), is(0));
+    assertThat(question.getOptional(), is(true));
     assertThat(((BooleanQuestionDto) question).getDefaultAnswer(), is(nullValue()));
     assertThat(((BooleanQuestionDto) question).getContainer(), is(nullValue()));
 
@@ -516,6 +523,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(ChoiceQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q6"));
     assertThat(question.getOrder(), is(5));
+    assertThat(question.getOptional(), is(true));
 
     choiceQuestion = (ChoiceQuestionDto) question;
 
@@ -569,6 +577,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(BooleanQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q6C1"));
     assertThat(question.getOrder(), is(0));
+    assertThat(question.getOptional(), is(true));
     assertThat(((BooleanQuestionDto) question).getDefaultAnswer(), is(nullValue()));
     assertThat(((BooleanQuestionDto) question).getContainer(), is(nullValue()));
 
@@ -599,6 +608,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(ChecklistQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q7"));
     assertThat(question.getOrder(), is(6));
+    assertThat(question.getOptional(), is(true));
 
     final ChecklistQuestionDto checklistQuestionDto = (ChecklistQuestionDto) question;
 
@@ -678,6 +688,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(RangeQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q8"));
     assertThat(question.getOrder(), is(7));
+    assertThat(question.getOptional(), is(true));
 
     final RangeQuestionDto rangeQuestion = (RangeQuestionDto) question;
 
@@ -738,6 +749,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(TextQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q9"));
     assertThat(question.getOrder(), is(8));
+    assertThat(question.getOptional(), is(true));
 
     TextQuestionDto textQuestion = (TextQuestionDto) question;
 
@@ -813,6 +825,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(TextQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q10"));
     assertThat(question.getOrder(), is(9));
+    assertThat(question.getOptional(), is(true));
 
     textQuestion = (TextQuestionDto) question;
 
@@ -888,6 +901,7 @@ public class SurveyIT {
     assertThat(question, is(instanceOf(NumberQuestionDto.class)));
     assertThat(question.getQuestion(), is("Q11"));
     assertThat(question.getOrder(), is(10));
+    assertThat(question.getOptional(), is(true));
 
     final NumberQuestionDto numberQuestion = (NumberQuestionDto) question;
 
