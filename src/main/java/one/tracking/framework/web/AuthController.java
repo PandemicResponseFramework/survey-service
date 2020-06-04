@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import one.tracking.framework.dto.AuthNTokenResponseDto;
 import one.tracking.framework.dto.DeviceTokenDto;
 import one.tracking.framework.dto.RegistrationDto;
+import one.tracking.framework.dto.TokenResponseDto;
 import one.tracking.framework.dto.VerificationDto;
 import one.tracking.framework.service.AuthService;
 import springfox.documentation.annotations.ApiIgnore;
@@ -41,12 +41,12 @@ public class AuthController {
   @RequestMapping(
       method = RequestMethod.POST,
       path = "/verify")
-  public AuthNTokenResponseDto verify(
+  public TokenResponseDto verify(
       @RequestBody
       @Valid
       final VerificationDto verification) throws IOException {
 
-    return AuthNTokenResponseDto.builder().token(this.authService.verifyEmail(verification)).build();
+    return TokenResponseDto.builder().token(this.authService.verifyEmail(verification)).build();
   }
 
   @RequestMapping(
@@ -63,18 +63,6 @@ public class AuthController {
 
   @RequestMapping(
       method = RequestMethod.POST,
-      path = "/register")
-  @Secured("ROLE_ADMIN")
-  public void registerParticipant(
-      @RequestBody
-      @Valid
-      final RegistrationDto registration) throws IOException {
-
-    this.authService.registerParticipant(registration, true);
-  }
-
-  @RequestMapping(
-      method = RequestMethod.POST,
       path = "/devicetoken")
   public void registerDeviceToken(
       @RequestBody
@@ -83,7 +71,21 @@ public class AuthController {
       @ApiIgnore
       final Authentication authentication) {
 
-    this.authService.registerDeviceToken(authentication.getName(), deviceTokenDto.getDeviceToken());
+    this.authService.registerDeviceToken(authentication.getName(), deviceTokenDto.getToken());
+  }
+
+  @RequestMapping(
+      method = RequestMethod.POST,
+      path = "/register")
+  @Secured("ROLE_ADMIN")
+  public void registerParticipant(
+      @RequestBody
+      @Valid
+      final RegistrationDto registration,
+      @ApiIgnore
+      final Authentication authentication) throws IOException {
+
+    this.authService.registerParticipant(registration, true);
   }
 
   @RequestMapping(
@@ -95,4 +97,5 @@ public class AuthController {
 
     this.authService.importParticipants(inputStream);
   }
+
 }

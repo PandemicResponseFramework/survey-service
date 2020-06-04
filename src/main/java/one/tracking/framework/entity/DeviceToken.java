@@ -13,7 +13,6 @@ import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,9 +30,6 @@ import lombok.NoArgsConstructor;
 @Table(
     indexes = {
         @Index(name = "IDX_DEVICE_TOKEN", columnList = "token"),
-    },
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"token", "user_id"})
     })
 public class DeviceToken {
 
@@ -41,7 +37,7 @@ public class DeviceToken {
   @GeneratedValue
   private Long id;
 
-  @Column(nullable = false, length = TOKEN_DEVICE_MAX_LENGTH)
+  @Column(nullable = false, length = TOKEN_DEVICE_MAX_LENGTH, unique = true)
   private String token;
 
   @ManyToOne(optional = false)

@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -258,6 +260,7 @@ public class AuthService {
    * @param name
    * @param deviceToken
    */
+  @Transactional
   public void registerDeviceToken(final String userId, final String deviceToken) {
 
     final User user = this.userRepository.findById(userId).get();
@@ -266,6 +269,11 @@ public class AuthService {
 
     if (deviceTokenOp.isPresent())
       return;
+
+    final List<DeviceToken> otherUserTokens = this.deviceTokenRepository.findByUserNotAndToken(user, deviceToken);
+
+    if (!otherUserTokens.isEmpty())
+      this.deviceTokenRepository.deleteInBatch(otherUserTokens);
 
     this.deviceTokenRepository.save(DeviceToken.builder()
         .user(user)
