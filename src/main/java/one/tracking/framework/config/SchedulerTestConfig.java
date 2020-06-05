@@ -62,6 +62,11 @@ public class SchedulerTestConfig implements SchedulingConfigurer {
 
   private void updateSchedule() {
 
+    if (!this.reminderComponent.isAvailable()) {
+      LOG.debug("Reminder component is not available. Skipping scheduler setup.");
+      return;
+    }
+
     final List<Survey> surveys =
         this.surveyRepository.findAllByReleaseStatusAndReminderTypeNotAndIntervalTypeNotOrderByNameIdAscVersionDesc(
             ReleaseStatusType.RELEASED, ReminderType.NONE, IntervalType.NONE);

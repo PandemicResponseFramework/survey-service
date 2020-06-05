@@ -91,7 +91,7 @@ public class FirebaseService {
   public List<BatchResponse> sendMessages(final PushNotificationRequest request, final List<String> tokens)
       throws InterruptedException, ExecutionException {
 
-    if (FirebaseApp.getApps().isEmpty())
+    if (!isAvailable())
       return null;
 
     return sendMessagesAsync(request, tokens).get();
@@ -108,7 +108,7 @@ public class FirebaseService {
   public ApiFuture<List<BatchResponse>> sendMessagesAsync(final PushNotificationRequest request,
       final List<String> tokens) {
 
-    if (FirebaseApp.getApps().isEmpty())
+    if (!isAvailable())
       return null;
 
     final List<List<String>> partitions = Lists.partition(tokens, this.config.getBatchSize());
@@ -136,7 +136,7 @@ public class FirebaseService {
   public String sendMessageToUser(final PushNotificationRequest request, final String token)
       throws InterruptedException, ExecutionException {
 
-    if (FirebaseApp.getApps().isEmpty())
+    if (!isAvailable())
       return null;
 
     return sendMessageToUserAsync(request, token).get();
@@ -144,7 +144,7 @@ public class FirebaseService {
 
   public ApiFuture<String> sendMessageToUserAsync(final PushNotificationRequest request, final String token) {
 
-    if (FirebaseApp.getApps().isEmpty())
+    if (!isAvailable())
       return null;
 
     final Message message = Message.builder()
@@ -183,6 +183,10 @@ public class FirebaseService {
             .setThreadId(topic)
             .build())
         .build();
+  }
+
+  public boolean isAvailable() {
+    return !FirebaseApp.getApps().isEmpty();
   }
 
 }

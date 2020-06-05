@@ -145,6 +145,9 @@ public class ReminderComponentIT {
     Mockito.when(batchResponse.getFailureCount()).thenReturn(countFailPerFcmBatch);
     Mockito.when(batchResponse.getResponses()).thenReturn(sendResponses);
 
+    Mockito.when(firebaseService1.isAvailable()).thenReturn(true);
+    Mockito.when(firebaseService2.isAvailable()).thenReturn(true);
+
     // Batch size = 1000 & FCM batch size = 500 -> return 2 BatchResponses
     Mockito.when(firebaseService1.sendMessages(any(PushNotificationRequest.class), anyList()))
         .then(new AnswersWithDelay(fcmDelay, new Returns(Arrays.asList(batchResponse, batchResponse))));

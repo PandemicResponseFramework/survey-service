@@ -359,4 +359,8 @@ public class ReminderComponent {
         .validDeviceTokens(validDeviceTokens)
         .build();
   }
+
+  public boolean isAvailable() {
+    return this.firebaseService.isAvailable();
+  }
 }
