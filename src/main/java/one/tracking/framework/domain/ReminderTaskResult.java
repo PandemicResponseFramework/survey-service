@@ -32,4 +32,7 @@ public class ReminderTaskResult {
   private int countNotifications;
   private int countDeviceTokens;
 
+  public static final ReminderTaskResult empty(final String surveyNameId) {
+    return ReminderTaskResult.builder().surveyNameId(surveyNameId).state(StateType.EXECUTED).build();
+  }
 }
