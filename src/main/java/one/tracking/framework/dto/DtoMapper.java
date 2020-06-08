@@ -45,6 +45,7 @@ public abstract class DtoMapper {
 
     return SurveyDto.builder()
         .id(entity.getId())
+        .dependsOn(entity.getDependsOn() == null ? null : entity.getDependsOn().getId())
         .nameId(entity.getNameId())
         .title(entity.getTitle())
         .description(entity.getDescription())
