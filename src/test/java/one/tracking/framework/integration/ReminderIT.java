@@ -223,14 +223,12 @@ public class ReminderIT {
     /*
      * Test that reminders are not being sent for surveys having no reminder setup
      */
-    this.helperBean.createSimpleSurvey("PREVIOUS", false);
+    this.helperBean.createSimpleSurvey("NOREMINDER", false);
 
-    final ReminderTaskResult result = this.reminderComponent.sendReminder("PREVIOUS");
+    final ReminderTaskResult result = this.reminderComponent.sendReminder("NOREMINDER");
 
     assertThat(result, is(not(nullValue())));
-    assertThat(result.getState(), is(StateType.CANCELLED));
-    assertThat(result.getCountDeviceTokens(), is(0));
-    assertThat(result.getCountNotifications(), is(0));
+    assertThat(result, is(equalTo(ReminderTaskResult.NOOP)));
 
   }
 
@@ -241,8 +239,8 @@ public class ReminderIT {
      * Test survey dependency -> do not send PNs for surveys, which depend on another survey as long as
      * the other survey has not been completed yet.
      */
-    final Survey survey = this.helperBean.createSimpleSurvey("PREVIOUS", false);
-    this.helperBean.createSimpleSurvey("NEXT", true, survey);
+    final Survey previous = this.helperBean.createSimpleSurvey("PREVIOUS", false);
+    this.helperBean.createSimpleSurvey("NEXT", true, previous);
 
     final ReminderTaskResult result = this.reminderComponent.sendReminder("NEXT");
 
@@ -255,19 +253,17 @@ public class ReminderIT {
   @Test
   public void testSatisfiedSurveyDependency() throws Exception {
 
-    final Survey survey = this.helperBean.createSimpleSurvey("PREVIOUS", false);
-    this.helperBean.createSimpleSurvey("NEXT", true, survey);
+    final Survey previous = this.helperBean.createSimpleSurvey("PREVIOUS", false);
+    this.helperBean.createSimpleSurvey("NEXT", true, previous);
 
     /*
      * Complete the depending survey for half the users and test again
      */
     for (int i = 0; i < this.deviceTokens.size(); i += 2) {
-      this.helperBean.completeSimpleSurvey(this.deviceTokens.get(i).getUser(), survey);
+      this.helperBean.completeSimpleSurvey(this.deviceTokens.get(i).getUser(), previous);
     }
 
-    this.helperBean.createSimpleSurvey("NEWNEXT", true, survey);
-
-    final ReminderTaskResult result = this.reminderComponent.sendReminder("NEWNEXT");
+    final ReminderTaskResult result = this.reminderComponent.sendReminder("NEXT");
 
     assertThat(result, is(not(nullValue())));
     assertThat(result.getState(), is(StateType.EXECUTED));
