@@ -128,6 +128,7 @@ public class SurveyService {
 
     return SurveyStatusDto.builder()
         .nameId(survey.getNameId())
+        .dependsOn(survey.getDependsOn() == null ? null : survey.getDependsOn().getNameId())
         .status(status)
         .title(survey.getTitle())
         .description(survey.getDescription())

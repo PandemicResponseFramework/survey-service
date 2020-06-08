@@ -150,6 +150,14 @@ public class SurveyIT {
       final SurveyStatusType expectedStatus,
       final Long expectedNextQuestionId) throws Exception {
 
+    return testOverview(expectedStatus, expectedNextQuestionId, null);
+  }
+
+  private String testOverview(
+      final SurveyStatusType expectedStatus,
+      final Long expectedNextQuestionId,
+      final String expectedDependsOnNameId) throws Exception {
+
     this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT_OVERVIEW)
         .with(csrf())
         .accept(MediaType.APPLICATION_JSON))
@@ -181,6 +189,7 @@ public class SurveyIT {
       assertThat(status.getNextQuestionId(), is(expectedNextQuestionId));
 
     assertThat(status.getStatus(), is(expectedStatus));
+    assertThat(status.getDependsOn(), is(expectedDependsOnNameId));
     assertThat(status.getToken(), is(not(nullValue())));
 
     return status.getToken();

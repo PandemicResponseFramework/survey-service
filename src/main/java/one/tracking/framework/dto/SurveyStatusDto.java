@@ -47,4 +47,6 @@ public class SurveyStatusDto {
   private Long startTime;
 
   private Long endTime;
+
+  private String dependsOn;
 }
