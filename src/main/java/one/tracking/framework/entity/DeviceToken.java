@@ -11,6 +11,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -31,6 +33,12 @@ import lombok.NoArgsConstructor;
     indexes = {
         @Index(name = "IDX_DEVICE_TOKEN", columnList = "token"),
     })
+@NamedQueries({
+    @NamedQuery(name = "DeviceToken.findByCreatedAtBefore", query = "SELECT d FROM DeviceToken d "
+        + "WHERE d.createdAt < ?1 "
+        + "ORDER BY d.id ASC"),
+    @NamedQuery(name = "DeviceToken.deleteById", query = "DELETE FROM DeviceToken d WHERE d.id = ?1")
+})
 public class DeviceToken {
 
   @Id

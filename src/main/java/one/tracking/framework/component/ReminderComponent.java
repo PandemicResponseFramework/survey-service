@@ -3,44 +3,46 @@
  */
 package one.tracking.framework.component;
 
+import static one.tracking.framework.entity.DataConstants.TOKEN_SURVEY_LENGTH;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.jpa.repository.JpaContext;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.SendResponse;
+import one.tracking.framework.config.TimeoutConfig;
+import one.tracking.framework.domain.Period;
 import one.tracking.framework.domain.PushNotificationRequest;
 import one.tracking.framework.domain.ReminderBatchResult;
 import one.tracking.framework.domain.ReminderTaskResult;
 import one.tracking.framework.domain.ReminderTaskResult.StateType;
+import one.tracking.framework.dto.SurveyStatusType;
 import one.tracking.framework.entity.DeviceToken;
 import one.tracking.framework.entity.Reminder;
+import one.tracking.framework.entity.SchedulerLock;
 import one.tracking.framework.entity.SurveyInstance;
+import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.meta.IntervalType;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.ReminderType;
 import one.tracking.framework.entity.meta.Survey;
-import one.tracking.framework.repo.ReminderRepository;
-import one.tracking.framework.repo.SurveyRepository;
-import one.tracking.framework.repo.SurveyResponseRepository;
 import one.tracking.framework.service.FirebaseService;
-import one.tracking.framework.service.SurveyService;
+import one.tracking.framework.service.ServiceUtility;
 
 /**
  * @author Marko Voß
@@ -62,25 +64,22 @@ public class ReminderComponent {
   private static final String KEY_SURVEY_NAME_ID = "surveyNameId";
 
   @Autowired
-  private SurveyResponseRepository surveyResponseRepository;
+  private LockerComponent lockerComponent;
 
   @Autowired
-  private ReminderRepository reminderRepository;
-
-  @Autowired
-  private SurveyService surveyService;
-
-  @Autowired
-  private SurveyRepository surveyRepository;
+  private ServiceUtility utility;
 
   @Autowired
   private FirebaseService firebaseService;
 
   @Autowired
-  private LockerComponent locker;
+  private TimeoutConfig timeoutConfig;
 
   @Autowired
-  private JpaContext jpaContext;
+  private TransactionTemplate transactionTemplate;
+
+  @Autowired
+  private EntityManager entityManager;
 
   @Value("${app.reminder.title}")
   private String reminderTitle;
@@ -91,10 +90,25 @@ public class ReminderComponent {
   @Value("${app.task.reminder.batchSize:1000}")
   private int batchSize;
 
-  @Transactional(propagation = Propagation.REQUIRED)
+  /**
+   *
+   * Perform sending reminders to users, which did not yet participate on the current survey instance
+   * identified by the specified <code>nameId</code>. The {@link Transactional} definition uses no
+   * roleback rule for all exceptions as the transactions are managed manually in this implementation.
+   * This is required as this is a batch job able to deal with millions of data entries.
+   *
+   * @param nameId
+   * @return
+   */
+  @Transactional(noRollbackFor = Throwable.class)
   public ReminderTaskResult sendReminder(final String nameId) {
 
-    LOG.debug("Executing scheduled job '{}{}'", TASK_REMINDER_PREFIX, nameId);
+    if (!isAvailable()) {
+      LOG.debug("Executing scheduled job '{}{}' NOT AVAILABLE", TASK_REMINDER_PREFIX, nameId);
+      return ReminderTaskResult.NOOP;
+    }
+
+    LOG.debug("Executing scheduled job '{}{}' START", TASK_REMINDER_PREFIX, nameId);
 
     try {
 
@@ -113,14 +127,16 @@ public class ReminderComponent {
     }
   }
 
-  private ReminderTaskResult lockAndSendReminder(final String nameId) throws InterruptedException, ExecutionException {
+  private ReminderTaskResult lockAndSendReminder(final String nameId) {
 
-    boolean locked;
+    final boolean locked;
+
+    final String taskName = TASK_REMINDER_PREFIX + nameId;
 
     try {
-      locked = this.locker.lock(TASK_REMINDER_PREFIX + nameId);
+      locked = this.lockerComponent.lock(taskName);
 
-    } catch (final DataIntegrityViolationException e) {
+    } catch (final Exception e) {
       // In case of concurrency by multiple instances, failing to store the same entry is valid
       // Unique index or primary key violation is to be expected
       LOG.debug("Expected violation: {}", e.getMessage());
@@ -130,39 +146,176 @@ public class ReminderComponent {
     if (locked) {
 
       final ReminderTaskResult result = performSendReminder(nameId);
-      this.locker.free(TASK_REMINDER_PREFIX + nameId);
+
+      this.lockerComponent.free(taskName);
+
       return result;
     }
 
     return ReminderTaskResult.NOOP;
   }
 
-  private ReminderTaskResult performSendReminder(final String nameId) throws InterruptedException, ExecutionException {
+  @SuppressWarnings("unused")
+  private boolean lock(final String taskName) {
+
+    final TypedQuery<SchedulerLock> query =
+        this.entityManager.createQuery("SELECT l FROM SchedulerLock l WHERE l.taskName = ?1", SchedulerLock.class);
+    query.setParameter(1, taskName);
+
+    final SchedulerLock lock = this.transactionTemplate.execute(status -> {
+      status.flush();
+      try {
+        return query.getSingleResult();
+      } catch (final NoResultException e) {
+        return null;
+      }
+    });
+
+    if (lock == null) {
+
+      LOG.debug("Creating lock for task: {}", taskName);
+
+      this.transactionTemplate.executeWithoutResult(status -> {
+        this.entityManager.persist(SchedulerLock.builder()
+            .taskName(taskName)
+            .timeout((int) this.timeoutConfig.getTaskLock().toSeconds())
+            .build());
+        status.flush();
+      });
+
+      return true;
+
+    } else if (Instant.now().isAfter(lock.getCreatedAt().plusSeconds(lock.getTimeout()))) {
+
+      LOG.debug("Updating lock for task: {}", taskName);
+
+      this.transactionTemplate.executeWithoutResult(status -> {
+        this.entityManager.persist(lock.toBuilder()
+            .createdAt(Instant.now())
+            .timeout((int) this.timeoutConfig.getTaskLock().toSeconds())
+            .build());
+        status.flush();
+      });
+
+      return true;
+    }
+
+    return false;
+  }
+
+  @SuppressWarnings("unused")
+  private boolean unlock(final String taskName) {
+
+    final Query query = this.entityManager.createQuery("DELETE FROM SchedulerLock l WHERE l.taskName = ?1");
+    query.setParameter(1, taskName);
+
+    return this.transactionTemplate.execute(status -> {
+      final int count = query.executeUpdate();
+      status.flush();
+      return count;
+    }) > 0;
+  }
+
+  private ReminderTaskResult performSendReminder(final String nameId) {
 
     LOG.debug("Sending reminders for survey '{}'...", nameId);
 
-    final List<Survey> surveys =
-        this.surveyRepository
-            .findAllByNameIdAndReleaseStatusAndReminderTypeNotAndIntervalTypeNotOrderByNameIdAscVersionDesc(
-                nameId,
-                ReleaseStatusType.RELEASED,
-                ReminderType.NONE,
-                IntervalType.NONE);
+    final Survey currentSurvey = getSurvey(nameId);
 
-    if (surveys.isEmpty())
+    if (currentSurvey == null)
       return ReminderTaskResult.NOOP;
 
-    final Survey currentRelease = surveys.get(0);
-    final SurveyInstance instance = this.surveyService.getCurrentInstance(currentRelease);
+    // Instance might be null, if no user participated on the current survey yet.
+    final SurveyInstance currentInstance = getCurrentSurveyInstance(currentSurvey, true);
+    final SurveyInstance dependsOnInstance = getCurrentSurveyInstance(currentSurvey.getDependsOn(), false);
 
-    if (instance == null)
-      return ReminderTaskResult.NOOP;
+    /*
+     * If the dependOn instance has not yet been created no participant performed the depending survey
+     * yet and because of this, there is nothing left to do.
+     */
+    if (currentSurvey.getDependsOn() != null && dependsOnInstance == null)
+      return ReminderTaskResult.empty(nameId);
 
-    return performSendReminderNEW(currentRelease, instance);
+    return performSendReminder(currentSurvey, currentInstance, dependsOnInstance);
   }
 
-  private ReminderTaskResult performSendReminderNEW(final Survey survey, final SurveyInstance instance)
-      throws InterruptedException, ExecutionException {
+  private SurveyInstance getCurrentSurveyInstance(final Survey survey, final boolean create) {
+
+    if (survey == null)
+      return null;
+
+    final Period period = this.utility.getCurrentSurveyInstancePeriod(survey);
+
+    final TypedQuery<SurveyInstance> query = this.entityManager.createNamedQuery(
+        "SurveyInstance.findBySurveyIdAndStartTimeAndEndTime", SurveyInstance.class);
+    query.setParameter(1, survey.getId());
+    query.setParameter(2, period.getStart());
+    query.setParameter(3, period.getEnd());
+
+    return this.transactionTemplate.execute(status -> {
+      status.flush();
+      try {
+        return query.getSingleResult();
+
+      } catch (final NoResultException e) {
+
+        if (create) {
+          final SurveyInstance entity = SurveyInstance.builder()
+              .survey(survey)
+              .startTime(period.getStart())
+              .endTime(period.getEnd())
+              .token(this.utility.generateString(TOKEN_SURVEY_LENGTH))
+              .build();
+          this.entityManager.persist(entity);
+          return entity;
+        }
+        return null;
+      }
+    });
+  }
+
+  private Survey getSurvey(final String nameId) {
+
+    final TypedQuery<Survey> query = this.entityManager.createNamedQuery(
+        "Survey.findByNameIdAndReleaseStatusAndReminderTypeNotAndIntervalTypeNot", Survey.class);
+    query.setParameter(1, nameId);
+    query.setParameter(2, ReleaseStatusType.RELEASED);
+    query.setParameter(3, ReminderType.NONE);
+    query.setParameter(4, IntervalType.NONE);
+    query.setFirstResult(0);
+    query.setMaxResults(1);
+
+    return this.transactionTemplate.execute(status -> {
+      status.flush();
+      try {
+        return query.getSingleResult();
+      } catch (final NoResultException e) {
+        return null;
+      }
+    });
+  }
+
+  private List<DeviceToken> getDeviceTokens(final SurveyInstance instance, final int offset,
+      final Instant maxTimestamp) {
+
+    LOG.debug("{}: Retrieving DeviceTokens for offset: {}", instance.getSurvey().getNameId(), offset);
+
+    final TypedQuery<DeviceToken> query = this.entityManager.createNamedQuery(
+        "DeviceToken.findByCreatedAtBefore", DeviceToken.class);
+    query.setFirstResult(offset);
+    query.setMaxResults(this.batchSize);
+    query.setParameter(1, maxTimestamp);
+
+    return this.transactionTemplate.execute(status -> {
+      status.flush();
+      return query.getResultList();
+    });
+  }
+
+  private ReminderTaskResult performSendReminder(
+      final Survey currentSurvey,
+      final SurveyInstance currentInstance,
+      final SurveyInstance dependsOnInstance) {
 
     final Instant now = Instant.now();
     final int batchSize = 1000;
@@ -171,147 +324,239 @@ public class ReminderComponent {
     int tokenCount = 0;
     int offset = 0;
 
-    final EntityManager deviceTokenManager = this.jpaContext.getEntityManagerByManagedType(DeviceToken.class);
-    final EntityManager reminderManager = this.jpaContext.getEntityManagerByManagedType(Reminder.class);
+    List<DeviceToken> deviceTokens = getDeviceTokens(currentInstance, offset, now);
 
-    final Session deviceTokenSession = deviceTokenManager.unwrap(Session.class);
-    final Session reminderSession = reminderManager.unwrap(Session.class);
-
-    final TypedQuery<DeviceToken> query = deviceTokenSession.createQuery(
-        "SELECT d FROM DeviceToken d WHERE d.createdAt < ?1 ORDER BY d.id ASC", DeviceToken.class);
-    query.setFirstResult(offset);
-    query.setMaxResults(this.batchSize);
-    query.setParameter(1, now);
-
-    Transaction deviceTokenTx = deviceTokenSession.isJoinedToTransaction() ? deviceTokenSession.getTransaction()
-        : deviceTokenSession.beginTransaction();
-
-    List<DeviceToken> deviceTokens = null;
-    while (!(deviceTokens = query.getResultList()).isEmpty()) {
-
-      deviceTokenTx.commit();
+    while (!deviceTokens.isEmpty()) {
 
       LOG.debug("{}: DeviceToken pages: Offset {} | Batch Size: {} | Page Size: {}",
-          survey.getNameId(),
+          currentSurvey.getNameId(),
           offset,
           batchSize,
           deviceTokens.size());
 
-      final List<DeviceToken> inactiveDeviceTokens = collectInactiveDeviceTokens(instance, deviceTokens);
+      final List<DeviceToken> inactiveDeviceTokens = checkDependsOnCompletion(
+          currentSurvey,
+          dependsOnInstance,
+          checkRemindersAndResponses(currentInstance, deviceTokens));
 
       if (inactiveDeviceTokens.isEmpty()) {
 
-        LOG.debug("{}: No DeviceTokens available to send messages to. Skipping sending messages.", survey.getNameId());
+        LOG.debug("{}: No DeviceTokens available to send messages to. Skipping sending messages.",
+            currentSurvey.getNameId());
         offset += batchSize;
 
       } else {
 
-        final ReminderBatchResult batchResponse = performSendReminderBatch(inactiveDeviceTokens, survey, instance);
+        try {
+          final ReminderBatchResult batchResponse = performSendReminderBatch(currentSurvey, inactiveDeviceTokens);
 
-        if (!batchResponse.getInvalidDeviceTokens().isEmpty()) {
+          if (!batchResponse.getInvalidDeviceTokens().isEmpty()) {
 
-          removeInvalidDeviceTokens(survey, deviceTokenSession, reminderSession,
-              batchResponse.getInvalidDeviceTokens());
+            removeInvalidDeviceTokens(currentSurvey, batchResponse.getInvalidDeviceTokens());
 
-          offset += batchResponse.getInvalidDeviceTokens().size();
+            offset += batchSize - batchResponse.getInvalidDeviceTokens().size();
 
-        } else {
+          } else {
+            offset += batchSize;
+          }
+
+          if (!batchResponse.getValidDeviceTokens().isEmpty())
+            persistSentReminders(currentSurvey, currentInstance, batchResponse);
+
+          successCount += batchResponse.getBatchResponses().stream().mapToInt(f -> f.getSuccessCount()).sum();
+
+        } catch (InterruptedException | ExecutionException e) {
           offset += batchSize;
+          LOG.error(e.getMessage(), e);
         }
-
-        if (!batchResponse.getValidDeviceTokens().isEmpty())
-          persistSentReminders(survey, instance, reminderSession, batchResponse);
-
-        successCount += batchResponse.getBatchResponses().stream().mapToInt(f -> f.getSuccessCount()).sum();
         tokenCount += inactiveDeviceTokens.size();
 
       }
 
-      query.setFirstResult(offset);
-      deviceTokenTx = deviceTokenSession.isJoinedToTransaction() ? deviceTokenSession.getTransaction()
-          : deviceTokenSession.beginTransaction();
+      deviceTokens = getDeviceTokens(currentInstance, offset, now);
     }
 
     return ReminderTaskResult.builder()
         .countDeviceTokens(tokenCount)
         .countNotifications(successCount)
         .state(StateType.EXECUTED)
-        .surveyNameId(survey.getNameId())
+        .surveyNameId(currentSurvey.getNameId())
         .build();
   }
 
-  private void removeInvalidDeviceTokens(final Survey survey, final Session deviceTokenSession,
-      final Session reminderSession, final List<DeviceToken> deviceTokens) {
+  private void removeInvalidDeviceTokens(final Survey survey, final List<DeviceToken> deviceTokens) {
 
-    LOG.debug("{}: Invalid DeviceTokens: {}", survey.getNameId(), deviceTokens.size());
+    LOG.debug("{}: Deleting reminders for {} invalid DeviceTokens", survey.getNameId(), deviceTokens.size());
 
-    final List<Long> ids = deviceTokens.stream().map(m -> m.getId()).collect(Collectors.toList());
+    for (final DeviceToken deviceToken : deviceTokens) {
 
-    final Transaction reminderTx =
-        reminderSession.isJoinedToTransaction() ? reminderSession.getTransaction()
-            : reminderSession.beginTransaction();
+      this.transactionTemplate.executeWithoutResult(status -> {
+        final Query query = this.entityManager.createNamedQuery("Reminder.deleteByDeviceTokenId");
+        query.setParameter(1, deviceToken.getId());
+        query.executeUpdate();
+        status.flush();
+      });
+    }
 
-    final Query deleteReminderQuery =
-        reminderSession.createQuery("DELETE FROM Reminder r WHERE r.deviceToken.id IN (?1)");
-    deleteReminderQuery.setParameter(1, ids);
-    deleteReminderQuery.executeUpdate();
+    LOG.debug("{}: Deleting {} invalid DeviceTokens", survey.getNameId(), deviceTokens.size());
 
-    reminderTx.commit();
+    for (final DeviceToken deviceToken : deviceTokens) {
 
-    final Transaction deviceTokenTx = deviceTokenSession.isJoinedToTransaction() ? deviceTokenSession.getTransaction()
-        : deviceTokenSession.beginTransaction();
+      this.transactionTemplate.executeWithoutResult(status -> {
+        final Query query = this.entityManager.createNamedQuery("DeviceToken.deleteById");
+        query.setParameter(1, deviceToken.getId());
+        query.executeUpdate();
+        status.flush();
+      });
+    }
 
-    final Query deleteDeviceTokenQuery =
-        deviceTokenSession.createQuery("DELETE FROM DeviceToken d WHERE d.id IN (?1)");
-    deleteDeviceTokenQuery.setParameter(1, ids);
-    deleteDeviceTokenQuery.executeUpdate();
-
-    deviceTokenTx.commit();
+    LOG.debug("{}: Deletion completed", survey.getNameId(), deviceTokens.size());
   }
 
-  private void persistSentReminders(final Survey survey, final SurveyInstance instance, final Session reminderSession,
+  private void persistSentReminders(final Survey survey, final SurveyInstance instance,
       final ReminderBatchResult batchResponse) {
 
-    LOG.debug("{}: Valid DeviceTokens: {}", survey.getNameId(), batchResponse.getValidDeviceTokens().size());
-
-    final Transaction reminderTx =
-        reminderSession.isJoinedToTransaction() ? reminderSession.getTransaction()
-            : reminderSession.beginTransaction();
+    LOG.debug("{}: Storing reminders for {} DeviceTokens", survey.getNameId(),
+        batchResponse.getValidDeviceTokens().size());
 
     for (final DeviceToken deviceToken : batchResponse.getValidDeviceTokens()) {
 
-      reminderSession.persist(Reminder.builder()
-          .deviceToken(deviceToken)
-          .surveyInstance(instance)
-          .build());
+      this.transactionTemplate.executeWithoutResult(status -> {
+        this.entityManager.persist(Reminder.builder()
+            .deviceToken(deviceToken)
+            .surveyInstance(instance)
+            .build());
+        status.flush();
+      });
     }
 
-    reminderTx.commit();
+    LOG.debug("{}: Storing reminders for {} DeviceTokens DONE", survey.getNameId(),
+        batchResponse.getValidDeviceTokens().size());
   }
 
-  private List<DeviceToken> collectInactiveDeviceTokens(final SurveyInstance instance,
-      final Iterable<DeviceToken> deviceTokens) {
+  private List<DeviceToken> checkRemindersAndResponses(
+      final SurveyInstance currentInstance,
+      final List<DeviceToken> deviceTokens) {
+
+    LOG.debug("{}: Checking existance of reminders for {} DeviceTokens.", currentInstance.getSurvey().getNameId(),
+        deviceTokens.size());
+
+    final Set<Long> deviceTokenIdsToCheck = deviceTokens.stream().map(DeviceToken::getId).collect(Collectors.toSet());
+
+    /*
+     * First, filter out all DeviceTokens, a reminder for the current instance has been set to already
+     */
+
+    final TypedQuery<Reminder> reminderQuery = this.entityManager.createNamedQuery(
+        "Reminder.findBySurveyInstanceIdAndDeviceTokenId", Reminder.class);
+    reminderQuery.setParameter(1, currentInstance.getId());
+    reminderQuery.setParameter(2, deviceTokenIdsToCheck);
+
+    final List<Reminder> reminders = this.transactionTemplate.execute(status -> {
+      status.flush();
+      return reminderQuery.getResultList();
+    });
+
+    LOG.debug("{}: {} existing Reminders.", currentInstance.getSurvey().getNameId(), reminders.size());
+
+    final Set<Long> reminderDeviceTokenIds = reminders.stream().map(m -> m.getDeviceToken().getId())
+        .collect(Collectors.toSet());
+
+    final List<DeviceToken> deviceTokensToCheck =
+        deviceTokens.stream().filter(f -> !reminderDeviceTokenIds.contains(f.getId())) // Set -> O(1)
+            .collect(Collectors.toList());
+
+    LOG.debug("{}: {} DeviceTokens left to check.", currentInstance.getSurvey().getNameId(),
+        deviceTokensToCheck.size());
+
+    if (deviceTokensToCheck.isEmpty())
+      return deviceTokensToCheck;
+
+    LOG.debug("{}: Checking existance of SurveyResponses.", currentInstance.getSurvey().getNameId());
+
+    /*
+     * Second, filter out all DeviceTokens, a SurveyResponse for the current SurveyInstance exists
+     * already
+     */
+
+    final Set<String> userIds = deviceTokensToCheck.stream().map(f -> f.getUser().getId()).collect(Collectors.toSet());
+
+    final TypedQuery<String> responseQuery =
+        this.entityManager.createNamedQuery("SurveyResponse.nativeFindBySurveyInstanceIdAndUserIdIn",
+            String.class);
+    responseQuery.setParameter(1, currentInstance.getId());
+    responseQuery.setParameter(2, userIds);
+
+    final Set<String> existingUserIds = new HashSet<>(this.transactionTemplate.execute(status -> {
+      status.flush();
+      return responseQuery.getResultList();
+    }));
+
+    final List<DeviceToken> result = new ArrayList<>(deviceTokensToCheck.size());
+
+    for (final DeviceToken deviceToken : deviceTokensToCheck) {
+      if (!existingUserIds.contains(deviceToken.getUser().getId()))
+        result.add(deviceToken);
+    }
+
+    LOG.debug("{}: {} DeviceTokens left.", currentInstance.getSurvey().getNameId(), result.size());
+
+    return result;
+
+  }
+
+  private List<DeviceToken> checkDependsOnCompletion(
+      final Survey currentSurvey,
+      final SurveyInstance dependsOnInstance,
+      final List<DeviceToken> deviceTokens) {
+
+    LOG.debug("{}: Checking depends on completion for {} DeviceTokens.", currentSurvey.getNameId(),
+        deviceTokens.size());
+
+    if (currentSurvey.getDependsOn() == null)
+      return deviceTokens;
+
+    if (dependsOnInstance == null)
+      return Collections.emptyList();
+
+    final TypedQuery<SurveyResponse> query = this.entityManager.createNamedQuery(
+        "SurveyResponse.findBySurveyInstanceIdAndUserIdAndMaxVersion", SurveyResponse.class);
 
     final List<DeviceToken> result = new ArrayList<>();
 
     for (final DeviceToken deviceToken : deviceTokens) {
 
-      // Skip if answer of user for the current survey instance exists
-      if (this.surveyResponseRepository.existsByUserAndSurveyInstance(deviceToken.getUser(), instance))
-        continue;
+      query.setParameter(1, dependsOnInstance.getId());
+      query.setParameter(2, deviceToken.getUser().getId());
 
-      // Skip if reminder got sent already
-      if (this.reminderRepository.existsByDeviceTokenAndSurveyInstance(deviceToken, instance))
+      final List<SurveyResponse> surveyResponses = this.transactionTemplate.execute(status -> {
+        status.flush();
+        return query.getResultList();
+      });
+
+      LOG.trace("{}: Calculating survey status for DeviceToken '{}' having {} SurveyResponses.",
+          currentSurvey.getNameId(), deviceToken.getToken(), surveyResponses.size());
+
+      final SurveyStatusType status = this.utility.calculateSurveyStatus(currentSurvey.getDependsOn(), surveyResponses);
+
+      LOG.trace("{}: Calculating survey status for DeviceToken '{}' DONE.",
+          currentSurvey.getNameId(), deviceToken.getToken());
+
+      if (status == SurveyStatusType.INCOMPLETE)
         continue;
 
       result.add(deviceToken);
     }
 
+    LOG.debug("{}: {} DeviceTokens left.", currentSurvey.getNameId(), result.size());
+
     return result;
   }
 
-  private ReminderBatchResult performSendReminderBatch(final List<DeviceToken> deviceTokens, final Survey survey,
-      final SurveyInstance instance) throws InterruptedException, ExecutionException {
+  private ReminderBatchResult performSendReminderBatch(final Survey survey, final List<DeviceToken> deviceTokens)
+      throws InterruptedException, ExecutionException {
+
+    LOG.debug("{}: Sending reminders for {} DeviceTokens.", survey.getNameId(), deviceTokens.size());
 
     final List<BatchResponse> batchResponses = this.firebaseService.sendMessages(PushNotificationRequest.builder()
         .title(this.reminderTitle)
@@ -337,7 +582,7 @@ public class ReminderComponent {
         if (ERROR_CODE_INVALID_REGISTRATION_TOKEN.equals(response.getException().getErrorCode())
             || ERROR_CODE_REGISTRATION_TOKEN_NOT_REGISTERED.equals(response.getException().getErrorCode())) {
 
-          LOG.trace("{}: Invalid DeviceToken: {}", survey.getNameId(), currentToken);
+          LOG.debug("{}: Invalid DeviceToken: {}", survey.getNameId(), currentToken.getToken());
           invalidDeviceTokens.add(currentToken);
 
         } else {
@@ -348,7 +593,7 @@ public class ReminderComponent {
         }
       } else {
 
-        LOG.trace("{}: Message send to DeviceToken: {}", survey.getNameId(), currentToken);
+        LOG.debug("{}: Message send to DeviceToken: {}", survey.getNameId(), currentToken.getToken());
         validDeviceTokens.add(currentToken);
       }
     }

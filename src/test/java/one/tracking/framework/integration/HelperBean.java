@@ -8,10 +8,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import one.tracking.framework.domain.Period;
 import one.tracking.framework.entity.DeviceToken;
+import one.tracking.framework.entity.SurveyInstance;
+import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.IntervalType;
@@ -32,8 +35,12 @@ import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.DeviceTokenRepository;
 import one.tracking.framework.repo.QuestionRepository;
+import one.tracking.framework.repo.ReminderRepository;
+import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
+import one.tracking.framework.repo.SurveyResponseRepository;
 import one.tracking.framework.repo.UserRepository;
+import one.tracking.framework.service.ServiceUtility;
 
 /**
  * @author Marko Voß
@@ -54,42 +61,86 @@ public class HelperBean {
   private SurveyRepository surveyRepository;
 
   @Autowired
+  private SurveyInstanceRepository surveyInstanceRepository;
+
+  @Autowired
+  private SurveyResponseRepository surveyResponseRepository;
+
+  @Autowired
   private UserRepository userRepository;
 
   @Autowired
   private DeviceTokenRepository deviceTokenRepository;
 
   @Autowired
-  private EntityManager entityManager;
+  private ReminderRepository reminderRepository;
 
-  public void reset() {
-
-    this.userRepository.deleteAll();
-    this.entityManager.flush();
-
-    this.deviceTokenRepository.deleteAll();
-    this.entityManager.flush();
-
-    this.surveyRepository.deleteAll();
-    this.entityManager.flush();
-
-    this.questionRepository.deleteAll();
-    this.entityManager.flush();
-  }
+  @Autowired
+  private ServiceUtility utility;
 
   public User createUser(final String userToken) {
     return this.userRepository.save(User.builder().userToken(userToken).build());
   }
 
-  public void addDeviceToken(final User user, final String... deviceTokens) {
-
-    for (final String token : deviceTokens) {
-      this.deviceTokenRepository.save(DeviceToken.builder().user(user).token(token).build());
-    }
-
+  public DeviceToken addDeviceToken(final User user, final String deviceToken) {
+    return this.deviceTokenRepository.save(DeviceToken.builder().user(user).token(deviceToken).build());
   }
 
-  public void createSurvey(final String nameId) {
+  public void completeSimpleSurvey(final User user, final Survey survey) {
+
+    final Period period = this.utility.getCurrentSurveyInstancePeriod(survey);
+
+    final Optional<SurveyInstance> instanceOp =
+        this.surveyInstanceRepository.findBySurveyAndStartTimeAndEndTime(survey, period.getStart(), period.getEnd());
+
+    SurveyInstance instance;
+
+    if (instanceOp.isEmpty()) {
+      instance = this.surveyInstanceRepository.save(SurveyInstance.builder()
+          .startTime(period.getStart())
+          .endTime(period.getEnd())
+          .survey(survey)
+          .token("TOKEN")
+          .build());
+    } else {
+      instance = instanceOp.get();
+    }
+
+    this.surveyResponseRepository.save(SurveyResponse.builder()
+        .boolAnswer(true)
+        .surveyInstance(instance)
+        .question(survey.getQuestions().get(0))
+        .user(user)
+        .valid(true)
+        .build());
+  }
+
+  public Survey createSimpleSurvey(final String nameId, final boolean withInterval) {
+    return createSimpleSurvey(nameId, withInterval, null);
+  }
+
+  public Survey createSimpleSurvey(final String nameId, final boolean withInterval, final Survey dependsOn) {
+
+    return this.surveyRepository.save(Survey.builder()
+        .dependsOn(dependsOn)
+        .questions(Collections.singletonList(createBoolQuestion("Q1", 0)))
+        .nameId(nameId)
+        .title("TITLE")
+        .description("DESCRIPTION")
+        .intervalStart(withInterval ? Instant.parse("2020-05-11T12:00:00Z") : null)
+        .intervalType(withInterval ? IntervalType.WEEKLY : IntervalType.NONE)
+        .intervalValue(withInterval ? 1 : null)
+        .reminderType(withInterval ? ReminderType.AFTER_DAYS : ReminderType.NONE)
+        .reminderValue(withInterval ? 2 : null)
+        .releaseStatus(ReleaseStatusType.RELEASED)
+        .build());
+  }
+
+  public Survey createSurvey(final String nameId) {
+    return createSurvey(nameId, null);
+  }
+
+  public Survey createSurvey(final String nameId, final Survey dependsOn) {
 
     int order = 0;
     final List<Question> questions = new ArrayList<>(12);
@@ -186,7 +237,8 @@ public class HelperBean {
         order++,
         0, 10, 5));
 
-    this.surveyRepository.save(Survey.builder()
+    return this.surveyRepository.save(Survey.builder()
+        .dependsOn(dependsOn)
         .questions(questions)
         .nameId(nameId)
         .title("TITLE")

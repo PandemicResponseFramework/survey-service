@@ -8,15 +8,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
+import javax.persistence.SqlResultSetMapping;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -35,9 +43,43 @@ import one.tracking.framework.entity.meta.question.Question;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "survey_instance_id", "question_id", "version"})
+@Table(
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "survey_instance_id", "question_id", "version"})
+    },
+    indexes = {
+        @Index(name = "IDX_SURVEY_RESPONSE_USER_ID", columnList = "user_id, survey_instance_id, version")
+    })
+@NamedQueries({
+    @NamedQuery(name = "SurveyResponse.findBySurveyInstanceIdAndUserId",
+        query = "SELECT COUNT(sr) FROM SurveyResponse sr WHERE sr.surveyInstance.id = ?1 AND sr.user.id = ?2"),
+    @NamedQuery(name = "SurveyResponse.findBySurveyInstanceIdAndUserIdAndMaxVersion", query = "SELECT s "
+        + "FROM SurveyResponse s "
+        + "WHERE s.user.id = ?2"
+        + "  AND s.surveyInstance.id = ?1"
+        + "  AND s.version = ("
+        + "    SELECT MAX(x.version) "
+        + "    FROM SurveyResponse x "
+        + "    WHERE x.user = s.user "
+        + "      AND x.surveyInstance = s.surveyInstance "
+        + "      AND x.question = s.question"
+        + "  )")
 })
+@NamedNativeQueries({
+    @NamedNativeQuery(name = "SurveyResponse.nativeFindBySurveyInstanceIdAndUserIdIn",
+        resultSetMapping = "StringMapping",
+        query = "SELECT DISTINCT sr.user_id FROM survey_response sr "
+            + "WHERE sr.survey_instance_id = ?1 AND sr.user_id IN (?2)")
+})
+@SqlResultSetMapping(
+    name = "StringMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = String.class,
+            columns = {
+                @ColumnResult(name = "user_id")
+            })
+    })
 public class SurveyResponse {
 
   @Id

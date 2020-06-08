@@ -5,31 +5,22 @@ package one.tracking.framework.service;
 
 import static one.tracking.framework.entity.DataConstants.TOKEN_SURVEY_LENGTH;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.temporal.WeekFields;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import one.tracking.framework.domain.Period;
 import one.tracking.framework.dto.SurveyStatusDto;
 import one.tracking.framework.dto.SurveyStatusType;
 import one.tracking.framework.entity.SurveyInstance;
 import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.SurveyStatus;
 import one.tracking.framework.entity.User;
-import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.Survey;
-import one.tracking.framework.entity.meta.question.BooleanQuestion;
-import one.tracking.framework.entity.meta.question.ChecklistEntry;
-import one.tracking.framework.entity.meta.question.ChecklistQuestion;
-import one.tracking.framework.entity.meta.question.ChoiceQuestion;
-import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
@@ -130,7 +121,10 @@ public class SurveyService {
       nextQuestionId = surveyStatus.getNextQuestion() == null ? null : surveyStatus.getNextQuestion().getId();
     }
 
-    final SurveyStatusType status = calculateSurveyStatus(user, instance);
+    final List<SurveyResponse> surveyResponses =
+        this.surveyResponseRepository.findByUserAndSurveyInstanceAndMaxVersion(user, instance);
+
+    final SurveyStatusType status = this.utility.calculateSurveyStatus(survey, surveyResponses);
 
     return SurveyStatusDto.builder()
         .nameId(survey.getNameId())
@@ -145,164 +139,6 @@ public class SurveyService {
         .build();
   }
 
-  private SurveyStatusType calculateSurveyStatus(final User user, final SurveyInstance instance) {
-
-    final Map<Long, SurveyResponse> responses =
-        this.surveyResponseRepository.findByUserAndSurveyInstanceAndMaxVersion(user, instance)
-            .stream().collect(Collectors.toMap(
-                e -> e.getQuestion().getId(),
-                e -> e));
-
-    if (responses.isEmpty())
-      return SurveyStatusType.INCOMPLETE;
-
-    if (checkAnswers(instance.getSurvey().getQuestions(), responses))
-      return SurveyStatusType.COMPLETED;
-
-    return SurveyStatusType.INCOMPLETE;
-  }
-
-  private boolean checkAnswers(final List<Question> questions, final Map<Long, SurveyResponse> responses) {
-
-    if (questions == null || responses == null || responses.isEmpty())
-      return false;
-
-    for (final Question question : questions) {
-
-      if (!isAnswered(question, responses))
-        return false;
-
-      if (isSubQuestionRequired(question, responses.get(question.getId()))) {
-        if (!checkAnswers(getQuestions(question), responses))
-          return false;
-      }
-    }
-
-    return true;
-  }
-
-  private List<Question> getQuestions(final Question question) {
-
-    switch (question.getType()) {
-      case BOOL:
-        return ((BooleanQuestion) question).getContainer().getQuestions();
-      case CHOICE:
-        return ((ChoiceQuestion) question).getContainer().getQuestions();
-      default:
-        return null;
-
-    }
-  }
-
-  /**
-   *
-   * @param question
-   * @param response
-   * @return
-   */
-  private boolean isSubQuestionRequired(final Question question, final SurveyResponse response) {
-
-    if (question == null || !question.hasContainer() || response == null || !response.isValid()
-        || (question.isOptional() && response.isSkipped()))
-      return false;
-
-    switch (question.getType()) {
-      case BOOL:
-
-        final BooleanQuestion booleanQuestion = (BooleanQuestion) question;
-        if (booleanQuestion.getContainer().getDependsOn() == null)
-          return true;
-
-        return response.getBoolAnswer().equals(booleanQuestion.getContainer().getDependsOn());
-
-      case CHOICE:
-
-        final ChoiceQuestion choiceQuestion = (ChoiceQuestion) question;
-        if (choiceQuestion.getContainer().getDependsOn() == null)
-          return true;
-
-        final List<Long> givenAnswerIds =
-            response.getAnswers().stream().map(Answer::getId).collect(Collectors.toList());
-
-        // anyMatch -> OR-linked answers
-        // allMatch -> AND-linked answers
-        return choiceQuestion.getContainer().getDependsOn().stream().anyMatch(p -> givenAnswerIds.contains(p.getId()));
-
-      default:
-        return true;
-
-    }
-  }
-
-  private boolean isAnswered(final Question question, final Map<Long, SurveyResponse> responses) {
-
-    switch (question.getType()) {
-      case BOOL: {
-
-        final SurveyResponse response = responses.get(question.getId());
-        return response != null && response.isValid()
-            && (response.getBoolAnswer() != null || question.isOptional() && response.isSkipped());
-
-      }
-      case CHECKLIST: {
-
-        final ChecklistQuestion checklistQuestion = (ChecklistQuestion) question;
-        for (final ChecklistEntry entry : checklistQuestion.getEntries()) {
-
-          final SurveyResponse response = responses.get(entry.getId());
-          if (response == null || !response.isValid()
-              || (!question.isOptional() && response.getBoolAnswer() == null)
-              || (question.isOptional() && response.getBoolAnswer() == null && !response.isSkipped()))
-            return false;
-        }
-
-        return true;
-
-      }
-      case CHOICE: {
-
-        final ChoiceQuestion choiceQuestion = (ChoiceQuestion) question;
-        final SurveyResponse response = responses.get(question.getId());
-
-        if (response == null || !response.isValid()
-            || (!question.isOptional() && (response.getAnswers() == null || response.getAnswers().isEmpty()))
-            || (question.isOptional() && (response.getAnswers() == null || response.getAnswers().isEmpty())
-                && !response.isSkipped()))
-          return false;
-
-        if (question.isOptional() && response.isSkipped())
-          return true;
-
-        // Is the given answer part of the possible answers (data integrity validation)
-        for (final Answer answer : choiceQuestion.getAnswers()) {
-          if (response.getAnswers().stream().anyMatch(p -> p.getId().equals(answer.getId())))
-            return true;
-        }
-
-        return false;
-
-      }
-      case NUMBER:
-      case RANGE: {
-
-        final SurveyResponse response = responses.get(question.getId());
-        return response != null && response.isValid()
-            && (response.getNumberAnswer() != null || question.isOptional() && response.isSkipped());
-
-      }
-      case TEXT: {
-
-        final SurveyResponse response = responses.get(question.getId());
-        return response != null && response.isValid()
-            && ((response.getTextAnswer() != null && !response.getTextAnswer().isBlank())
-                || question.isOptional() && response.isSkipped());
-
-      }
-      default:
-        return false;
-    }
-  }
-
   /**
    * Self-healing implementation: If the current survey instance does not yet exist, it will be
    * created on request.
@@ -312,52 +148,21 @@ public class SurveyService {
    */
   public SurveyInstance getCurrentInstance(final Survey survey) {
 
-    switch (survey.getIntervalType()) {
-      case WEEKLY:
-        return getInstanceByWeek(survey);
-      case NONE:
-      default:
-        return getPermanentInstance(survey);
-    }
+    return getInstance(survey, this.utility.getCurrentSurveyInstancePeriod(survey));
   }
 
-  private SurveyInstance getInstanceByWeek(final Survey survey) {
-
-    final ZonedDateTime start = survey.getIntervalStart().atZone(ZoneOffset.UTC);
-    final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-
-    if (start.isAfter(now))
-      return null;
-
-    final int weekStart = start.get(WeekFields.ISO.weekOfWeekBasedYear());
-    final int weekNow = now.get(WeekFields.ISO.weekOfWeekBasedYear());
-
-    final int weekDelta = (int) (Math.floor((weekNow - weekStart) / (double) survey.getIntervalValue()));
-
-    final ZonedDateTime startTime = start.plusWeeks(weekDelta * survey.getIntervalValue());
-    final ZonedDateTime endTime = startTime.plus(survey.getIntervalValue(), survey.getIntervalType().toChronoUnit())
-        .minusSeconds(1);
-
-    return getInstance(survey, startTime.toInstant(), endTime.toInstant());
-  }
-
-  private SurveyInstance getPermanentInstance(final Survey survey) {
-
-    return getInstance(survey, INSTANT_MIN, INSTANT_MAX);
-  }
-
-  private SurveyInstance getInstance(final Survey survey, final Instant min, final Instant max) {
+  private SurveyInstance getInstance(final Survey survey, final Period period) {
 
     final Optional<SurveyInstance> instanceOp =
-        this.surveyInstanceRepository.findBySurveyAndStartTimeAndEndTime(survey, min, max);
+        this.surveyInstanceRepository.findBySurveyAndStartTimeAndEndTime(survey, period.getStart(), period.getEnd());
 
     if (instanceOp.isPresent())
       return instanceOp.get();
 
     return this.surveyInstanceRepository.save(SurveyInstance.builder()
         .survey(survey)
-        .startTime(min)
-        .endTime(max)
+        .startTime(period.getStart())
+        .endTime(period.getEnd())
         .token(this.utility.generateString(TOKEN_SURVEY_LENGTH))
         .build());
   }

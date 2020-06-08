@@ -9,6 +9,10 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -33,6 +37,12 @@ import one.tracking.framework.entity.meta.container.Container;
 @Entity
 @Table(uniqueConstraints = {
     @UniqueConstraint(columnNames = {"nameId", "version"})
+})
+@NamedQueries({
+    @NamedQuery(name = "Survey.findByNameIdAndReleaseStatusAndReminderTypeNotAndIntervalTypeNot",
+        query = "SELECT s FROM Survey s "
+            + "WHERE s.nameId = ?1 AND s.releaseStatus = ?2 AND s.reminderType <> ?3 AND s.intervalType <> ?4 "
+            + "ORDER BY s.version DESC")
 })
 @DiscriminatorValue("SURVEY")
 public class Survey extends Container {
@@ -76,6 +86,9 @@ public class Survey extends Container {
   @Column(nullable = false, updatable = false)
   private Instant createdAt;
 
+  @ManyToOne(optional = true, fetch = FetchType.LAZY)
+  private Survey dependsOn;
+
   @Override
   @PrePersist
   protected void onPrePersist() {
@@ -87,6 +100,8 @@ public class Survey extends Container {
         setVersion(0);
       }
     }
+    // Parent question of survey must be null
+    setParent(null);
   }
 
 }

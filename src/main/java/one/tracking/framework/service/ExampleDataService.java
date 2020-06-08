@@ -85,8 +85,7 @@ public class ExampleDataService {
     LOG.info("Creating example data...");
 
     createAccount();
-    createBasicSurvey();
-    createRegularSurvey();
+    createRegularSurvey(createBasicSurvey());
 
     this.schedulerConfig.updateSchedule();
 
@@ -109,7 +108,7 @@ public class ExampleDataService {
     LOG.info("Token for example user: {}", token);
   }
 
-  private void createBasicSurvey() {
+  private Survey createBasicSurvey() {
 
     int order = 0;
     final List<Question> questions = new ArrayList<>(12);
@@ -222,7 +221,7 @@ public class ExampleDataService {
     questions.add(createBoolQuestion(
         "Do you smoke?", order++, null, null));
 
-    this.surveyRepository.save(Survey.builder()
+    return this.surveyRepository.save(Survey.builder()
         .questions(questions)
         .nameId("BASIC")
         .title(s32)
@@ -233,7 +232,7 @@ public class ExampleDataService {
         .build());
   }
 
-  private void createRegularSurvey() {
+  private Survey createRegularSurvey(final Survey dependsOn) {
 
     int order = 0;
     final List<Question> questions = new ArrayList<>(12);
@@ -449,7 +448,8 @@ public class ExampleDataService {
         "Has the COVID-19 crisis changed the way that you use social media?",
         order++, true, 256));
 
-    this.surveyRepository.save(Survey.builder()
+    return this.surveyRepository.save(Survey.builder()
+        .dependsOn(dependsOn)
         .questions(questions)
         .nameId("REGULAR")
         .title("Regular survey")

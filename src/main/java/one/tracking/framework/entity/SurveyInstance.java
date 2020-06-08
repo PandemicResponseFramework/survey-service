@@ -11,6 +11,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -30,11 +32,16 @@ import one.tracking.framework.entity.meta.Survey;
 @Entity
 @Table(
     uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"survey_id", "token"})
+        @UniqueConstraint(columnNames = {"survey_id", "token"}),
+        @UniqueConstraint(columnNames = {"survey_id", "startTime", "endTime"})
     },
     indexes = {
         @Index(name = "IDX_TOKEN", columnList = "token"),
     })
+@NamedQueries({
+    @NamedQuery(name = "SurveyInstance.findBySurveyIdAndStartTimeAndEndTime",
+        query = "SELECT i FROM SurveyInstance i WHERE i.survey.id = ?1 AND i.startTime = ?2 AND i.endTime = ?3")
+})
 public class SurveyInstance {
 
   @Id
