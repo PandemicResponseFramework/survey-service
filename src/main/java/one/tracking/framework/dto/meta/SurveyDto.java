@@ -31,7 +31,7 @@ public class SurveyDto {
   @NotNull
   private Long id;
 
-  private Long dependsOn;
+  private String dependsOn;
 
   @NotEmpty
   private List<@Valid QuestionDto> questions;
