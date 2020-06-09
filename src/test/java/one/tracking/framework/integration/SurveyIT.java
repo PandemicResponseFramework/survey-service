@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,6 +40,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import one.tracking.framework.SurveyApplication;
+import one.tracking.framework.dto.SurveyResponseConflictDto;
+import one.tracking.framework.dto.SurveyResponseConflictType;
 import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.dto.SurveyStatusDto;
 import one.tracking.framework.dto.SurveyStatusType;
@@ -69,7 +72,7 @@ import one.tracking.framework.util.JWTHelper;
 // @SpringBootTest(classes = SurveyApplication.class, webEnvironment =
 // SpringBootTest.WebEnvironment.DEFINED_PORT)
 @SpringBootTest(classes = SurveyApplication.class)
-@DirtiesContext
+@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 public class SurveyIT {
 
   private static final Logger LOG = LoggerFactory.getLogger(SurveyIT.class);
@@ -107,7 +110,7 @@ public class SurveyIT {
   }
 
   @Test
-  public void test() throws Exception {
+  public void testSurveyExecution() throws Exception {
 
     this.helper.createSurvey("TEST");
 
@@ -1411,6 +1414,181 @@ public class SurveyIT {
         .andExpect(status().isOk());
 
     testOverview(SurveyStatusType.COMPLETED, null);
+  }
+
+  @Test
+  public void testSurveyDependency() throws Exception {
+
+    this.helper.createSimpleSurvey("NEXT", true, this.helper.createSimpleSurvey("PREVIOUS", false));
+
+    /*
+     * Test overview
+     */
+
+    MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT_OVERVIEW)
+        .with(csrf())
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    final List<SurveyStatusDto> statusList = this.mapper.readValue(result.getResponse().getContentAsByteArray(),
+        this.mapper.getTypeFactory().constructCollectionType(List.class, SurveyStatusDto.class));
+
+    // Currently ordered by nameId ASC
+    assertThat(statusList.size(), is(2));
+
+    SurveyStatusDto status = statusList.get(0);
+
+    assertThat(status, is(not(nullValue())));
+    assertThat(status.getNameId(), is("NEXT"));
+    assertThat(status.getTitle(), is("TITLE"));
+    assertThat(status.getDescription(), is("DESCRIPTION"));
+    assertThat(status.getCountQuestions(), is(1));
+    assertThat(status.getNextQuestionId(), is(nullValue()));
+    assertThat(status.getStatus(), is(SurveyStatusType.INCOMPLETE));
+    assertThat(status.getDependsOn(), is("PREVIOUS"));
+    assertThat(status.getToken(), is(not(nullValue())));
+
+    final String surveyTokenNext = status.getToken();
+
+    status = statusList.get(1);
+
+    assertThat(status, is(not(nullValue())));
+    assertThat(status.getNameId(), is("PREVIOUS"));
+    assertThat(status.getTitle(), is("TITLE"));
+    assertThat(status.getDescription(), is("DESCRIPTION"));
+    assertThat(status.getCountQuestions(), is(1));
+    assertThat(status.getNextQuestionId(), is(nullValue()));
+    assertThat(status.getStatus(), is(SurveyStatusType.INCOMPLETE));
+    assertThat(status.getDependsOn(), is(nullValue()));
+    assertThat(status.getToken(), is(not(nullValue())));
+
+    final String surveyTokenPrevious = status.getToken();
+
+    /*
+     * Test survey meta data
+     */
+
+    result = this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT_SURVEY + "/PREVIOUS")
+        .with(csrf())
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    final SurveyDto surveyPrevious =
+        this.mapper.readValue(result.getResponse().getContentAsByteArray(), SurveyDto.class);
+
+    assertThat(surveyPrevious.getNameId(), is("PREVIOUS"));
+    assertThat(surveyPrevious.getVersion(), is(0));
+    assertThat(surveyPrevious.getTitle(), is("TITLE"));
+    assertThat(surveyPrevious.getDescription(), is("DESCRIPTION"));
+    assertThat(surveyPrevious.getQuestions().size(), is(1));
+    assertThat(surveyPrevious.getDependsOn(), is(nullValue()));
+
+    result = this.mockMvc.perform(MockMvcRequestBuilders.get(ENDPOINT_SURVEY + "/NEXT")
+        .with(csrf())
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    final SurveyDto surveyNext = this.mapper.readValue(result.getResponse().getContentAsByteArray(), SurveyDto.class);
+
+    assertThat(surveyNext.getNameId(), is("NEXT"));
+    assertThat(surveyNext.getVersion(), is(0));
+    assertThat(surveyNext.getTitle(), is("TITLE"));
+    assertThat(surveyNext.getDescription(), is("DESCRIPTION"));
+    assertThat(surveyNext.getQuestions().size(), is(1));
+    assertThat(surveyNext.getDependsOn(), is("PREVIOUS"));
+
+    final QuestionDto questionPrevious = surveyPrevious.getQuestions().get(0);
+    final QuestionDto questionNext = surveyNext.getQuestions().get(0);
+
+    /*
+     * TEST send response to NEXT survey
+     */
+    result = this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY + "/NEXT/answer")
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(questionNext.getId())
+            .boolAnswer(true)
+            .surveyToken(surveyTokenNext)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isConflict())
+        .andReturn();
+
+    SurveyResponseConflictDto conflict =
+        this.mapper.readValue(result.getResponse().getContentAsByteArray(), SurveyResponseConflictDto.class);
+
+    assertThat(conflict, is(not(nullValue())));
+    assertThat(conflict.getConflictType(), is(not(nullValue())));
+    assertThat(conflict.getConflictType(), is(SurveyResponseConflictType.UNSATISFIED_DEPENDENCY));
+
+    /*
+     * TEST invalid survey token
+     */
+    result = this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY + "/PREVIOUS/answer")
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(questionPrevious.getId())
+            .boolAnswer(true)
+            .surveyToken("INVALID")
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isConflict())
+        .andReturn();
+
+    conflict = this.mapper.readValue(result.getResponse().getContentAsByteArray(), SurveyResponseConflictDto.class);
+
+    assertThat(conflict, is(not(nullValue())));
+    assertThat(conflict.getConflictType(), is(not(nullValue())));
+    assertThat(conflict.getConflictType(), is(SurveyResponseConflictType.INVALID_SURVEY_TOKEN));
+
+    /*
+     * TEST invalid question id
+     */
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY + "/PREVIOUS/answer")
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(questionNext.getId())
+            .boolAnswer(true)
+            .surveyToken(surveyTokenPrevious)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    /*
+     * Complete previous survey and TEST response to NEXT survey again
+     */
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY + "/PREVIOUS/answer")
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(questionPrevious.getId())
+            .boolAnswer(true)
+            .surveyToken(surveyTokenPrevious)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    this.mockMvc.perform(MockMvcRequestBuilders.post(ENDPOINT_SURVEY + "/NEXT/answer")
+        .with(csrf())
+        .content(this.mapper.writeValueAsBytes(SurveyResponseDto.builder()
+            .questionId(questionNext.getId())
+            .boolAnswer(true)
+            .surveyToken(surveyTokenNext)
+            .build()))
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.token)
+        .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
   }
 
   /**

@@ -35,7 +35,6 @@ import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.DeviceTokenRepository;
 import one.tracking.framework.repo.QuestionRepository;
-import one.tracking.framework.repo.ReminderRepository;
 import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
@@ -71,9 +70,6 @@ public class HelperBean {
 
   @Autowired
   private DeviceTokenRepository deviceTokenRepository;
-
-  @Autowired
-  private ReminderRepository reminderRepository;
 
   @Autowired
   private ServiceUtility utility;

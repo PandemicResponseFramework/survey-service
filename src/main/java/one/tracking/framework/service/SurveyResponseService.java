@@ -15,9 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import one.tracking.framework.component.SurveyResponseComponent;
+import one.tracking.framework.domain.Period;
 import one.tracking.framework.domain.SurveyStatusChange;
+import one.tracking.framework.dto.SurveyResponseConflictType;
 import one.tracking.framework.dto.SurveyResponseDto;
+import one.tracking.framework.dto.SurveyStatusType;
 import one.tracking.framework.entity.SurveyInstance;
+import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.SurveyStatus;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.meta.Answer;
@@ -26,15 +30,16 @@ import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.Container;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
+import one.tracking.framework.entity.meta.question.IContainerQuestion;
 import one.tracking.framework.entity.meta.question.NumberQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
-import one.tracking.framework.exception.ConflictException;
+import one.tracking.framework.exception.SurveyResponseConflictException;
 import one.tracking.framework.repo.ContainerRepository;
-import one.tracking.framework.repo.QuestionRepository;
 import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
+import one.tracking.framework.repo.SurveyResponseRepository;
 import one.tracking.framework.repo.SurveyStatusRepository;
 import one.tracking.framework.repo.UserRepository;
 
@@ -57,9 +62,6 @@ public class SurveyResponseService {
   private SurveyInstanceRepository surveyInstanceRepository;
 
   @Autowired
-  private QuestionRepository questionRepository;
-
-  @Autowired
   private SurveyStatusRepository surveyStatusRepository;
 
   @Autowired
@@ -68,21 +70,39 @@ public class SurveyResponseService {
   @Autowired
   private SurveyResponseComponent surveyResponseComponent;
 
+  @Autowired
+  private SurveyResponseRepository surveyResponseRepository;
+
+  @Autowired
+  private ServiceUtility utility;
+
   @Transactional
-  public void handleSurveyResponse(final String userId, final String nameId, final SurveyResponseDto surveyResponse) {
+  public void handleSurveyResponse(final String userId, final String nameId, final SurveyResponseDto surveyResponse)
+      throws SurveyResponseConflictException {
 
     final User user = this.userRepository.findById(userId).get();
 
     final Survey survey = this.surveyRepository
         .findTopByNameIdAndReleaseStatusOrderByVersionDesc(nameId, ReleaseStatusType.RELEASED).get();
 
-    final SurveyInstance instance = this.surveyInstanceRepository.findBySurveyAndToken(
-        survey, surveyResponse.getSurveyToken()).get();
+    final Optional<SurveyInstance> instanceOp = this.surveyInstanceRepository.findBySurveyAndToken(
+        survey, surveyResponse.getSurveyToken());
+
+    if (instanceOp.isEmpty())
+      throw new SurveyResponseConflictException(SurveyResponseConflictType.INVALID_SURVEY_TOKEN);
+
+    final SurveyInstance instance = instanceOp.get();
 
     if (Instant.now().isAfter(instance.getEndTime()))
-      throw new ConflictException("The survey token got expired.");
+      throw new SurveyResponseConflictException(SurveyResponseConflictType.INVALID_SURVEY_TOKEN);
 
-    final Question question = this.questionRepository.findById(surveyResponse.getQuestionId()).get();
+    if (!checkIfDependencyIsSatisfied(user, survey))
+      throw new SurveyResponseConflictException(SurveyResponseConflictType.UNSATISFIED_DEPENDENCY);
+
+    final Question question = getQuestion(survey.getQuestions(), surveyResponse.getQuestionId());
+
+    if (question == null)
+      throw new IllegalArgumentException("Provided questionId is not part of the current survey.");
 
     if (!validateResponse(question, surveyResponse))
       throw new IllegalArgumentException("Invalid survey response.");
@@ -112,6 +132,55 @@ public class SurveyResponseService {
       status.setNextQuestion(nextQuestion);
       this.surveyStatusRepository.save(status);
     }
+  }
+
+  private Question getQuestion(final List<Question> questions, final Long questionId) {
+
+    if (questions == null || questions.isEmpty() || questionId == null)
+      return null;
+
+    for (final Question question : questions) {
+
+      if (questionId.equals(question.getId()))
+        return question;
+
+      if (!(question instanceof IContainerQuestion))
+        continue;
+
+      final Container container = ((IContainerQuestion) question).getContainer();
+
+      if (container == null)
+        continue;
+
+      final List<Question> subQuestions = container.getQuestions();
+      if (subQuestions == null)
+        continue;
+
+      final Question result = getQuestion(subQuestions, questionId);
+      if (result != null)
+        return result;
+    }
+
+    return null;
+  }
+
+  private boolean checkIfDependencyIsSatisfied(final User user, final Survey survey) {
+
+    if (survey.getDependsOn() == null)
+      return true;
+
+    final Period period = this.utility.getCurrentSurveyInstancePeriod(survey.getDependsOn());
+
+    final Optional<SurveyInstance> dependsOnInstanceOp = this.surveyInstanceRepository
+        .findBySurveyAndStartTimeAndEndTime(survey.getDependsOn(), period.getStart(), period.getEnd());
+
+    if (dependsOnInstanceOp.isEmpty())
+      return false;
+
+    final List<SurveyResponse> surveyResponses =
+        this.surveyResponseRepository.findByUserAndSurveyInstanceAndMaxVersion(user, dependsOnInstanceOp.get());
+
+    return this.utility.calculateSurveyStatus(survey.getDependsOn(), surveyResponses) == SurveyStatusType.COMPLETED;
   }
 
   private Question seekNextQuestion(final Question question) {

@@ -16,6 +16,7 @@ import one.tracking.framework.dto.DtoMapper;
 import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.dto.SurveyStatusDto;
 import one.tracking.framework.dto.meta.SurveyDto;
+import one.tracking.framework.exception.SurveyResponseConflictException;
 import one.tracking.framework.service.SurveyResponseService;
 import one.tracking.framework.service.SurveyService;
 import springfox.documentation.annotations.ApiIgnore;
@@ -68,7 +69,7 @@ public class SurveyController {
       @Valid
       final SurveyResponseDto surveyResponse,
       @ApiIgnore
-      final Authentication authentication) {
+      final Authentication authentication) throws SurveyResponseConflictException {
 
     this.surveyResponseService.handleSurveyResponse(authentication.getName(), nameId, surveyResponse);
   }

@@ -11,6 +11,7 @@ import com.fasterxml.classmate.TypeResolver;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import one.tracking.framework.dto.SurveyResponseConflictDto;
 import one.tracking.framework.dto.meta.AnswerDto;
 import one.tracking.framework.dto.meta.container.ContainerDto;
 import one.tracking.framework.web.SurveyController;
@@ -48,7 +49,8 @@ public class SpringFoxConfig {
         .build()
         .additionalModels(
             typeResolver.resolve(ContainerDto.class),
-            typeResolver.resolve(AnswerDto.class))
+            typeResolver.resolve(AnswerDto.class),
+            typeResolver.resolve(SurveyResponseConflictDto.class))
         .apiInfo(new ApiInfoBuilder()
             .title(this.name)
             .version(this.version)
