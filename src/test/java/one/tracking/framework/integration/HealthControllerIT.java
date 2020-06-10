@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -47,13 +46,12 @@ import one.tracking.framework.util.JWTHelper;
 // SpringBootTest.WebEnvironment.DEFINED_PORT)
 @SpringBootTest(classes = SurveyApplication.class)
 @DirtiesContext
-@ActiveProfiles("dev")
 public class HealthControllerIT {
 
   // private static final Logger LOG = LoggerFactory.getLogger(HealthControllerIT.class);
 
-  private static final String ENDPOINT_AUTH = "/health";
-  private static final String ENDPOINT_STEPCOUNT = ENDPOINT_AUTH + "/stepcount";
+  private static final String ENDPOINT_HEALTH = "/health";
+  private static final String ENDPOINT_STEPCOUNT = ENDPOINT_HEALTH + "/stepcount";
 
   @Autowired
   private MockMvc mockMvc;
