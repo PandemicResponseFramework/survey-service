@@ -55,8 +55,6 @@ import one.tracking.framework.dto.meta.question.NumberQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
 import one.tracking.framework.dto.meta.question.RangeQuestionDto;
 import one.tracking.framework.dto.meta.question.TextQuestionDto;
-import one.tracking.framework.entity.User;
-import one.tracking.framework.repo.UserRepository;
 import one.tracking.framework.util.JWTHelper;
 
 /**
@@ -91,28 +89,22 @@ public class SurveyIT {
   private JWTHelper jwtHelper;
 
   @Autowired
-  private UserRepository userRepository;
-
-  @Autowired
   private ObjectMapper mapper;
 
   @Autowired
-  private HelperBean helper;
-
-  private User user;
+  private HelperBean helperBean;
 
   private String token;
 
   @Before
   public void beforeEach() {
-    this.user = this.userRepository.save(User.builder().userToken("test").build());
-    this.token = this.jwtHelper.createJWT(this.user.getId(), 24 * 60 * 60);
+    this.token = this.jwtHelper.createJWT(this.helperBean.createUser("test").getId(), 24 * 60 * 60);
   }
 
   @Test
   public void testSurveyExecution() throws Exception {
 
-    this.helper.createSurvey("TEST");
+    this.helperBean.createSurvey("TEST");
 
     /*
      * Test overview
@@ -1419,7 +1411,7 @@ public class SurveyIT {
   @Test
   public void testSurveyDependency() throws Exception {
 
-    this.helper.createSimpleSurvey("NEXT", true, this.helper.createSimpleSurvey("PREVIOUS", false));
+    this.helperBean.createSimpleSurvey("NEXT", true, this.helperBean.createSimpleSurvey("PREVIOUS", false));
 
     /*
      * Test overview
