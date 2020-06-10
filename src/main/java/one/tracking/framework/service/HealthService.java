@@ -33,6 +33,9 @@ public class HealthService {
     final Instant start = Instant.ofEpochMilli(stepCountDto.getStartTime());
     final Instant end = Instant.ofEpochMilli(stepCountDto.getEndTime());
 
+    if (start.isAfter(end))
+      throw new IllegalArgumentException("StartTime must be before EndTime.");
+
     final Optional<StepCount> entityOp = this.stepCountRepository.findByUserAndStartTimeAndEndTime(user, start, end);
 
     if (entityOp.isEmpty()) {
