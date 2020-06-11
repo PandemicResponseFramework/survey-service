@@ -12,7 +12,7 @@
 	<artifactId>survey-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Survey Service</name>
-	<description>Survey management and evaluation service</description>
+	<description>Survey service for client interaction</description>
 
 	<properties>
 		<java.version>11</java.version>
@@ -91,11 +91,10 @@
 			<version>6.13.0</version>
 		</dependency>
 
-		<!-- TODO Dev only! -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
