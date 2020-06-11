@@ -23,7 +23,6 @@ import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
-import one.tracking.framework.entity.meta.question.IContainerQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.repo.AnswerRepository;
 import one.tracking.framework.repo.ContainerRepository;
@@ -109,17 +108,10 @@ public class SurveyResponseComponent {
       final SurveyInstance instance,
       final Question question) {
 
-    if (!(question instanceof IContainerQuestion))
+    if (question.getSubQuestions() == null || question.getSubQuestions().isEmpty())
       return;
 
-    final IContainerQuestion cQuestion = (IContainerQuestion) question;
-
-    if (cQuestion.getContainer() == null
-        || cQuestion.getContainer().getQuestions() == null
-        || cQuestion.getContainer().getQuestions().isEmpty())
-      return;
-
-    for (final Question subQuestion : cQuestion.getContainer().getQuestions()) {
+    for (final Question subQuestion : question.getSubQuestions()) {
 
       invalidateSubQuestionTree(user, instance, subQuestion);
 

@@ -30,7 +30,6 @@ import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.entity.meta.container.Container;
 import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
-import one.tracking.framework.entity.meta.question.IContainerQuestion;
 import one.tracking.framework.entity.meta.question.NumberQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
@@ -144,16 +143,8 @@ public class SurveyResponseService {
       if (questionId.equals(question.getId()))
         return question;
 
-      if (!(question instanceof IContainerQuestion))
-        continue;
-
-      final Container container = ((IContainerQuestion) question).getContainer();
-
-      if (container == null)
-        continue;
-
-      final List<Question> subQuestions = container.getQuestions();
-      if (subQuestions == null)
+      final List<Question> subQuestions = question.getSubQuestions();
+      if (subQuestions == null || subQuestions.isEmpty())
         continue;
 
       final Question result = getQuestion(subQuestions, questionId);

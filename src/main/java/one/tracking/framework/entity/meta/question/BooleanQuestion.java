@@ -3,11 +3,12 @@
  */
 package one.tracking.framework.entity.meta.question;
 
+import java.util.Collections;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.OneToOne;
-import javax.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,7 +29,7 @@ import one.tracking.framework.entity.meta.container.BooleanContainer;
 @ToString(callSuper = true)
 @Entity
 @DiscriminatorValue("BOOL")
-public class BooleanQuestion extends Question implements IContainerQuestion {
+public class BooleanQuestion extends Question {
 
   @Column(nullable = true)
   private Boolean defaultAnswer;
@@ -42,8 +43,7 @@ public class BooleanQuestion extends Question implements IContainerQuestion {
   }
 
   @Override
-  @PrePersist
-  void onPrePersist() {
-    super.onPrePersist();
+  public List<Question> getSubQuestions() {
+    return this.container == null ? Collections.emptyList() : this.container.getQuestions();
   }
 }

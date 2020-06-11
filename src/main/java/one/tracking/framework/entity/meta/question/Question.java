@@ -4,6 +4,8 @@
 package one.tracking.framework.entity.meta.question;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
@@ -23,6 +25,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import one.tracking.framework.entity.meta.container.Container;
 
 /**
  * @author Marko Voß
@@ -62,8 +65,34 @@ public class Question {
   @Column(nullable = false)
   private boolean optional;
 
+  /**
+   * Convenience method to check if this {@link Question} owns a {@link Container}.
+   *
+   * @return <code>true</code> if and only if this {@link Question} owns a {@link Container},
+   *         <code>false</code> otherwise
+   */
   public boolean hasContainer() {
     return false;
+  }
+
+  /**
+   * Convenience method to get the {@link Container} of this {@link Question}.
+   *
+   * @return the {@link Container} owned by this {@link Question}
+   */
+  public Container getContainer() {
+    return null;
+  }
+
+  /**
+   * Convenience method to get the {@link List} of {@link Question}s of the {@link Container} owned by
+   * this {@link Question}.
+   *
+   * @return the {@link List} of {@link Question}s of the {@link Container} owned by this
+   *         {@link Question}
+   */
+  public List<Question> getSubQuestions() {
+    return Collections.emptyList();
   }
 
   @PostLoad

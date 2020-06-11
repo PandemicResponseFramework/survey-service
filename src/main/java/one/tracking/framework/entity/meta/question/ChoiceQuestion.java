@@ -3,6 +3,7 @@
  */
 package one.tracking.framework.entity.meta.question;
 
+import java.util.Collections;
 import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -32,7 +33,7 @@ import one.tracking.framework.entity.meta.container.ChoiceContainer;
 @ToString(callSuper = true)
 @Entity
 @DiscriminatorValue("CHOICE")
-public class ChoiceQuestion extends Question implements IContainerQuestion {
+public class ChoiceQuestion extends Question {
 
   @OneToMany(fetch = FetchType.LAZY)
   private List<Answer> answers;
@@ -49,6 +50,11 @@ public class ChoiceQuestion extends Question implements IContainerQuestion {
   @Override
   public boolean hasContainer() {
     return this.container != null;
+  }
+
+  @Override
+  public List<Question> getSubQuestions() {
+    return this.container == null ? Collections.emptyList() : this.container.getQuestions();
   }
 
   @Override
