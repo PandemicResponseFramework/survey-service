@@ -14,7 +14,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
@@ -50,7 +49,6 @@ public class Container {
 
   @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true)
   @OrderBy("ranking ASC")
-  @JoinColumn(name = "question_id")
   private List<Question> questions;
 
   @ManyToOne(fetch = FetchType.LAZY)
