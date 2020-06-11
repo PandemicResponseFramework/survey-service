@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import one.tracking.framework.dto.meta.AnswerDto;
 import one.tracking.framework.dto.meta.container.ChoiceContainerDto;
+import one.tracking.framework.entity.meta.question.QuestionType;
 
 /**
  * @author Marko Voß
@@ -38,5 +39,10 @@ public class ChoiceQuestionDto extends QuestionDto {
   @Override
   public List<QuestionDto> getSubQuestions() {
     return this.container == null ? null : this.container.getSubQuestions();
+  }
+
+  @Override
+  public QuestionType getType() {
+    return QuestionType.CHOICE;
   }
 }

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import one.tracking.framework.entity.meta.question.QuestionType;
 
 /**
  * @author Marko Voß
@@ -21,4 +22,9 @@ import lombok.experimental.SuperBuilder;
 public class ChecklistEntryDto extends QuestionDto {
 
   private Boolean defaultAnswer;
+
+  @Override
+  public QuestionType getType() {
+    return QuestionType.CHECKLIST_ENTRY;
+  }
 }

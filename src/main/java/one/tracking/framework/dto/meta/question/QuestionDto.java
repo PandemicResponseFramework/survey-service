@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import one.tracking.framework.entity.meta.question.QuestionType;
 
 /**
  * @author Marko Voß
@@ -76,4 +77,7 @@ public abstract class QuestionDto {
   public List<QuestionDto> getSubQuestions() {
     return null;
   }
+
+  @JsonIgnore
+  public abstract QuestionType getType();
 }

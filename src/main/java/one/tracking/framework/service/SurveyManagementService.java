@@ -110,7 +110,7 @@ public class SurveyManagementService {
 
     final int currentRanking = question.getRanking();
 
-    final QuestionType dataType = QuestionType.valueOf(data.getClass());
+    final QuestionType dataType = data.getType();
 
     if (!question.getType().equals(dataType))
       throw new IllegalArgumentException("The question type does not match the expected question type. Expected: "

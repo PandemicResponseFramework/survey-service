@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import one.tracking.framework.entity.DataConstants;
+import one.tracking.framework.entity.meta.question.QuestionType;
 
 /**
  * @author Marko Voß
@@ -27,4 +28,8 @@ public class TextQuestionDto extends QuestionDto {
   @Max(value = DataConstants.TEXT_ANSWER_MAX_LENGTH)
   private int length;
 
+  @Override
+  public QuestionType getType() {
+    return QuestionType.TEXT;
+  }
 }
