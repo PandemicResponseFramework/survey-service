@@ -1,7 +1,7 @@
 /**
  *
  */
-package one.tracking.framework.dto;
+package one.tracking.framework.domain;
 
 /**
  * @author Marko Voß

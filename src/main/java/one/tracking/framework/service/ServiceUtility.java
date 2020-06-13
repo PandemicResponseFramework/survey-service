@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import one.tracking.framework.domain.Period;
-import one.tracking.framework.dto.SurveyStatusType;
+import one.tracking.framework.domain.SurveyStatusType;
 import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.meta.Answer;
 import one.tracking.framework.entity.meta.Survey;
