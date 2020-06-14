@@ -18,9 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
+import one.tracking.framework.filter.BearerAuthenticationFilter;
 import one.tracking.framework.repo.UserRepository;
-import one.tracking.framework.security.BearerAuthenticationFilter;
-import one.tracking.framework.util.JWTHelper;
+import one.tracking.framework.support.JWTHelper;
 
 /**
  * @author Marko Voß

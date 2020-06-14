@@ -41,7 +41,7 @@ import one.tracking.framework.repo.QuestionRepository;
 import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.UserRepository;
 import one.tracking.framework.repo.VerificationRepository;
-import one.tracking.framework.util.JWTHelper;
+import one.tracking.framework.support.JWTHelper;
 
 /**
  * FIXME DEV only

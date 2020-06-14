@@ -32,7 +32,8 @@ import one.tracking.framework.entity.Verification;
 import one.tracking.framework.repo.DeviceTokenRepository;
 import one.tracking.framework.repo.UserRepository;
 import one.tracking.framework.repo.VerificationRepository;
-import one.tracking.framework.util.JWTHelper;
+import one.tracking.framework.support.JWTHelper;
+import one.tracking.framework.support.ServiceUtility;
 
 /**
  * @author Marko Voß

@@ -39,7 +39,7 @@ import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
 import one.tracking.framework.repo.UserRepository;
-import one.tracking.framework.service.ServiceUtility;
+import one.tracking.framework.support.ServiceUtility;
 
 /**
  * @author Marko Voß

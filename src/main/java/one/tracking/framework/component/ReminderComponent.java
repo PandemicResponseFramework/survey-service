@@ -30,8 +30,8 @@ import one.tracking.framework.domain.Period;
 import one.tracking.framework.domain.PushNotificationRequest;
 import one.tracking.framework.domain.ReminderBatchResult;
 import one.tracking.framework.domain.ReminderTaskResult;
-import one.tracking.framework.domain.SurveyStatusType;
 import one.tracking.framework.domain.ReminderTaskResult.StateType;
+import one.tracking.framework.domain.SurveyStatusType;
 import one.tracking.framework.entity.DeviceToken;
 import one.tracking.framework.entity.Reminder;
 import one.tracking.framework.entity.SchedulerLock;
@@ -42,7 +42,7 @@ import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.ReminderType;
 import one.tracking.framework.entity.meta.Survey;
 import one.tracking.framework.service.FirebaseService;
-import one.tracking.framework.service.ServiceUtility;
+import one.tracking.framework.support.ServiceUtility;
 
 /**
  * @author Marko Voß

@@ -47,8 +47,8 @@ import one.tracking.framework.repo.DeviceTokenRepository;
 import one.tracking.framework.repo.UserRepository;
 import one.tracking.framework.repo.VerificationRepository;
 import one.tracking.framework.service.SendGridService;
-import one.tracking.framework.service.ServiceUtility;
-import one.tracking.framework.util.JWTHelper;
+import one.tracking.framework.support.JWTHelper;
+import one.tracking.framework.support.ServiceUtility;
 
 /**
  * @author Marko Voß

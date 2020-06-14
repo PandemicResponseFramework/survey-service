@@ -55,7 +55,7 @@ import one.tracking.framework.dto.meta.question.NumberQuestionDto;
 import one.tracking.framework.dto.meta.question.QuestionDto;
 import one.tracking.framework.dto.meta.question.RangeQuestionDto;
 import one.tracking.framework.dto.meta.question.TextQuestionDto;
-import one.tracking.framework.util.JWTHelper;
+import one.tracking.framework.support.JWTHelper;
 
 /**
  * TODO: Evaluation of persistence layer

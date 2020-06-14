@@ -41,6 +41,7 @@ import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
 import one.tracking.framework.repo.SurveyStatusRepository;
 import one.tracking.framework.repo.UserRepository;
+import one.tracking.framework.support.ServiceUtility;
 
 /**
  * @author Marko Voß
@@ -239,7 +240,6 @@ public class SurveyResponseService {
 
   private final boolean validateRangeResponse(final Question question, final SurveyResponseDto response) {
 
-    // TODO: introduce step
     final RangeQuestion rangeQuestion = (RangeQuestion) question;
     return response.getNumberAnswer() != null
         && response.getNumberAnswer() >= rangeQuestion.getMinValue()

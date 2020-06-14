@@ -4,7 +4,6 @@
 package one.tracking.framework.service;
 
 import static one.tracking.framework.entity.DataConstants.TOKEN_SURVEY_LENGTH;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +25,7 @@ import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
 import one.tracking.framework.repo.SurveyStatusRepository;
 import one.tracking.framework.repo.UserRepository;
+import one.tracking.framework.support.ServiceUtility;
 
 /**
  * @author Marko Voß
@@ -33,12 +33,6 @@ import one.tracking.framework.repo.UserRepository;
  */
 @Service
 public class SurveyService {
-
-  // private static final Logger LOG = LoggerFactory.getLogger(SurveyService.class);
-
-  public static final Instant INSTANT_MIN = Instant.ofEpochMilli(0);
-  // FIXME: Long.MAX_VALUE causes overflow on DB -> beware Christmas in 9999!
-  public static final Instant INSTANT_MAX = Instant.parse("9999-12-24T00:00:00Z");
 
   @Autowired
   private ServiceUtility utility;
@@ -77,11 +71,6 @@ public class SurveyService {
     return getStatus(surveyOp.get(), user);
   }
 
-  /**
-   * TODO: Currently the interval logic is very limited and needs to be implemented as a generic
-   * approach later.
-   *
-   */
   public Collection<SurveyStatusDto> getSurveyOverview(final String userId) {
 
     final User user = this.userRepository.findById(userId).get();
@@ -135,8 +124,12 @@ public class SurveyService {
         .countQuestions(survey.getQuestions().size())
         .nextQuestionId(nextQuestionId)
         .token(instance.getToken())
-        .startTime(INSTANT_MIN.equals(instance.getStartTime()) ? null : instance.getStartTime().toEpochMilli())
-        .endTime(INSTANT_MAX.equals(instance.getEndTime()) ? null : instance.getEndTime().toEpochMilli())
+        .startTime(Period.INFINITE.getStart().equals(instance.getStartTime())
+            ? null
+            : instance.getStartTime().toEpochMilli())
+        .endTime(Period.INFINITE.getEnd().equals(instance.getEndTime())
+            ? null
+            : instance.getEndTime().toEpochMilli())
         .build();
   }
 

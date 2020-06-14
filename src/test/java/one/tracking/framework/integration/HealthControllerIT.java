@@ -32,7 +32,7 @@ import one.tracking.framework.dto.StepCountDto;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.health.StepCount;
 import one.tracking.framework.repo.StepCountRepository;
-import one.tracking.framework.util.JWTHelper;
+import one.tracking.framework.support.JWTHelper;
 
 /**
  * @author Marko Voß

@@ -70,6 +70,18 @@
 		</dependency>
 
 		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+			<version>2.9.2</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-ui</artifactId>
 			<version>1.3.9</version>
@@ -117,8 +129,8 @@
 
 		<dependency>
 			<groupId>one.tracking.framework</groupId>
-			<artifactId>commons-boot</artifactId>
-			<version>0.0.3-SNAPSHOT</version>
+			<artifactId>survey-commons</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -168,7 +180,7 @@
 		<repository>
 			<id>com.github.OneTrackingFramework.commons-boot</id>
 			<name>GitHub OneTrackingFramework Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/OneTrackingFramework/commons-boot</url>
+			<url>https://maven.pkg.github.com/OneTrackingFramework/survey-commons</url>
 		</repository>
 	</repositories>
 
