@@ -44,8 +44,6 @@ You can place a file named `application.properties` right next to this JAR file.
 
 ## Configuration
 
-:warning: OUTDATED
-
 Next to the common [server properties](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#server-properties) and [logging properties](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#core-properties), which can be placed on the customized configuration, the application uses the following configuration properties.
 
 <table>
