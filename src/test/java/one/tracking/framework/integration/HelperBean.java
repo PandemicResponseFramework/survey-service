@@ -39,6 +39,7 @@ import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
 import one.tracking.framework.repo.UserRepository;
+import one.tracking.framework.support.JWTHelper;
 import one.tracking.framework.support.ServiceUtility;
 
 /**
@@ -74,8 +75,15 @@ public class HelperBean {
   @Autowired
   private ServiceUtility utility;
 
+  @Autowired
+  private JWTHelper jwtHelper;
+
   public User createUser(final String userToken) {
     return this.userRepository.save(User.builder().userToken(userToken).build());
+  }
+
+  public String createToken(final User user) {
+    return this.jwtHelper.createJWT(user.getId(), 10000);
   }
 
   public DeviceToken addDeviceToken(final User user, final String deviceToken) {
