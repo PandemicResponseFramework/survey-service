@@ -1,7 +1,7 @@
 ![Maven Package & Integration Tests](https://github.com/OneTrackingFramework/survey-service/workflows/Maven%20Package%20&%20Integration%20Tests/badge.svg)
 
 # Survey Service
-Survey management and evaluation service
+Survey service for client interaction
 
 ## Getting Started
 
@@ -11,7 +11,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 You need to have [Maven](https://maven.apache.org/) installed on your machine. You will also need to have a [SendGrid](https://sendgrid.com/) account setup with the desired [sender authentication](https://app.sendgrid.com/settings/sender_auth).
 
-This project depends on the [commons-boot](https://github.com/OneTrackingFramework/commons-boot) project. Therefore you need to [create an access token](https://help.github.com/en/packages/publishing-and-managing-packages/about-github-packages) in order to be able to access the package. You will also need to setup maven to use this access token by creating or modifying your `settings.xml`, which is usually located at `<USER_HOME>/.m2`. Add the following server-element to the `settings.xml`.
+This project depends on the [survey-commons](https://github.com/OneTrackingFramework/survey-commons) project. Therefore you need to [create an access token](https://help.github.com/en/packages/publishing-and-managing-packages/about-github-packages) in order to be able to access the package. You will also need to setup maven to use this access token by creating or modifying your `settings.xml`, which is usually located at `<USER_HOME>/.m2`. Add the following server-element to the `settings.xml`.
 
 ```
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
@@ -44,8 +44,6 @@ You can place a file named `application.properties` right next to this JAR file.
 
 ## Configuration
 
-:warning: OUTDATED
-
 Next to the common [server properties](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#server-properties) and [logging properties](https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#core-properties), which can be placed on the customized configuration, the application uses the following configuration properties.
 
 <table>
@@ -58,43 +56,13 @@ Next to the common [server properties](https://docs.spring.io/spring-boot/docs/c
 </thead>
 <tbody>
   <tr>
-    <td>app.sendgrid.api.key</td>
-    <td>The SendGrid API key to use for sending e-mails to the participants.<br/>:warning: This property is subject to be removed and replaced by the built-in property spring.sendgrid.api-key</td>
-    <td>-</td>
-  </tr>
-  <tr>
-    <td>app.email.reply.to</td>
-    <td>The reply-to e-mail address to be used. If single sender authentication is setup in SendGrid, please make sure, to use this reply-to e-mail address here.</td>
-    <td>-</td>
-  </tr>
-  <tr>
-    <td>app.email.from</td>
-    <td>The e-mail address to use as the sender of the e-mails sent to the participants. If single sender authentication is setup in SendGrid, please make sure, to use this e-mail address here.</td>
-    <td>-</td>
-  </tr>
-  <tr>
-    <td>app.timeout.verification</td>
-    <td>The timeout in seconds, how long the verification token stays valid.</td>
-    <td>-</td>
-  </tr>
-  <tr>
-    <td>app.timeout.access</td>
-    <td>The timeout in seconds, how long the access token stays valid.</td>
-    <td>-</td>
-  </tr>
-  <tr>
-    <td>app.custom.uri.prefix</td>
-    <td>The custom URI scheme to be used for redirection to trigger the App on mobile devices.</td>
-    <td>-</td>
-  </tr>
-  <tr>
-    <td>app.public.url</td>
-    <td>The public URL this server is available on. This will be used in the e-mails send to the participants in order to provide a verification link, which points to the server instance.</td>
-    <td>-</td>
-  </tr>
-  <tr>
     <td>app.token.secret</td>
-    <td>The secret to use for JWT signature generation and validation. This is required in order to create the access tokens for the participants.</td>
+    <td>The secret to use for JWT signature validation. This secret must match the secret specified on the survey-mgmt-service.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>app.token.issuer</td>
+    <td>The issuer of the JWT token. The issuer must match the issuer specified on the survey-mgmt-service.</td>
     <td>-</td>
   </tr>
   <tr>
@@ -102,17 +70,46 @@ Next to the common [server properties](https://docs.spring.io/spring-boot/docs/c
     <td>Setup of the LOG level for the entire service.</td>
     <td>INFO | DEBUG | WARN | ERROR</td>
   </tr>
+  <tr>
+    <td>app.logging.request.enable</td>
+    <td>Enable/disable request logging.</td>
+    <td>true | false</td>
+  </tr>
+  <tr>
+    <td>app.logging.request.include.queryString</td>
+    <td>Include query request parameters in request logging.</td>
+    <td>true | false</td>
+  </tr>
+  <tr>
+    <td>app.logging.request.include.clientInfo</td>
+    <td>Include client information in request logging.</td>
+    <td>true | false</td>
+  </tr>
+  <tr>
+    <td>app.logging.request.include.headers</td>
+    <td>Include HTTP headers in request logging.</td>
+    <td>true | false</td>
+  </tr>
+  <tr>
+    <td>app.logging.request.include.payload</td>
+    <td>Include HTTP payload in request logging.</td>
+    <td>true | false</td>
+  </tr>
+  <tr>
+    <td>app.logging.request.include.payloadLength</td>
+    <td>How many characters to include in HTTP payload logging.</td>
+    <td>1000</td>
+  </tr>  
 </tbody>
 </table>
 
 ## Database
 
-This service is currently utilizing a H2 in-memory database. This will be adjusted in the future of course.
+This service is currently utilizing a H2 in-memory database or a MySql database. The MySQL database will be used by default. You can perform the switch by Maven profiles: mysql, h2
 
 ## API Documentation
 
 The API documentation will be available at runtime on the path `/swagger-ui.html#`.
-You can also view the current API documentation on [SwaggerHub](https://app.swaggerhub.com/apis/mk01/survey-service-api/1.0).
 
 ## Running the tests
 
