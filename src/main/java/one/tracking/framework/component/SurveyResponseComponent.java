@@ -58,6 +58,7 @@ public class SurveyResponseComponent {
       return SurveyStatusChange.skip();
 
     invalidateSubQuestionTree(user, instance, question);
+    invalidateSuccessiveQuestions(user, instance, question);
 
     switch (question.getType()) {
       case BOOL:
@@ -103,6 +104,44 @@ public class SurveyResponseComponent {
     return !surveyResponseOp.isEmpty() && !surveyResponseOp.get().isSkipped() && surveyResponseOp.get().isValid();
   }
 
+  private final void invalidateSuccessiveQuestions(
+      final User user,
+      final SurveyInstance instance,
+      final Question currentQuestion) {
+
+    /*
+     * Invalidate next siblings
+     */
+
+    final Optional<Container> containerOp =
+        this.containerRepository.findByQuestionsIn(Collections.singleton(currentQuestion));
+
+    if (containerOp.isEmpty()) {
+      LOG.warn("Current question is not part of a container! QuestionId: {}", currentQuestion.getId());
+      return; // should not occur
+    }
+
+    final Container container = containerOp.get();
+
+    boolean found = false;
+    for (final Question question : container.getQuestions()) {
+
+      if (found && invalidateSurveyResponse(user, instance, question))
+        invalidateSubQuestionTree(user, instance, question);
+
+      if (!found && question.getId().equals(currentQuestion.getId()))
+        found = true;
+    }
+
+    /*
+     * Invalidate next parent siblings
+     */
+    if (container.getParent() == null)
+      return;
+
+    invalidateSuccessiveQuestions(user, instance, container.getParent());
+  }
+
   private final void invalidateSubQuestionTree(
       final User user,
       final SurveyInstance instance,
@@ -113,18 +152,25 @@ public class SurveyResponseComponent {
 
     for (final Question subQuestion : question.getSubQuestions()) {
 
-      invalidateSubQuestionTree(user, instance, subQuestion);
-
-      final Optional<SurveyResponse> responseOp = this.surveyResponseRepository
-          .findTopByUserAndSurveyInstanceAndQuestionOrderByVersionDesc(user, instance, subQuestion);
-
-      if (responseOp.isPresent()) {
-
-        this.surveyResponseRepository.save(responseOp.get().toBuilder()
-            .valid(false)
-            .build());
-      }
+      if (invalidateSurveyResponse(user, instance, subQuestion))
+        invalidateSubQuestionTree(user, instance, subQuestion);
     }
+  }
+
+  private final boolean invalidateSurveyResponse(final User user, final SurveyInstance instance,
+      final Question question) {
+
+    final Optional<SurveyResponse> responseOp = this.surveyResponseRepository
+        .findTopByUserAndSurveyInstanceAndQuestionAndValidOrderByVersionDesc(user, instance, question, true);
+
+    if (responseOp.isPresent()) {
+
+      this.surveyResponseRepository.save(responseOp.get().toBuilder()
+          .valid(false)
+          .build());
+      return true;
+    }
+    return false;
   }
 
   private final void storeBooleanResponse(
