@@ -16,7 +16,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * TODO: Currently we do not support text answers.
  *
  * @author Marko Voß
  *

@@ -79,7 +79,7 @@ public class SurveyService {
     final Map<String, SurveyStatusDto> result = new TreeMap<>();
 
     for (final Survey survey : this.surveyRepository
-        .findAllByReleaseStatusOrderByNameIdAscVersionDesc(ReleaseStatusType.RELEASED)) {
+        .findByReleaseStatusOrderByNameIdAscVersionDesc(ReleaseStatusType.RELEASED)) {
 
       // Collect each survey only once by its top most released version
       if (result.get(survey.getNameId()) != null)
@@ -117,7 +117,7 @@ public class SurveyService {
 
     return SurveyStatusDto.builder()
         .nameId(survey.getNameId())
-        .dependsOn(survey.getDependsOn() == null ? null : survey.getDependsOn().getNameId())
+        .dependsOn(survey.getDependsOn() == null ? null : survey.getDependsOn())
         .status(status)
         .title(survey.getTitle())
         .description(survey.getDescription())

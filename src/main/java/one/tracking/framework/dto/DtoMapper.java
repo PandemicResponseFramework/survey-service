@@ -45,7 +45,7 @@ public abstract class DtoMapper {
 
     return SurveyDto.builder()
         .id(entity.getId())
-        .dependsOn(entity.getDependsOn() == null ? null : entity.getDependsOn().getNameId())
+        .dependsOn(entity.getDependsOn() == null ? null : entity.getDependsOn())
         .nameId(entity.getNameId())
         .title(entity.getTitle())
         .description(entity.getDescription())
@@ -181,7 +181,7 @@ public abstract class DtoMapper {
         .order(entity.getRanking())
         .optional(entity.isOptional())
         .question(entity.getQuestion())
-        .multiline(entity.isMultiline())
+        .multiline(entity.getMultiline())
         .length(entity.getLength())
         .build();
   }

@@ -4,7 +4,6 @@
 package one.tracking.framework.service;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import one.tracking.framework.component.SurveyResponseComponent;
 import one.tracking.framework.domain.Period;
+import one.tracking.framework.domain.SearchResult;
 import one.tracking.framework.domain.SurveyStatusChange;
 import one.tracking.framework.domain.SurveyStatusType;
 import one.tracking.framework.dto.SurveyResponseConflictType;
@@ -35,7 +35,6 @@ import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.entity.meta.question.RangeQuestion;
 import one.tracking.framework.entity.meta.question.TextQuestion;
 import one.tracking.framework.exception.SurveyResponseConflictException;
-import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.SurveyInstanceRepository;
 import one.tracking.framework.repo.SurveyRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
@@ -65,9 +64,6 @@ public class SurveyResponseService {
   private SurveyStatusRepository surveyStatusRepository;
 
   @Autowired
-  private ContainerRepository containerRepository;
-
-  @Autowired
   private SurveyResponseComponent surveyResponseComponent;
 
   @Autowired
@@ -75,6 +71,9 @@ public class SurveyResponseService {
 
   @Autowired
   private ServiceUtility utility;
+
+  @Autowired
+  private TemporaryHelperService helperService;
 
   @Transactional
   public void handleSurveyResponse(final String userId, final String nameId, final SurveyResponseDto surveyResponse)
@@ -161,18 +160,28 @@ public class SurveyResponseService {
     if (survey.getDependsOn() == null)
       return true;
 
-    final Period period = this.utility.getCurrentSurveyInstancePeriod(survey.getDependsOn());
+    // Get the top survey instance available for the referenced dependsOn survey
+    final Optional<SurveyInstance> topDependsOnInstanceOp =
+        this.surveyInstanceRepository.findTopBySurveyNameIdOrderByStartTimeDesc(survey.getDependsOn());
 
-    final Optional<SurveyInstance> dependsOnInstanceOp = this.surveyInstanceRepository
-        .findBySurveyAndStartTimeAndEndTime(survey.getDependsOn(), period.getStart(), period.getEnd());
+    if (topDependsOnInstanceOp.isEmpty())
+      return false;
 
-    if (dependsOnInstanceOp.isEmpty())
+    final SurveyInstance dependsOnInstance = topDependsOnInstanceOp.get();
+
+    // Calculate the current period of the survey instance
+    final Period period = this.utility.getCurrentSurveyInstancePeriod(dependsOnInstance.getSurvey());
+
+    // Check if the top survey instance matches the expected current period
+    if (!(dependsOnInstance.getStartTime().equals(period.getStart()) &&
+        dependsOnInstance.getEndTime().equals(period.getEnd())))
       return false;
 
     final List<SurveyResponse> surveyResponses =
-        this.surveyResponseRepository.findByUserAndSurveyInstanceAndMaxVersion(user, dependsOnInstanceOp.get());
+        this.surveyResponseRepository.findByUserAndSurveyInstanceAndMaxVersion(user, dependsOnInstance);
 
-    return this.utility.calculateSurveyStatus(survey.getDependsOn(), surveyResponses) == SurveyStatusType.COMPLETED;
+    return this.utility.calculateSurveyStatus(dependsOnInstance.getSurvey(),
+        surveyResponses) == SurveyStatusType.COMPLETED;
   }
 
   private Question seekNextQuestion(final Question question) {
@@ -182,13 +191,18 @@ public class SurveyResponseService {
 
     LOG.debug("Seeking next question. Current: {}", question.getQuestion());
 
-    final Optional<Container> containerOp =
-        this.containerRepository.findByQuestionsIn(Collections.singleton(question));
+    final List<SearchResult> results = this.helperService.searchSurveys(question);
 
-    if (containerOp.isEmpty())
+    final Optional<SearchResult> resultOp = results.stream()
+        .filter(result -> result.getSurvey().getReleaseStatus() == ReleaseStatusType.RELEASED)
+        .reduce((a, b) -> {
+          throw new IllegalStateException("Multiple elements: " + a + ", " + b);
+        });
+
+    if (resultOp.isEmpty())
       return null;
 
-    final Container container = containerOp.get();
+    final Container container = resultOp.get().getOriginContainer();
 
     Question result = null;
 

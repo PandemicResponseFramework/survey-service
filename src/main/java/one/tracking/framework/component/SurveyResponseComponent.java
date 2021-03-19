@@ -4,7 +4,6 @@
 package one.tracking.framework.component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -12,12 +11,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import one.tracking.framework.domain.SearchResult;
 import one.tracking.framework.domain.SurveyStatusChange;
 import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.entity.SurveyInstance;
 import one.tracking.framework.entity.SurveyResponse;
 import one.tracking.framework.entity.User;
 import one.tracking.framework.entity.meta.Answer;
+import one.tracking.framework.entity.meta.ReleaseStatusType;
 import one.tracking.framework.entity.meta.container.Container;
 import one.tracking.framework.entity.meta.question.BooleanQuestion;
 import one.tracking.framework.entity.meta.question.ChecklistEntry;
@@ -25,8 +26,8 @@ import one.tracking.framework.entity.meta.question.ChecklistQuestion;
 import one.tracking.framework.entity.meta.question.ChoiceQuestion;
 import one.tracking.framework.entity.meta.question.Question;
 import one.tracking.framework.repo.AnswerRepository;
-import one.tracking.framework.repo.ContainerRepository;
 import one.tracking.framework.repo.SurveyResponseRepository;
+import one.tracking.framework.service.TemporaryHelperService;
 
 /**
  * @author Marko Voß
@@ -42,10 +43,10 @@ public class SurveyResponseComponent {
   private SurveyResponseRepository surveyResponseRepository;
 
   @Autowired
-  private ContainerRepository containerRepository;
+  private AnswerRepository answerRepository;
 
   @Autowired
-  private AnswerRepository answerRepository;
+  private TemporaryHelperService helperService;
 
   public SurveyStatusChange persistSurveyResponse(final User user, final SurveyInstance instance,
       final Question question,
@@ -88,12 +89,19 @@ public class SurveyResponseComponent {
   private boolean checkIfParentQuestionIsValid(final User user, final SurveyInstance instance,
       final Question question) {
 
-    final Optional<Container> containerOp = this.containerRepository.findByQuestionsIn(Collections.singleton(question));
+    final List<SearchResult> results = this.helperService.searchSurveys(question);
 
-    if (containerOp.isEmpty())
+    final Optional<SearchResult> resultOp = results.stream()
+        .filter(result -> result.getSurvey().getReleaseStatus() == ReleaseStatusType.RELEASED)
+        .reduce((a, b) -> {
+          throw new IllegalStateException("Multiple elements: " + a + ", " + b);
+        });
+
+    if (resultOp.isEmpty())
       return false;
 
-    final Question parent = containerOp.get().getParent();
+    final Container container = resultOp.get().getOriginContainer();
+    final Question parent = container.getParent();
 
     if (parent == null)
       return true;
@@ -113,15 +121,20 @@ public class SurveyResponseComponent {
      * Invalidate next siblings
      */
 
-    final Optional<Container> containerOp =
-        this.containerRepository.findByQuestionsIn(Collections.singleton(currentQuestion));
+    final List<SearchResult> results = this.helperService.searchSurveys(currentQuestion);
 
-    if (containerOp.isEmpty()) {
+    final Optional<SearchResult> resultOp = results.stream()
+        .filter(result -> result.getSurvey().getReleaseStatus() == ReleaseStatusType.RELEASED)
+        .reduce((a, b) -> {
+          throw new IllegalStateException("Multiple elements: " + a + ", " + b);
+        });
+
+    if (resultOp.isEmpty()) {
       LOG.warn("Current question is not part of a container! QuestionId: {}", currentQuestion.getId());
       return; // should not occur
     }
 
-    final Container container = containerOp.get();
+    final Container container = resultOp.get().getOriginContainer();
 
     boolean found = false;
     for (final Question question : container.getQuestions()) {
