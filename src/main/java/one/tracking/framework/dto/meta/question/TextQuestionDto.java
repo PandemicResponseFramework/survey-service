@@ -4,7 +4,7 @@
 package one.tracking.framework.dto.meta.question;
 
 import javax.validation.constraints.Max;
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -20,7 +20,7 @@ import one.tracking.framework.entity.meta.question.QuestionType;
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @NoArgsConstructor
-@ApiModel(parent = QuestionDto.class)
+@Schema
 public class TextQuestionDto extends QuestionDto {
 
   private boolean multiline;

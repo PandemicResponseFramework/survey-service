@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Parameter;
 import one.tracking.framework.dto.DtoMapper;
 import one.tracking.framework.dto.SurveyResponseDto;
 import one.tracking.framework.dto.SurveyStatusDto;
@@ -19,7 +20,6 @@ import one.tracking.framework.dto.meta.SurveyDto;
 import one.tracking.framework.exception.SurveyResponseConflictException;
 import one.tracking.framework.service.SurveyResponseService;
 import one.tracking.framework.service.SurveyService;
-import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * @author Marko Voß
@@ -45,7 +45,7 @@ public class SurveyController {
 
   @RequestMapping(method = RequestMethod.GET, path = "/overview")
   public Collection<SurveyStatusDto> getSurveyOverviews(
-      @ApiIgnore
+      @Parameter(hidden = true)
       final Authentication authentication) {
 
     return this.surveyService.getSurveyOverview(authentication.getName());
@@ -55,7 +55,7 @@ public class SurveyController {
   public SurveyStatusDto getSurveyOverview(
       @PathVariable("nameId")
       final String nameId,
-      @ApiIgnore
+      @Parameter(hidden = true)
       final Authentication authentication) {
 
     return this.surveyService.getSurveyOverview(nameId, authentication.getName());
@@ -68,7 +68,7 @@ public class SurveyController {
       @RequestBody
       @Valid
       final SurveyResponseDto surveyResponse,
-      @ApiIgnore
+      @Parameter(hidden = true)
       final Authentication authentication) throws SurveyResponseConflictException {
 
     this.surveyResponseService.handleSurveyResponse(authentication.getName(), nameId, surveyResponse);

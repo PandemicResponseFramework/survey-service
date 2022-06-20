@@ -7,14 +7,13 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.time.Instant;
 import java.util.Optional;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,7 +22,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,12 +37,9 @@ import one.tracking.framework.support.JWTHelper;
  *
  */
 @AutoConfigureMockMvc
-@TestPropertySource(locations = "classpath:application-it.properties")
 @Import(ITConfiguration.class)
-@RunWith(SpringRunner.class)
-// @SpringBootTest(classes = SurveyApplication.class, webEnvironment =
-// SpringBootTest.WebEnvironment.DEFINED_PORT)
 @SpringBootTest(classes = SurveyApplication.class)
+@TestPropertySource(locations = "classpath:application-it.properties")
 @DirtiesContext
 public class HealthControllerIT {
 
@@ -72,7 +67,7 @@ public class HealthControllerIT {
 
   private String token;
 
-  @Before
+  @BeforeEach
   public void before() {
     this.user = this.helperBean.createUser("test");
     this.token = this.jwtHelper.createJWT(this.user.getId(), 24 * 60 * 60);

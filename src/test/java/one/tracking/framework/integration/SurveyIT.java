@@ -9,7 +9,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.Arrays;
@@ -20,9 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +33,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -63,12 +61,9 @@ import one.tracking.framework.support.JWTHelper;
  *
  */
 @AutoConfigureMockMvc
-@TestPropertySource(locations = "classpath:application-it.properties")
 @Import(ITConfiguration.class)
-@RunWith(SpringRunner.class)
-// @SpringBootTest(classes = SurveyApplication.class, webEnvironment =
-// SpringBootTest.WebEnvironment.DEFINED_PORT)
 @SpringBootTest(classes = SurveyApplication.class)
+@TestPropertySource(locations = "classpath:application-it.properties")
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 public class SurveyIT {
 
@@ -95,7 +90,7 @@ public class SurveyIT {
 
   private String token;
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     this.token = this.jwtHelper.createJWT(this.helperBean.createUser("test").getId(), 24 * 60 * 60);
   }

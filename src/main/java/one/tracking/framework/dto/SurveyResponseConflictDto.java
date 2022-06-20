@@ -3,7 +3,7 @@
  */
 package one.tracking.framework.dto;
 
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ApiModel
+@Schema
 public class SurveyResponseConflictDto {
 
   private SurveyResponseConflictType conflictType;
